@@ -5,9 +5,15 @@ import { storage } from "../shared/storage";
 import { applyDocumentTheme } from "../shared/theme";
 import type { ChatMessage, PageSnapshot } from "../shared/types/messages";
 import type { AgentState, AgentType } from "../shared/types/agent";
+import type { AgentSettings } from "../shared/types/storage";
+import type { AgentMetricRecord } from "../debug/AgentMetrics";
+import type { ExecutionLogEntry } from "../debug/ExecutionLogger";
+import type { HealthCheckResult } from "../ai/healthCheck";
+import type { LongTermMemory } from "../types/Memory";
 import { VoiceInput } from "./VoiceInput";
 import { ProfileSettings } from "./ProfileSettings";
 import { Markdown, parseInlineMarkdown } from "../shared/components/Markdown";
+import { DeveloperPanel } from "./DeveloperPanel";
 
 interface ExtractedJob {
   title: string;
@@ -416,6 +422,16 @@ interface AutofillConfirmation {
   skipped: string[];
 }
 
+interface OrchestrationResult {
+  type: "orchestration_result";
+  summary: string;
+  job?: ExtractedJob;
+  match?: MatchAnalysis;
+  coverLetter?: CoverLetter;
+  autofill?: AutofillConfirmation;
+  errors?: string[];
+}
+
 const AutofillConfirmationCard = ({ confirmation }: { confirmation: AutofillConfirmation }) => {
   const [status, setStatus] = useState<"pending" | "submitting" | "confirmed" | "cancelled">("pending");
   const [filledCount, setFilledCount] = useState(0);
@@ -593,7 +609,7 @@ const OrchestrationResultCard = ({
   currentUrl,
   onSubmitPrompt
 }: {
-  result: any;
+  result: OrchestrationResult;
   currentUrl: string;
   onSubmitPrompt?: (prompt: string) => void;
 }) => {
@@ -688,7 +704,7 @@ const OrchestrationResultCard = ({
           <CoverLetterCard coverLetter={result.coverLetter} />
         )}
         {activeTab === "fill" && result.autofill && (
-          <AutofillConfirmationCard confirmation={{ type: "autofill_confirmation", ...result.autofill }} />
+          <AutofillConfirmationCard confirmation={result.autofill} />
         )}
       </div>
     </div>
@@ -790,7 +806,11 @@ export const ChatWindow = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [agentState, setAgentState] = useState<AgentState | null>(null);
   const [showSteps, setShowSteps] = useState(true);
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<AgentSettings | null>(null);
+  const [executionLogs, setExecutionLogs] = useState<ExecutionLogEntry[]>([]);
+  const [agentMetrics, setAgentMetrics] = useState<AgentMetricRecord[]>([]);
+  const [longMemory, setLongMemory] = useState<LongTermMemory | null>(null);
+  const [healthChecks, setHealthChecks] = useState<HealthCheckResult[]>([]);
 
   // Find the latest MatchAnalysis score from chat history
   const latestMatchScore = (() => {
@@ -829,7 +849,17 @@ export const ChatWindow = () => {
   const toggleTheme = async () => {
     const currentTheme = settings?.theme || "light";
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
-    const newSettings = { ...settings, theme: nextTheme };
+    const newSettings: AgentSettings = {
+      theme: nextTheme,
+      sidebarPinned: settings?.sidebarPinned ?? false,
+      userName: settings?.userName ?? "",
+      developerMode: settings?.developerMode ?? false,
+      apiKey: settings?.apiKey,
+      openaiApiKey: settings?.openaiApiKey,
+      anthropicApiKey: settings?.anthropicApiKey,
+      groqApiKey: settings?.groqApiKey,
+      provider: settings?.provider
+    };
     await storage.set("settings", newSettings);
     setSettings(newSettings);
     applyDocumentTheme(nextTheme);
@@ -845,6 +875,10 @@ export const ChatWindow = () => {
       setSettings(s);
       applyDocumentTheme(s.theme);
     });
+    storage.get("executionLogs").then(setExecutionLogs);
+    storage.get("agentMetrics").then((metrics) => setAgentMetrics(Object.values(metrics)));
+    storage.get("longTermMemory").then(setLongMemory);
+    storage.get("healthChecks").then(setHealthChecks);
 
     chrome.storage.local.get("agentState").then((data) => {
       if (data.agentState) {
@@ -880,6 +914,22 @@ export const ChatWindow = () => {
         setMessages(changes.chatHistory.newValue as ChatMessage[]);
       }
 
+      if (areaName === "sync" && changes.executionLogs?.newValue) {
+        setExecutionLogs(changes.executionLogs.newValue as ExecutionLogEntry[]);
+      }
+
+      if (areaName === "sync" && changes.agentMetrics?.newValue) {
+        setAgentMetrics(Object.values(changes.agentMetrics.newValue as Record<string, AgentMetricRecord>));
+      }
+
+      if (areaName === "sync" && changes.longTermMemory?.newValue) {
+        setLongMemory(changes.longTermMemory.newValue as LongTermMemory);
+      }
+
+      if (areaName === "sync" && changes.healthChecks?.newValue) {
+        setHealthChecks(changes.healthChecks.newValue as HealthCheckResult[]);
+      }
+
       if (areaName === "local" && changes.agentState) {
         setAgentState((changes.agentState.newValue as AgentState) || null);
       }
@@ -892,6 +942,19 @@ export const ChatWindow = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isSending]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "d" && settings) {
+        const nextSettings = { ...settings, developerMode: !settings.developerMode };
+        void storage.set("settings", nextSettings);
+        setSettings(nextSettings);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [settings]);
 
   const closeSidebar = () => {
     window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*");
@@ -1016,6 +1079,16 @@ export const ChatWindow = () => {
           />
         </div>
       </header>
+
+      {settings?.developerMode && (
+        <DeveloperPanel
+          agentState={agentState}
+          logs={executionLogs}
+          metrics={agentMetrics}
+          memory={longMemory}
+          healthChecks={healthChecks}
+        />
+      )}
 
       {/* Autonomous Agent Live Dashboard */}
       {agentState && agentState.isActive && (

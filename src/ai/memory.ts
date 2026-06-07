@@ -1,11 +1,7 @@
+import { EventBus } from "../core/EventBus";
 import type { AgentState } from "../shared/types/agent";
-
-export interface LoggedGoal {
-  timestamp: string;
-  goal: string;
-  status: "completed" | "failed";
-  stepsCount: number;
-}
+import { storage } from "../shared/storage";
+import type { LoggedGoal, MemorySnapshot } from "../types/Memory";
 
 export const memory = {
   getRecentCommands: async (): Promise<string[]> => {
@@ -52,5 +48,22 @@ export const memory = {
     };
     const updated: AgentState = { ...currentState, ...state };
     await chrome.storage.local.set({ agentState: updated });
+    await EventBus.emit("MEMORY_UPDATED", {});
+  },
+
+  getSnapshot: async (): Promise<MemorySnapshot> => {
+    const [recentCommands, executionHistory, agentState, longTermMemory] = await Promise.all([
+      memory.getRecentCommands(),
+      memory.getExecutionHistory(),
+      memory.getAgentState(),
+      storage.get("longTermMemory")
+    ]);
+
+    return {
+      recentCommands,
+      executionHistory,
+      agentState,
+      longTermMemory
+    };
   }
 };

@@ -1,33 +1,34 @@
 import { defaultStorage, type StorageSchema } from "./types/storage";
 
 type StorageKey = keyof StorageSchema;
+type StorageFallbacks = Partial<StorageSchema> | StorageKey;
 
 const isExtension = typeof chrome !== "undefined" && typeof chrome.storage !== "undefined";
 
 const storageArea = {
-  async get(keys: any): Promise<any> {
+  async get(keys: StorageFallbacks): Promise<Partial<StorageSchema>> {
     if (isExtension) {
       return chrome.storage.sync.get(keys);
     }
-    // Fallback to localStorage
-    const res: any = {};
+
+    const res: Partial<StorageSchema> = {};
     if (typeof keys === "string") {
       const val = localStorage.getItem(keys);
       res[keys] = val ? JSON.parse(val) : defaultStorage[keys as StorageKey];
     } else {
       for (const [k, fallbackVal] of Object.entries(keys)) {
         const val = localStorage.getItem(k);
-        res[k] = val ? JSON.parse(val) : fallbackVal;
+        res[k as StorageKey] = val ? JSON.parse(val) : fallbackVal;
       }
     }
     return res;
   },
 
-  async set(items: any): Promise<void> {
+  async set(items: Partial<StorageSchema>): Promise<void> {
     if (isExtension) {
       return chrome.storage.sync.set(items);
     }
-    // Fallback to localStorage
+
     for (const [k, v] of Object.entries(items)) {
       localStorage.setItem(k, JSON.stringify(v));
     }

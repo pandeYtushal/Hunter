@@ -4,6 +4,7 @@ import { useChromeStorage } from "./hooks/useChromeStorage";
 import { useTheme } from "./hooks/useTheme";
 import { sendMessageToActiveTab } from "../shared/chromeRuntime";
 import type { PageSnapshot, SidebarStatus } from "../shared/types/messages";
+import type { AgentSettings } from "../shared/types/storage";
 
 const emptySnapshot: PageSnapshot = {
   title: "No page connected",
@@ -163,7 +164,7 @@ export const App = () => {
               </label>
               <select
                 value={settings.provider || "gemini"}
-                onChange={(e) => setSettings({ ...settings, provider: e.target.value as any })}
+                onChange={(e) => setSettings({ ...settings, provider: e.target.value as AgentSettings["provider"] })}
                 className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
               >
                 <option value="gemini">Google Gemini</option>

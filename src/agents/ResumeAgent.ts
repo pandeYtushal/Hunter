@@ -1,9 +1,10 @@
 import { analyzeJobFit } from "../ai/matchAgent";
 import type { PageSnapshot } from "../shared/types/messages";
 import type { UserProfile } from "../shared/types/storage";
+import type { JobDetails, MatchAnalysis } from "../types/Job";
 
 export const ResumeAgent = {
-  async matchResume(job: any, profile: UserProfile) {
+  async matchResume(job: JobDetails, profile: UserProfile): Promise<MatchAnalysis> {
     const pageContextFake: PageSnapshot = {
       title: `${job.title} at ${job.company}`,
       url: "",

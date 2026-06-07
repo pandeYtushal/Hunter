@@ -13,17 +13,24 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["http://*/*", "https://*/*"],
       "js": ["assets/content.js"],
       "run_at": "document_idle"
     }
   ],
   "permissions": ["activeTab", "storage", "tabs", "scripting"],
-  "host_permissions": ["<all_urls>", "https://generativelanguage.googleapis.com/*"],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.groq.com/*"
+  ],
   "web_accessible_resources": [
     {
       "resources": ["sidebar.html", "assets/*.js", "assets/*.css", "assets/*.mjs"],
-      "matches": ["<all_urls>"]
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "icons": {

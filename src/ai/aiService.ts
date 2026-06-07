@@ -1,5 +1,5 @@
 import type { ChatMessage, PageSnapshot } from "../shared/types/messages";
-import type { UserProfile } from "../shared/types/storage";
+import type { AgentSettings, UserProfile } from "../shared/types/storage";
 import { storage } from "../shared/storage";
 
 interface GeminiPart {
@@ -226,7 +226,7 @@ export const generateAiReply = async ({
   pageContext,
   profile
 }: GenerateAiReplyInput): Promise<string> => {
-  let settings: any = null;
+  let settings: AgentSettings | null = null;
   try {
     settings = await storage.get("settings");
   } catch (err) {

@@ -1,17 +1,8 @@
 import { extractJobDetails } from "../ai/jobAgent";
 import { generateCoverLetter as coreGenerateCoverLetter } from "../ai/coverLetterAgent";
 import type { PageSnapshot } from "../shared/types/messages";
-import type { UserProfile } from "../shared/types/storage";
-
-export interface JobAgentOutput {
-  title: string;
-  company: string;
-  location: string;
-  salary: string;
-  experience: string;
-  skills: string[];
-  matchScore: number;
-}
+import type { CoverLetterRecord, UserProfile } from "../shared/types/storage";
+import type { JobAgentOutput, JobDetails } from "../types/Job";
 
 export const JobAgent = {
   async extractJob(pageContext: PageSnapshot): Promise<JobAgentOutput> {
@@ -35,7 +26,7 @@ export const JobAgent = {
     };
   },
 
-  async generateCoverLetter(job: any, profile: UserProfile) {
+  async generateCoverLetter(job: JobDetails, profile: UserProfile): Promise<CoverLetterRecord> {
     const pageContextFake: PageSnapshot = {
       title: `${job.title} at ${job.company}`,
       url: "",

@@ -3,7 +3,7 @@
  * (such as markdown code blocks, comments, smart quotes, trailing commas, and unescaped control characters)
  * before attempting to parse the JSON string.
  */
-export function robustJsonParse<T = any>(text: string): T {
+export function robustJsonParse<T = unknown>(text: string): T {
   if (!text) {
     throw new Error("Cannot parse empty or undefined text");
   }

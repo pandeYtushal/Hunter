@@ -1,4 +1,8 @@
 import type { ChatMessage, ThemeMode } from "./messages";
+import type { AgentMetricRecord } from "../../debug/AgentMetrics";
+import type { ExecutionLogEntry } from "../../debug/ExecutionLogger";
+import type { HealthCheckResult } from "../../ai/healthCheck";
+import type { LongTermMemory } from "../../types/Memory";
 
 export interface ApplicationRecord {
   id: string;
@@ -13,6 +17,7 @@ export interface AgentSettings {
   theme: ThemeMode;
   sidebarPinned: boolean;
   userName: string;
+  developerMode: boolean;
   apiKey?: string; // Gemini
   openaiApiKey?: string;
   anthropicApiKey?: string;
@@ -46,6 +51,10 @@ export interface StorageSchema {
   sidebarOpen: boolean;
   profile?: UserProfile;
   coverLetters?: CoverLetterRecord[];
+  longTermMemory: LongTermMemory;
+  executionLogs: ExecutionLogEntry[];
+  agentMetrics: Record<string, AgentMetricRecord>;
+  healthChecks: HealthCheckResult[];
 }
 
 export const defaultStorage: StorageSchema = {
@@ -55,6 +64,7 @@ export const defaultStorage: StorageSchema = {
     theme: "system",
     sidebarPinned: false,
     userName: "",
+    developerMode: false,
     apiKey: "",
     openaiApiKey: "",
     anthropicApiKey: "",
@@ -72,5 +82,16 @@ export const defaultStorage: StorageSchema = {
     linkedIn: "",
     portfolio: ""
   },
-  coverLetters: []
+  coverLetters: [],
+  longTermMemory: {
+    userPreferences: {},
+    favoriteCompanies: [],
+    successfulApplications: [],
+    savedJobs: [],
+    generatedCoverLetters: [],
+    updatedAt: new Date(0).toISOString()
+  },
+  executionLogs: [],
+  agentMetrics: {},
+  healthChecks: []
 };

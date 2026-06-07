@@ -6,6 +6,11 @@ export interface MappedField {
   mappedType: "name" | "firstName" | "lastName" | "email" | "phone" | "linkedin" | "portfolio" | "resume" | "unknown";
 }
 
+type MappedType = MappedField["mappedType"];
+
+const isMappedType = (value: string): value is MappedType =>
+  ["name", "firstName", "lastName", "email", "phone", "linkedin", "portfolio", "resume", "unknown"].includes(value);
+
 // Find a label associated with an element
 function getElementLabelText(element: HTMLElement): string {
   // 1. Check if enclosed in <label>
@@ -210,8 +215,8 @@ export async function scanPageForm(profile: UserProfile): Promise<{
           const matched = unknownFields.find(
             (m) => m.input.getAttribute("data-autofill-temp-id") === mapping.fieldId
           );
-          if (matched && mapping.mappedType !== "unknown") {
-            matched.mappedType = mapping.mappedType as any;
+          if (matched && isMappedType(mapping.mappedType) && mapping.mappedType !== "unknown") {
+            matched.mappedType = mapping.mappedType;
           }
         });
       }

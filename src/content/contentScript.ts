@@ -1,28 +1,5 @@
 import { sidebarStyles } from "./sidebarStyles";
-import type { StorageSchema } from "../shared/types/storage";
-
-const defaultStorage: StorageSchema = {
-  applications: [],
-  chatHistory: [],
-  settings: {
-    theme: "system",
-    sidebarPinned: false,
-    userName: "",
-    apiKey: ""
-  },
-  sidebarOpen: false,
-  profile: {
-    name: "",
-    email: "",
-    phone: "",
-    skills: [],
-    experience: "",
-    resumeFileName: "",
-    linkedIn: "",
-    portfolio: ""
-  },
-  coverLetters: []
-};
+import { defaultStorage, type StorageSchema } from "../shared/types/storage";
 import type { PageSnapshot, RuntimeMessage, SidebarStatus, ThemeMode } from "../shared/types/messages";
 import { extractTitle, extractMetadata, extractPageContent } from "./pageReader";
 import { autofillPageForm, scanPageForm, executeAutofill, cancelAutofill } from "./formMapper";

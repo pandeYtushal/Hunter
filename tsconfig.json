@@ -18,5 +18,6 @@
     "types": ["chrome"]
   },
   "include": ["src", "vite.config.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test"],
   "references": []
 }

@@ -6,6 +6,7 @@ import { generateCoverLetter } from "../ai/coverLetterAgent";
 import { analyzeFormFields } from "../ai/formAgent";
 import { planUserGoal } from "../ai/planner";
 import { researchCompany } from "../ai/researchAgent";
+import { runStartupDiagnostics } from "../ai/healthCheck";
 import { AgentManager } from "../agents/AgentManager";
 import type { ChatMessage, RuntimeMessage } from "../shared/types/messages";
 import { defaultStorage, type StorageSchema } from "../shared/types/storage";
@@ -243,3 +244,16 @@ addMessageListener(async (message, sender) => {
       return { ok: true };
   }
 });
+
+const persistStartupDiagnostics = async () => {
+  const results = await runStartupDiagnostics().catch((error) => [
+    {
+      name: "Background worker availability" as const,
+      ok: false,
+      message: error instanceof Error ? error.message : "Startup diagnostics failed."
+    }
+  ]);
+  await setStorageValue("healthChecks", results);
+};
+
+void persistStartupDiagnostics();

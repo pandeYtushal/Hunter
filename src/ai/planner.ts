@@ -1,10 +1,113 @@
 import { generateAiReply } from "./aiService";
-import type { ExecutionPlan, AgentType, ActionType } from "../shared/types/agent";
+import { IntentClassifier } from "./intentClassifier";
+import type { ExecutionPlan, AgentType, ActionType, IntentClassification, IntentType, PlanGoal } from "../shared/types/agent";
 import { robustJsonParse } from "../shared/json";
 
+const deterministicPlan = (classification: IntentClassification): ExecutionPlan => {
+  const map: Record<IntentType, ExecutionPlan> = {
+    APPLY_JOB: {
+      goal: "apply_job",
+      agents: ["JobAgent", "ResumeAgent", "FormAgent"],
+      actions: ["extract_job", "match_resume", "generate_cover_letter", "fill_form"]
+    },
+    ANALYZE_JOB: {
+      goal: "analyze_job_match",
+      agents: ["JobAgent", "ResumeAgent"],
+      actions: ["extract_job", "match_resume"]
+    },
+    RESEARCH_COMPANY: {
+      goal: "research_company",
+      agents: ["ResearchAgent"],
+      actions: ["research_company"]
+    },
+    GENERATE_COVER_LETTER: {
+      goal: "generate_cover_letter",
+      agents: ["JobAgent"],
+      actions: ["extract_job", "generate_cover_letter"]
+    },
+    FILL_FORM: {
+      goal: "autofill_form",
+      agents: ["FormAgent"],
+      actions: ["fill_form"]
+    },
+    SAVE_JOB: {
+      goal: "save_job",
+      agents: ["JobAgent"],
+      actions: ["extract_job", "save_job"]
+    },
+    SUMMARIZE_PAGE: {
+      goal: "summarize_page",
+      agents: ["JobAgent"],
+      actions: ["extract_text", "chat_fallback"]
+    },
+    CHAT_FALLBACK: {
+      goal: "chat_fallback",
+      agents: ["Unknown"],
+      actions: ["chat_fallback"]
+    }
+  };
+
+  return {
+    ...map[classification.intent],
+    intent: classification
+  };
+};
+
+const sanitizePlan = (parsed: Partial<ExecutionPlan>, fallback: ExecutionPlan): ExecutionPlan => {
+  const validGoals: PlanGoal[] = [
+    "apply_job",
+    "analyze_job_match",
+    "research_company",
+    "generate_cover_letter",
+    "autofill_form",
+    "save_job",
+    "summarize_page",
+    "chat_fallback"
+  ];
+  const validActions = new Set<ActionType>([
+    "extract_job",
+    "match_resume",
+    "generate_cover_letter",
+    "fill_form",
+    "research_company",
+    "save_job",
+    "parse_resume",
+    "click_element",
+    "fill_input",
+    "extract_text",
+    "navigate_page",
+    "upload_resume",
+    "chat_fallback"
+  ]);
+  const validAgents = new Set<AgentType>(["JobAgent", "ResumeAgent", "FormAgent", "ResearchAgent", "NavigationAgent", "Unknown"]);
+
+  const goal = parsed.goal && validGoals.includes(parsed.goal) ? parsed.goal : fallback.goal;
+  const agents = Array.isArray(parsed.agents)
+    ? parsed.agents.filter((agent): agent is AgentType => validAgents.has(agent as AgentType))
+    : fallback.agents;
+  const actions = Array.isArray(parsed.actions)
+    ? parsed.actions.filter((action): action is ActionType => validActions.has(action as ActionType))
+    : fallback.actions;
+
+  return {
+    goal,
+    agents: agents.length > 0 ? agents : fallback.agents,
+    actions: actions.length > 0 ? actions : fallback.actions,
+    intent: fallback.intent
+  };
+};
+
 export const planUserGoal = async (userPrompt: string): Promise<ExecutionPlan> => {
+  const classification = IntentClassifier.classify(userPrompt);
+  const fallbackPlan = deterministicPlan(classification);
+
+  if (classification.intent === "CHAT_FALLBACK") {
+    return fallbackPlan;
+  }
+
   const prompt = `You are a cognitive planning agent for an Autonomous Browser Job Search Assistant.
-Your task is to analyze the user's natural language goal and map it to one of the supported goals, list the specialized agents required, and define the sequence of actions to be executed.
+The user's intent has already been classified deterministically as "${classification.intent}".
+Your task is to refine the execution plan without changing the user-facing feature or inventing unsupported actions.
 
 Supported Goals:
 - "apply_job": Run the full application cycle (extract job details, match resume, generate cover letter, scan/fill form).
@@ -29,6 +132,7 @@ Available Actions:
 - "generate_cover_letter": Generate tailored cover letter text.
 - "fill_form": Run heuristic and FormAgent matches to populate input fields.
 - "research_company": Pull company summary, culture, and interview prep tips.
+- "save_job": Persist extracted job details into application tracking storage.
 - "parse_resume": Extract candidate profile from resume text.
 - "click_element": Click a specific link, button, or tab.
 - "fill_input": Set the value of an input field.
@@ -38,14 +142,13 @@ Available Actions:
 - "chat_fallback": General fallback chat answer.
 
 Instructions:
-- If the user wants to apply for a job ("apply for this job", "start application", "autofill and submit"), return goal "apply_job", agents ["JobAgent", "ResumeAgent", "FormAgent"], and actions ["extract_job", "match_resume", "generate_cover_letter", "fill_form"].
-- If the user wants to research a company ("research this company", "tell me about google", "who is the employer"), return goal "research_company", agents ["ResearchAgent"], and actions ["research_company"].
-- If the user wants to save or track a job ("save this job", "track this posting"), return goal "save_job", agents ["JobAgent"], and actions ["extract_job"].
-- If the user wants to match resume or check alignment ("analyze this job", "am I a good fit", "check match score"), return goal "analyze_job_match", agents ["ResumeAgent"], and actions ["match_resume"].
-- If the user wants a cover letter ("generate cover letter", "write cover letter"), return goal "generate_cover_letter", agents ["JobAgent"], and actions ["generate_cover_letter"].
+- Start from this deterministic plan: ${JSON.stringify(fallbackPlan)}.
+- Keep actions in a safe execution order and only remove an action when it is clearly unnecessary.
+- If the user wants to save or track a job, include actions ["extract_job", "save_job"].
+- If the user wants to match resume or check alignment, include actions ["extract_job", "match_resume"].
+- If the user wants a cover letter, include actions ["extract_job", "generate_cover_letter"].
 - If the user wants to fill a form ("fill application form", "autofill form", "scan form"), return goal "autofill_form", agents ["FormAgent"], and actions ["fill_form"].
 - If the user wants to summarize the page ("summarize page", "what is this page about"), return goal "summarize_page", agents ["JobAgent"], and actions ["extract_text", "chat_fallback"].
-- Otherwise, return goal "chat_fallback", agents ["Unknown"], and actions ["chat_fallback"].
 
 User Command: "${userPrompt}"
 
@@ -63,17 +166,9 @@ Return a clean, valid JSON object with the following keys. Do not include markdo
 
   try {
     const parsed = robustJsonParse<Partial<ExecutionPlan>>(responseText);
-    return {
-      goal: parsed.goal || "chat_fallback",
-      agents: Array.isArray(parsed.agents) ? (parsed.agents as AgentType[]) : ["Unknown"],
-      actions: Array.isArray(parsed.actions) ? (parsed.actions as ActionType[]) : ["chat_fallback"]
-    };
+    return sanitizePlan(parsed, fallbackPlan);
   } catch (error) {
     console.error("Failed to parse Planner response as JSON:", responseText, error);
-    return {
-      goal: "chat_fallback",
-      agents: ["Unknown"],
-      actions: ["chat_fallback"]
-    };
+    return fallbackPlan;
   }
 };

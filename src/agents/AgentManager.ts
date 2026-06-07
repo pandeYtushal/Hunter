@@ -1,13 +1,16 @@
 import { memory } from "../ai/memory";
 import { executePlan } from "../ai/executor";
+import { ExecutionStateMachine } from "../ai/stateMachine";
+import { EventBus } from "../core/EventBus";
 import type { AgentState, ExecutionStep, ExecutionPlan } from "../shared/types/agent";
 
 export const AgentManager = {
   async runGoal(goal: string, plan: ExecutionPlan): Promise<AgentState> {
-    // 1. Record command in history
+    const machine = new ExecutionStateMachine();
     await memory.addCommand(goal);
+    machine.transition("PLANNING");
+    await EventBus.emit("PLAN_CREATED", { plan });
 
-    // 2. Set active state
     const initialState: AgentState = {
       isActive: true,
       goal,
@@ -15,13 +18,12 @@ export const AgentManager = {
       currentStep: "Formulating execution plan...",
       progress: 5,
       steps: [],
-      errors: []
+      errors: [],
+      machineState: machine.current()
     };
     await memory.updateAgentState(initialState);
 
     try {
-      
-      // 4. Map plan actions to execution checklist
       const steps: ExecutionStep[] = plan.actions.map((action, idx) => ({
         step: idx + 1,
         action,
@@ -29,30 +31,30 @@ export const AgentManager = {
         status: "pending" as const
       }));
 
+      machine.transition("EXECUTING");
       await memory.updateAgentState({
         steps,
         currentStep: "Plan generated. Commencing execution...",
-        progress: 10
+        progress: 10,
+        machineState: machine.current()
       });
 
-      // 5. Hand over to the execution engine
       const finalState = await executePlan(plan, steps, (stepProgress) => {
-        // Real-time update callbacks to Chrome local storage
         void memory.updateAgentState(stepProgress);
       });
 
-      // 6. Log execution to history log
       const isSuccess = finalState.errors.length === 0;
       await memory.logExecution(goal, isSuccess ? "completed" : "failed", steps.length);
 
-      // 7. Transition goal state to completed
+      machine.transition(isSuccess ? "COMPLETED" : "FAILED");
       const completedState: AgentState = {
         ...finalState,
         isActive: false,
         currentStep: isSuccess 
           ? "Goal completed successfully!" 
           : "Execution finished with errors.",
-        progress: 100
+        progress: 100,
+        machineState: machine.current()
       };
       await memory.updateAgentState(completedState);
       return completedState;
@@ -60,6 +62,9 @@ export const AgentManager = {
     } catch (error) {
       console.error("AgentManager failed to execute goal:", error);
       const errMsg = error instanceof Error ? error.message : "Orchestrated agent flow failed.";
+      if (machine.canTransition("FAILED")) {
+        machine.transition("FAILED");
+      }
       
       const failedState: AgentState = {
         isActive: false,
@@ -68,7 +73,8 @@ export const AgentManager = {
         currentStep: "Execution failed due to internal error.",
         progress: 100,
         steps: [],
-        errors: [errMsg]
+        errors: [errMsg],
+        machineState: machine.current()
       };
       await memory.updateAgentState(failedState);
       await memory.logExecution(goal, "failed", 0);
@@ -89,6 +95,8 @@ function getActionDescription(action: string): string {
       return "Scanning and mapping webpage forms";
     case "research_company":
       return "Synthesizing company overview and culture insights";
+    case "save_job":
+      return "Saving job to application tracker";
     case "parse_resume":
       return "Extracting candidate profile from resume PDF";
     case "click_element":

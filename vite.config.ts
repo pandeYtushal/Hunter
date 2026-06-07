@@ -1,9 +1,42 @@
 import { resolve } from "node:path";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, type UserConfig } from "vite";
 
-export default defineConfig({
+type VitestConfig = UserConfig & {
+  test: {
+    environment: "node";
+    globals: boolean;
+    setupFiles: string[];
+    coverage: {
+      provider: "v8";
+      reporter: string[];
+      thresholds: {
+        statements: number;
+        branches: number;
+        functions: number;
+        lines: number;
+      };
+    };
+  };
+};
+
+const config = {
   plugins: [react()],
+  test: {
+    environment: "node",
+    globals: true,
+    setupFiles: ["src/test/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 80,
+        lines: 80
+      }
+    }
+  },
   publicDir: "public",
   build: {
     outDir: "dist",
@@ -23,4 +56,6 @@ export default defineConfig({
       }
     }
   }
-});
+} satisfies VitestConfig;
+
+export default defineConfig(config);

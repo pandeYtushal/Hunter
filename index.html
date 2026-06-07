@@ -1639,6 +1639,16 @@
       text-align: right;
     }
 
+    footer a {
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    footer a:hover {
+      color: var(--amber);
+    }
+
     /* Spin animation helper */
     @keyframes spin {
       to {
@@ -2235,8 +2245,15 @@
           <i data-lucide="briefcase" style="width:11px;height:11px;"></i>
         </div>
         <span class="footer-name">HUNTERR</span>
+        <span style="color: var(--text-3); opacity: 0.4; margin: 0 4px;">|</span>
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--text-2);">
+          Built by <a href="https://github.com/pandeYtushal" target="_blank" rel="noopener">Tushal Pandey</a>
+        </span>
       </div>
       <div class="footer-right">
+        <a href="https://github.com/pandeYtushal/Hunter" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+          <i data-lucide="github" style="width:12px;height:12px;"></i> GitHub
+        </a><br>
         Open Source · MIT License<br>
         Not affiliated with Google LLC or the Chrome Web Store.
       </div>
