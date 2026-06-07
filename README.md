@@ -78,8 +78,8 @@ Install Node.js (LTS recommended) on your machine. This project utilizes `pnpm` 
 ### 2. Install Dependencies
 Clone the repository and install packages:
 ```bash
-git clone https://github.com/your-username/hunterr.git
-cd hunterr
+git clone https://github.com/pandeYtushal/Hunter.git
+cd Hunter
 pnpm install
 ```
 
