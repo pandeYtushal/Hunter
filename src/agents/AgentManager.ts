@@ -1,5 +1,5 @@
 import { memory } from "../ai/memory";
-import { executePlan } from "../ai/executor";
+import { executePlan, type ExecutionRunMetrics } from "../ai/executor";
 import { ExecutionStateMachine } from "../ai/stateMachine";
 import { EventBus } from "../core/EventBus";
 import type { AgentState, ExecutionStep, ExecutionPlan } from "../shared/types/agent";
@@ -39,8 +39,19 @@ export const AgentManager = {
         machineState: machine.current()
       });
 
-      const finalState = await executePlan(plan, steps, (stepProgress) => {
-        void memory.updateAgentState(stepProgress);
+      const finalState = await executePlan(plan, steps, (stepProgress, metrics?: ExecutionRunMetrics) => {
+        void memory.updateAgentState({
+          ...stepProgress,
+          // Store reflection metrics on the agent state for Developer Panel
+          ...(metrics
+            ? {
+                goalProgress: metrics.goalProgress,
+                failureCount: metrics.failureCount,
+                replanCount: metrics.replanCount,
+                recoveryCount: metrics.recoveryCount
+              }
+            : {})
+        });
       });
 
       const isSuccess = finalState.errors.length === 0;
@@ -50,8 +61,8 @@ export const AgentManager = {
       const completedState: AgentState = {
         ...finalState,
         isActive: false,
-        currentStep: isSuccess 
-          ? "Goal completed successfully!" 
+        currentStep: isSuccess
+          ? "Goal completed successfully!"
           : "Execution finished with errors.",
         progress: 100,
         machineState: machine.current()
@@ -65,7 +76,7 @@ export const AgentManager = {
       if (machine.canTransition("FAILED")) {
         machine.transition("FAILED");
       }
-      
+
       const failedState: AgentState = {
         isActive: false,
         goal,
@@ -85,33 +96,19 @@ export const AgentManager = {
 
 function getActionDescription(action: string): string {
   switch (action) {
-    case "extract_job":
-      return "Extracting job description details";
-    case "match_resume":
-      return "Comparing resume qualifications against requirements";
-    case "generate_cover_letter":
-      return "Generating tailored cover letter draft";
-    case "fill_form":
-      return "Scanning and mapping webpage forms";
-    case "research_company":
-      return "Synthesizing company overview and culture insights";
-    case "save_job":
-      return "Saving job to application tracker";
-    case "parse_resume":
-      return "Extracting candidate profile from resume PDF";
-    case "click_element":
-      return "Performing element click on webpage";
-    case "fill_input":
-      return "Populating input value on form field";
-    case "extract_text":
-      return "Extracting raw text from active webpage";
-    case "navigate_page":
-      return "Navigating page sections or URLs";
-    case "upload_resume":
-      return "Locating and highlighting file inputs for resume manual uploads";
-    case "chat_fallback":
-      return "Generating fallback general conversational response";
-    default:
-      return "Executing general workflow action";
+    case "extract_job": return "Extracting job description details";
+    case "match_resume": return "Comparing resume qualifications against requirements";
+    case "generate_cover_letter": return "Generating tailored cover letter draft";
+    case "fill_form": return "Scanning and mapping webpage forms";
+    case "research_company": return "Synthesizing company overview and culture insights";
+    case "save_job": return "Saving job to application tracker";
+    case "parse_resume": return "Extracting candidate profile from resume PDF";
+    case "click_element": return "Performing element click on webpage";
+    case "fill_input": return "Populating input value on form field";
+    case "extract_text": return "Extracting raw text from active webpage";
+    case "navigate_page": return "Navigating page sections or URLs";
+    case "upload_resume": return "Locating and highlighting file inputs for resume manual uploads";
+    case "chat_fallback": return "Generating fallback general conversational response";
+    default: return "Executing general workflow action";
   }
 }

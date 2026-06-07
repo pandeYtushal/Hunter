@@ -22,6 +22,11 @@ export interface AgentState {
   errors: string[];
   machineState?: ExecutionMachineState;
   finalResult?: string;
+  // Reflection and replanning metrics
+  goalProgress?: import("../ai/goalTracker").GoalProgress;
+  failureCount?: number;
+  replanCount?: number;
+  recoveryCount?: number;
 }
 
 export interface AutofillProposal {
