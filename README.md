@@ -73,43 +73,65 @@ graph TD
 ## Setup and Installation
 
 ### 1. Prerequisites
-Install Node.js (LTS recommended) on your machine. This project utilizes `pnpm` as the package manager.
+Install Node.js (LTS recommended) on your machine. Note that since the workspace contains package-level script parameters, you should install dependencies using the pnpm package manager. If pnpm is not installed globally, you can execute it via npx.
 
 ### 2. Install Dependencies
 Clone the repository and install packages:
 ```bash
 git clone https://github.com/pandeYtushal/Hunter.git
 cd Hunter
-pnpm install
+npx pnpm install
 ```
 
 ### 3. Build the Extension
-To compile the production-ready build:
+To compile the extension:
 ```bash
-pnpm build
+npx pnpm build
 ```
-This outputs compiled assets in the `dist` directory.
+This outputs compiled files in the dist directory.
 
 ### 4. Load the Extension in Chrome
-1. Open Google Chrome and go to `chrome://extensions/`.
-2. Enable **Developer mode** via the toggle in the top-right corner.
-3. Click **Load unpacked** in the top-left corner.
-4. Select the `dist` folder generated inside your project directory.
+1. Open Google Chrome and navigate to chrome://extensions/
+2. Enable Developer mode using the toggle in the top-right corner.
+3. Click Load unpacked in the top-left corner.
+4. Select the dist folder generated inside your project directory.
 
 ---
 
-## API Configuration
+## Usage Guide
 
-HUNTERR runs client-side using direct API connections to maintain data privacy. 
+Follow these steps to configure and use HUNTERR for job search automation.
 
-1. Click the HUNTERR extension icon in your Chrome toolbar.
-2. Select **API Config** (or click Setup).
-3. Select your provider in the dropdown:
-   - Google Gemini (uses gemini-2.5-flash)
-   - OpenAI (uses gpt-4o-mini)
-   - Anthropic Claude (uses claude-3-5-sonnet)
-   - Groq Llama 3 (uses llama-3.3-70b)
-4. Enter your API Key. Key values are saved securely in your Chrome sync profile.
+### Step 1: Configure Your AI API Keys
+To maintain absolute privacy, HUNTERR connects directly to your chosen AI provider without intermediate proxy servers.
+1. Click the HUNTERR extension icon in your Chrome toolbar to open the popup interface.
+2. Click the API Config option in the bottom-right corner of the popup.
+3. Select your preferred AI Provider from the dropdown list.
+4. Paste your API key in the input box. Your keys are saved locally and securely inside the browser's storage container.
+
+### Step 2: Configure Your Profile and Resume
+1. Navigate to a standard website (such as google.com or github.com).
+2. Open the HUNTERR sidebar by clicking the floating circular toggle button on the right edge of the screen, or by clicking Open AI Chat in the toolbar popup.
+3. Click the Profile Settings button (user icon) at the top of the sidebar.
+4. Drag and drop your resume in PDF format into the upload card, or click to select the file.
+5. The local parser will extract the text, send it to the local LLM wrapper to parse your details, and populate your name, email, phone, and skills.
+6. Verify and edit your details manually if needed, then click Save Profile.
+
+### Step 3: Analyze Job Postings
+1. Navigate to a job description page (such as Greenhouse, Lever, LinkedIn, or Indeed).
+2. Open the HUNTERR sidebar.
+3. Click any of the quick-action prompts at the bottom:
+   - Summarize page: Provides a quick overview of the job posting.
+   - Extract job details: Extracts structured information such as role title, location, salary range, and experience.
+   - Match: Evaluates your resume against the job requirements, returns a match score, highlights matched skills, and identifies missing skills.
+
+### Step 4: Run the Autofill Agent
+1. Open a job application form page.
+2. In the HUNTERR sidebar, click the Run Autofill Agent button.
+3. The FormAgent scans all input fields and selects the correct value from your saved profile details.
+4. An Autofill Form Confirmation card will appear in your chat window showing proposed mapping values.
+5. Review the values, then click Confirm Fill.
+6. The fields on the webpage will populate and highlight in green. Note that for security, browser sandboxing prevents scripts from setting file fields, so resume upload fields will be highlighted in blue for manual upload.
 
 ---
 
