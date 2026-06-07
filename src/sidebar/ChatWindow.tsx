@@ -441,18 +441,16 @@ const AutofillConfirmationCard = ({ confirmation }: { confirmation: AutofillConf
     setStatus("submitting");
     setErrorMsg("");
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.id) {
-        throw new Error("No active tab found.");
-      }
-
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        type: "EXECUTE_AUTOFILL",
-        proposals: confirmation.proposals
-      });
+      const response = (await chrome.runtime.sendMessage({
+        type: "SEND_TO_ACTIVE_TAB",
+        message: {
+          type: "EXECUTE_AUTOFILL",
+          proposals: confirmation.proposals
+        }
+      })) as { ok: boolean; filledCount?: number; error?: string } | undefined;
 
       if (response && response.ok) {
-        setFilledCount(response.filledCount);
+        setFilledCount(response.filledCount || 0);
         setStatus("confirmed");
       } else {
         throw new Error(response?.error || "Content script failed to execute autofill.");
@@ -466,10 +464,10 @@ const AutofillConfirmationCard = ({ confirmation }: { confirmation: AutofillConf
   const handleCancel = async () => {
     setStatus("submitting");
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        await chrome.tabs.sendMessage(tab.id, { type: "CANCEL_AUTOFILL" });
-      }
+      await chrome.runtime.sendMessage({
+        type: "SEND_TO_ACTIVE_TAB",
+        message: { type: "CANCEL_AUTOFILL" }
+      });
     } catch (err) {
       console.warn("Cancel autofill signal failed", err);
     }
@@ -734,17 +732,17 @@ const createLocalMessage = (content: string): ChatMessage => ({
 });
 
 const requestPageSnapshot = async (): Promise<PageSnapshot | undefined> => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  try {
+    const response = (await chrome.runtime.sendMessage({
+      type: "SEND_TO_ACTIVE_TAB",
+      message: { type: "GET_PAGE_SNAPSHOT" }
+    })) as { snapshot?: PageSnapshot } | undefined;
 
-  if (!tab?.id) {
+    return response?.snapshot;
+  } catch (err) {
+    console.error("Failed to request page snapshot:", err);
     return undefined;
   }
-
-  const response = (await chrome.tabs
-    .sendMessage(tab.id, { type: "GET_PAGE_SNAPSHOT" })
-    .catch(() => undefined)) as { snapshot?: PageSnapshot } | undefined;
-
-  return response?.snapshot;
 };
 
 const commandPrompts = [
@@ -866,11 +864,13 @@ export const ChatWindow = () => {
   };
 
   useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-      if (tab?.url) {
-        setCurrentUrl(tab.url);
-      }
-    });
+    chrome.runtime.sendMessage({ type: "GET_ACTIVE_TAB" })
+      .then((response) => {
+        if (response?.tab?.url) {
+          setCurrentUrl(response.tab.url);
+        }
+      })
+      .catch(() => undefined);
     storage.get("settings").then((s) => {
       setSettings(s);
       applyDocumentTheme(s.theme);

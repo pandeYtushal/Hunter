@@ -52,7 +52,9 @@ export type RuntimeMessage =
   | { type: "FILL_INPUT"; selector: string; value: string }
   | { type: "EXTRACT_TEXT" }
   | { type: "NAVIGATE_PAGE"; url: string }
-  | { type: "UPLOAD_RESUME" };
+  | { type: "UPLOAD_RESUME" }
+  | { type: "GET_ACTIVE_TAB" }
+  | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage };
 
 export interface RuntimeResponseMap {
   PING: { ok: true };
@@ -82,6 +84,8 @@ export interface RuntimeResponseMap {
   EXTRACT_TEXT: { ok: true; text: string } | { ok: false; error: string };
   NAVIGATE_PAGE: { ok: true } | { ok: false; error: string };
   UPLOAD_RESUME: { ok: true } | { ok: false; error: string };
+  GET_ACTIVE_TAB: { tab?: { id?: number; url?: string; title?: string } };
+  SEND_TO_ACTIVE_TAB: any;
 }
 
 export type RuntimeMessageType = RuntimeMessage["type"];

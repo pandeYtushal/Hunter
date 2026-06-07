@@ -240,6 +240,20 @@ addMessageListener(async (message, sender) => {
       }
       return { ok: true };
 
+    case "GET_ACTIVE_TAB": {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      return { tab };
+    }
+
+    case "SEND_TO_ACTIVE_TAB": {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id) {
+        throw new Error("No active tab available to relay message.");
+      }
+      const response = await chrome.tabs.sendMessage(tab.id, message.message);
+      return response;
+    }
+
     default:
       return { ok: true };
   }

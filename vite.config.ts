@@ -20,42 +20,70 @@ type VitestConfig = UserConfig & {
   };
 };
 
-const config = {
-  plugins: [react()],
-  test: {
-    environment: "node",
-    globals: true,
-    setupFiles: ["src/test/setup.ts"],
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html"],
-      thresholds: {
-        statements: 80,
-        branches: 70,
-        functions: 80,
-        lines: 80
-      }
-    }
-  },
-  publicDir: "public",
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-    sourcemap: true,
-    rollupOptions: {
-      input: {
-        popup: resolve(__dirname, "popup.html"),
-        sidebar: resolve(__dirname, "sidebar.html"),
-        background: resolve(__dirname, "src/background/background.ts"),
-        content: resolve(__dirname, "src/content/contentScript.ts"),
-      },
-      output: {
-        entryFileNames: "assets/[name].js",
-        chunkFileNames: "assets/[name].js",
-        assetFileNames: "assets/[name][extname]"
-      }
-    }
-  }
-} satisfies VitestConfig;
+const getConfig = ({ mode }: { mode: string }) => {
+  const isContentBuild = mode === "content";
 
-export default defineConfig(config);
+  const baseConfig = {
+    plugins: [react()],
+    test: {
+      environment: "node",
+      globals: true,
+      setupFiles: ["src/test/setup.ts"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+        thresholds: {
+          statements: 80,
+          branches: 70,
+          functions: 80,
+          lines: 80
+        }
+      }
+    },
+    publicDir: "public"
+  } satisfies VitestConfig;
+
+  if (isContentBuild) {
+    return {
+      ...baseConfig,
+      build: {
+        outDir: "dist",
+        emptyOutDir: false,
+        sourcemap: true,
+        rollupOptions: {
+          input: {
+            content: resolve(__dirname, "src/content/contentScript.ts")
+          } as Record<string, string>,
+          output: {
+            format: "iife" as const,
+            entryFileNames: "assets/[name].js",
+            extend: true
+          }
+        }
+      }
+    };
+  }
+
+  return {
+    ...baseConfig,
+    build: {
+      outDir: "dist",
+      emptyOutDir: true,
+      sourcemap: true,
+      rollupOptions: {
+        input: {
+          popup: resolve(__dirname, "popup.html"),
+          sidebar: resolve(__dirname, "sidebar.html"),
+          background: resolve(__dirname, "src/background/background.ts")
+        } as Record<string, string>,
+        output: {
+          entryFileNames: "assets/[name].js",
+          chunkFileNames: "assets/[name].js",
+          assetFileNames: "assets/[name][extname]"
+        }
+      }
+    }
+  };
+};
+
+export default defineConfig(({ mode }) => getConfig({ mode }));

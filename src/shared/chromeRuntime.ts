@@ -91,7 +91,9 @@ export const isRuntimeMessage = (value: unknown): value is RuntimeMessage => {
     "FILL_INPUT",
     "EXTRACT_TEXT",
     "NAVIGATE_PAGE",
-    "UPLOAD_RESUME"
+    "UPLOAD_RESUME",
+    "GET_ACTIVE_TAB",
+    "SEND_TO_ACTIVE_TAB"
   ];
 
   return typeof type === "string" && types.includes(type as RuntimeMessageType);
