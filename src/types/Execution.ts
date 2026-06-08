@@ -22,6 +22,17 @@ export interface AgentState {
   errors: string[];
   machineState?: ExecutionMachineState;
   finalResult?: string;
+  reasoning?: string;
+  selectedTool?: string;
+  confidence?: number;
+  decisionHistory?: Array<{
+    action: string;
+    reasoning: string;
+    confidence: number;
+    observation: string;
+    status: "completed" | "failed";
+    timestamp: string;
+  }>;
   // Reflection and replanning metrics
   goalProgress?: import("../ai/goalTracker").GoalProgress;
   failureCount?: number;

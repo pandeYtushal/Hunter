@@ -1,8 +1,8 @@
 import { memory } from "../ai/memory";
-import { executePlan, type ExecutionRunMetrics } from "../ai/executor";
+import { AgentLoop } from "../ai/agentLoop";
 import { ExecutionStateMachine } from "../ai/stateMachine";
 import { EventBus } from "../core/EventBus";
-import type { AgentState, ExecutionStep, ExecutionPlan } from "../shared/types/agent";
+import type { AgentState, ExecutionPlan } from "../shared/types/agent";
 
 export const AgentManager = {
   async runGoal(goal: string, plan: ExecutionPlan): Promise<AgentState> {
@@ -15,7 +15,7 @@ export const AgentManager = {
       isActive: true,
       goal,
       currentAgent: "Unknown",
-      currentStep: "Formulating execution plan...",
+      currentStep: "Initiating Reasoning Agent Loop...",
       progress: 5,
       steps: [],
       errors: [],
@@ -24,45 +24,28 @@ export const AgentManager = {
     await memory.updateAgentState(initialState);
 
     try {
-      const steps: ExecutionStep[] = plan.actions.map((action, idx) => ({
-        step: idx + 1,
-        action,
-        description: getActionDescription(action),
-        status: "pending" as const
-      }));
-
       machine.transition("EXECUTING");
       await memory.updateAgentState({
-        steps,
-        currentStep: "Plan generated. Commencing execution...",
+        currentStep: "Commencing dynamic reasoning loop...",
         progress: 10,
         machineState: machine.current()
       });
 
-      const finalState = await executePlan(plan, steps, (stepProgress, metrics?: ExecutionRunMetrics) => {
+      const finalState = await AgentLoop.run(goal, (stepProgress) => {
         void memory.updateAgentState({
-          ...stepProgress,
-          // Store reflection metrics on the agent state for Developer Panel
-          ...(metrics
-            ? {
-                goalProgress: metrics.goalProgress,
-                failureCount: metrics.failureCount,
-                replanCount: metrics.replanCount,
-                recoveryCount: metrics.recoveryCount
-              }
-            : {})
+          ...stepProgress
         });
       });
 
       const isSuccess = finalState.errors.length === 0;
-      await memory.logExecution(goal, isSuccess ? "completed" : "failed", steps.length);
+      await memory.logExecution(goal, isSuccess ? "completed" : "failed", finalState.steps.length);
 
       machine.transition(isSuccess ? "COMPLETED" : "FAILED");
       const completedState: AgentState = {
         ...finalState,
         isActive: false,
         currentStep: isSuccess
-          ? "Goal completed successfully!"
+          ? "All reasoning agent loops completed successfully!"
           : "Execution finished with errors.",
         progress: 100,
         machineState: machine.current()

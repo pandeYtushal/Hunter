@@ -33,6 +33,38 @@ export const DeveloperPanel = ({ agentState, logs, metrics, memory, healthChecks
         </div>
       </div>
 
+      {/* Cognitive Reasoning */}
+      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Active Reasoning Engine</div>
+        <div className="mt-1 text-zinc-500 space-y-1.5">
+          <div className="leading-relaxed"><b>Reasoning:</b> {agentState?.reasoning || "—"}</div>
+          <div className="flex items-center justify-between text-[9px] border-t border-zinc-100 dark:border-zinc-800 pt-1 mt-1">
+            <span>Tool: <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-[8px] font-mono">{agentState?.selectedTool || "—"}</code></span>
+            <span>Confidence: <b className="text-[#f97316]">{agentState?.confidence !== undefined ? `${Math.round(agentState.confidence * 100)}%` : "—"}</b></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Decision Log History */}
+      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Decision History Log</div>
+        <div className="mt-1 max-h-24 overflow-y-auto space-y-1 text-[9px] text-zinc-500 pr-1">
+          {agentState?.decisionHistory?.map((entry, idx) => (
+            <div key={idx} className="border-b border-zinc-100 dark:border-zinc-800/60 pb-1.5 mb-1.5 last:border-0 last:mb-0">
+              <div className="flex justify-between font-bold text-zinc-700 dark:text-zinc-350">
+                <span className="text-zinc-800 dark:text-zinc-200">{entry.action}</span>
+                <span className="text-[#f97316]">{(entry.confidence * 100).toFixed(0)}%</span>
+              </div>
+              <p className="italic text-zinc-400 dark:text-zinc-500 mt-0.5 leading-snug">{entry.reasoning}</p>
+              <div className="text-[8px] text-zinc-400/85 mt-0.5 font-mono truncate">Result: {entry.observation}</div>
+            </div>
+          ))}
+          {(!agentState?.decisionHistory || agentState.decisionHistory.length === 0) && (
+            <span className="text-zinc-400 italic">No decisions logged yet.</span>
+          )}
+        </div>
+      </div>
+
       {/* Reflection & Replanning Dashboard */}
       <div className="rounded border border-indigo-200 bg-indigo-50/40 p-2 dark:border-indigo-900/40 dark:bg-indigo-950/10">
         <div className="flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400 mb-1.5">
