@@ -35,7 +35,15 @@ const rules: IntentRule[] = [
   {
     intent: "SAVE_JOB",
     weight: 5,
-    terms: [/save .*job/i, /track .*job/i, /bookmark .*job/i, "save posting", "add to tracker"]
+    terms: [
+      /save .*job/i,
+      /track .*job/i,
+      /bookmark .*job/i,
+      /save .*posting/i,
+      "save posting",
+      "add to tracker",
+      "tracker"
+    ]
   },
   {
     intent: "SUMMARIZE_PAGE",

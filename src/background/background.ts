@@ -194,11 +194,11 @@ addMessageListener(async (message, sender) => {
         const plan = await planUserGoal(prompt);
         console.log("Planner orchestrated actions:", plan);
 
-        if (plan.goal !== "chat_fallback") {
+        if (plan.goal !== "chat_fallback" && plan.goal !== "summarize_page") {
           // Hand execution over to the AgentManager orchestrator
           const finalState = await AgentManager.runGoal(prompt, plan);
           
-          if (finalState.errors.length > 0 && finalState.errors.length === finalState.steps.length) {
+          if (finalState.errors.length > 0) {
             reply = JSON.stringify({ error: finalState.errors.join("\n") });
           } else {
             reply = finalState.finalResult || "Application flow completed successfully!";

@@ -101,7 +101,7 @@ export const planUserGoal = async (userPrompt: string): Promise<ExecutionPlan> =
   const classification = IntentClassifier.classify(userPrompt);
   const fallbackPlan = deterministicPlan(classification);
 
-  if (classification.intent === "CHAT_FALLBACK") {
+  if (classification.intent === "CHAT_FALLBACK" || classification.intent === "SUMMARIZE_PAGE") {
     return fallbackPlan;
   }
 
