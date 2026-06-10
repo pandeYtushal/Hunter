@@ -9,11 +9,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-amber-500 text-zinc-950 font-bold hover:bg-amber-600 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(249,115,22,0.25)] focus-visible:ring-amber-500 disabled:opacity-50 dark:bg-amber-500 dark:text-zinc-950 dark:hover:bg-amber-600",
+    "bg-[#ff6b35] text-[#09090b] font-bold hover:bg-[#ff8255] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(255,107,53,0.25)] focus-visible:ring-[#ff6b35] disabled:opacity-50",
   secondary:
-    "border border-zinc-200/10 bg-transparent text-zinc-750 hover:border-amber-500/45 hover:text-amber-500 dark:border-zinc-800/50 dark:text-zinc-300 dark:hover:border-amber-500/45 dark:hover:text-amber-500",
+    "border border-[var(--border-color)] bg-transparent text-[var(--text-secondary)] hover:border-[#ff6b35]/45 hover:text-[#ff6b35]",
   ghost:
-    "text-zinc-500 hover:text-amber-500 focus-visible:ring-zinc-800 dark:text-zinc-450 dark:hover:text-amber-500"
+    "text-[var(--text-secondary)] hover:text-[#ff6b35] hover:bg-[var(--bg-tertiary)] focus-visible:ring-[var(--border-color)]"
 };
 
 export const Button = ({ children, icon, variant = "primary", className = "", ...props }: ButtonProps) => (

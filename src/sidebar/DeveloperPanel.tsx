@@ -14,165 +14,153 @@ interface DeveloperPanelProps {
 }
 
 export const DeveloperPanel = ({ agentState, logs, metrics, memory, healthChecks }: DeveloperPanelProps) => (
-  <section className="border-b border-zinc-200 bg-zinc-50/80 p-3 text-[10px] dark:border-zinc-800 dark:bg-black/40">
-    <div className="mb-2 flex items-center gap-1.5 font-bold uppercase tracking-wider text-zinc-500">
-      <Activity size={12} />
-      Developer Panel
+  <section className="border-b border-[var(--border-color)] bg-[var(--bg-primary)] p-3.5 text-[10px] text-[var(--text-secondary)] space-y-3 font-mono">
+    <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono">
+      <Activity size={12} className="text-[#ff6b35]" />
+      Developer Operations Console
     </div>
 
-    <div className="grid gap-2">
-
+    <div className="grid grid-cols-1 gap-2.5">
       {/* Agent status */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Agent</div>
-        <div className="mt-1 grid grid-cols-2 gap-1 text-zinc-500">
-          <span>Current: {agentState?.currentAgent ?? "Unknown"}</span>
-          <span>State: {agentState?.machineState ?? "IDLE"}</span>
-          <span>Plan steps: {agentState?.steps.length ?? 0}</span>
-          <span>Errors: {agentState?.errors.length ?? 0}</span>
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5 flex justify-between items-center">
+          <span>Agent Diagnostics</span>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-secondary)]">
+          <span>Agent: <strong className="text-[var(--text-primary)]">{agentState?.currentAgent ?? "Unknown"}</strong></span>
+          <span>State: <strong className="text-[var(--text-primary)]">{agentState?.machineState ?? "IDLE"}</strong></span>
+          <span>Plan steps: <strong className="text-[var(--text-primary)]">{agentState?.steps.length ?? 0}</strong></span>
+          <span>Errors: <strong className="text-rose-500">{agentState?.errors.length ?? 0}</strong></span>
         </div>
       </div>
 
       {/* Cognitive Reasoning */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Active Reasoning Engine</div>
-        <div className="mt-1 text-zinc-500 space-y-1.5">
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[#ff6b35] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          Cognitive Reasoning Output
+        </div>
+        <div className="text-[10px] text-[var(--text-secondary)] space-y-1.5">
           <div className="leading-relaxed"><b>Reasoning:</b> {agentState?.reasoning || "—"}</div>
-          <div className="flex items-center justify-between text-[9px] border-t border-zinc-100 dark:border-zinc-800 pt-1 mt-1">
-            <span>Tool: <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-[8px] font-mono">{agentState?.selectedTool || "—"}</code></span>
-            <span>Confidence: <b className="text-[#f97316]">{agentState?.confidence !== undefined ? `${Math.round(agentState.confidence * 100)}%` : "—"}</b></span>
+          <div className="flex items-center justify-between text-[9px] border-t border-[var(--border-color)] pt-1.5 mt-1.5">
+            <span>Tool: <code className="bg-[var(--bg-primary)] px-1 py-0.5 rounded text-[8px] border border-[var(--border-color)] text-[var(--text-primary)] font-mono">{agentState?.selectedTool || "—"}</code></span>
+            <span>Confidence: <strong className="text-[#ff6b35]">{agentState?.confidence !== undefined ? (agentState.confidence <= 1 ? `${Math.round(agentState.confidence * 100)}%` : `${Math.round(agentState.confidence)}%`) : "—"}</strong></span>
           </div>
         </div>
       </div>
 
       {/* Decision Log History */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Decision History Log</div>
-        <div className="mt-1 max-h-24 overflow-y-auto space-y-1 text-[9px] text-zinc-500 pr-1">
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          Decision History Log
+        </div>
+        <div className="max-h-24 overflow-y-auto space-y-1.5 text-[9px] text-[var(--text-secondary)] pr-1 custom-scrollbar">
           {agentState?.decisionHistory?.map((entry, idx) => (
-            <div key={idx} className="border-b border-zinc-100 dark:border-zinc-800/60 pb-1.5 mb-1.5 last:border-0 last:mb-0">
-              <div className="flex justify-between font-bold text-zinc-700 dark:text-zinc-350">
-                <span className="text-zinc-800 dark:text-zinc-200">{entry.action}</span>
-                <span className="text-[#f97316]">{(entry.confidence * 100).toFixed(0)}%</span>
+            <div key={idx} className="border-b border-[var(--border-color)]/60 pb-1.5 mb-1.5 last:border-0 last:mb-0">
+              <div className="flex justify-between font-bold text-[var(--text-secondary)]">
+                <span className="text-[var(--text-primary)]">{entry.action}</span>
+                <span className="text-[#ff6b35]">{entry.confidence <= 1 ? `${Math.round(entry.confidence * 100)}%` : `${Math.round(entry.confidence)}%`}</span>
               </div>
-              <p className="italic text-zinc-400 dark:text-zinc-500 mt-0.5 leading-snug">{entry.reasoning}</p>
-              <div className="text-[8px] text-zinc-400/85 mt-0.5 font-mono truncate">Result: {entry.observation}</div>
+              <p className="italic text-[var(--text-muted)] mt-0.5 leading-snug">{entry.reasoning}</p>
+              <div className="text-[8px] text-[var(--text-muted)] mt-0.5 truncate">Result: {entry.observation}</div>
             </div>
           ))}
           {(!agentState?.decisionHistory || agentState.decisionHistory.length === 0) && (
-            <span className="text-zinc-400 italic">No decisions logged yet.</span>
+            <span className="text-[var(--text-muted)] italic">No decisions logged yet.</span>
           )}
         </div>
       </div>
 
       {/* Reflection & Replanning Dashboard */}
-      <div className="rounded border border-indigo-200 bg-indigo-50/40 p-2 dark:border-indigo-900/40 dark:bg-indigo-950/10">
-        <div className="flex items-center gap-1 font-semibold text-indigo-700 dark:text-indigo-400 mb-1.5">
-          <TrendingUp size={10} />
-          Reflection Engine
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="flex items-center gap-1 font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          <TrendingUp size={10} className="text-[#ff6b35]" />
+          Reflection & Replanning
         </div>
-        <div className="grid grid-cols-2 gap-1 text-zinc-500">
-          <span className="flex items-center gap-1">
-            <Target size={9} className="text-indigo-400" />
-            Goal: <span className="truncate font-medium text-zinc-700 dark:text-zinc-300 ml-1">{agentState?.goalProgress?.goal ?? agentState?.goal ?? "—"}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            Progress: <span className="font-bold text-emerald-600 dark:text-emerald-400 ml-1">{agentState?.goalProgress?.completionPercentage ?? 0}%</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <AlertTriangle size={9} className="text-rose-400" />
-            Failures: <span className="font-medium text-rose-600 dark:text-rose-400 ml-1">{agentState?.failureCount ?? 0}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <RefreshCw size={9} className="text-amber-400" />
-            Replans: <span className="font-medium text-amber-600 dark:text-amber-400 ml-1">{agentState?.replanCount ?? 0}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <Shield size={9} className="text-blue-400" />
-            Recoveries: <span className="font-medium text-blue-600 dark:text-blue-400 ml-1">{agentState?.recoveryCount ?? 0}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            Blocked: <span className={`font-medium ml-1 ${agentState?.goalProgress?.isBlocked ? "text-rose-500" : "text-emerald-500"}`}>
-              {agentState?.goalProgress?.isBlocked ? "Yes" : "No"}
-            </span>
-          </span>
+        <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-secondary)]">
+          <span className="truncate">Goal: <span className="font-semibold text-[var(--text-primary)]">{agentState?.goalProgress?.goal ?? agentState?.goal ?? "—"}</span></span>
+          <span>Progress: <span className="font-bold text-emerald-500">{agentState?.goalProgress?.completionPercentage ?? 0}%</span></span>
+          <span>Failures: <span className="font-medium text-rose-500">{agentState?.failureCount ?? 0}</span></span>
+          <span>Replans: <span className="font-medium text-[#ff6b35]">{agentState?.replanCount ?? 0}</span></span>
+          <span>Recoveries: <span className="font-medium text-blue-500">{agentState?.recoveryCount ?? 0}</span></span>
+          <span>Blocked: <span className={`font-medium ${agentState?.goalProgress?.isBlocked ? "text-rose-500" : "text-emerald-500"}`}>{agentState?.goalProgress?.isBlocked ? "Yes" : "No"}</span></span>
         </div>
 
         {/* Subgoal list */}
         {agentState?.goalProgress?.subGoals && agentState.goalProgress.subGoals.length > 0 && (
-          <div className="mt-1.5 max-h-20 overflow-y-auto space-y-0.5">
+          <div className="mt-1.5 max-h-20 overflow-y-auto space-y-0.5 border-t border-[var(--border-color)] pt-1.5">
             {agentState.goalProgress.subGoals.map((sg) => (
-              <div key={sg.id} className="flex items-center gap-1 text-zinc-500">
+              <div key={sg.id} className="flex items-center gap-1.5 text-[var(--text-muted)] text-[9px]">
                 {sg.status === "completed" && <CheckCircle2 size={9} className="text-emerald-500 shrink-0" />}
                 {sg.status === "failed" && <AlertTriangle size={9} className="text-rose-500 shrink-0" />}
-                {sg.status === "running" && <RefreshCw size={9} className="text-indigo-500 shrink-0 animate-spin" />}
-                {sg.status === "pending" && <span className="h-2 w-2 rounded-full border border-zinc-300 inline-block shrink-0" />}
-                <span className="truncate text-[9px]">{sg.description}</span>
+                {sg.status === "running" && <RefreshCw size={9} className="text-[#ff6b35] shrink-0 animate-spin" />}
+                {sg.status === "pending" && <span className="h-1.5 w-1.5 rounded-full border border-[var(--border-color)] inline-block shrink-0" />}
+                <span className="truncate">{sg.description}</span>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Block reason */}
-        {agentState?.goalProgress?.blockReason && (
-          <div className="mt-1 text-[9px] text-rose-500 dark:text-rose-400 italic truncate">
-            Blocked: {agentState.goalProgress.blockReason}
           </div>
         )}
       </div>
 
       {/* Execution timeline */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Execution Timeline</div>
-        <div className="mt-1 max-h-24 overflow-y-auto space-y-1">
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          Execution Timeline Logs
+        </div>
+        <div className="max-h-24 overflow-y-auto space-y-1.5 text-[9px] text-[var(--text-muted)] pr-1 custom-scrollbar">
           {logs.slice(0, 8).map((log) => (
-            <div key={log.id} className="flex items-center gap-1 text-zinc-500">
-              {log.level === "error" ? <AlertTriangle size={10} className="text-rose-500 shrink-0" /> : <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />}
-              <span className="truncate">{log.action ?? "system"}: {log.message}</span>
+            <div key={log.id} className="flex items-start gap-1.5 leading-normal">
+              {log.level === "error" ? <AlertTriangle size={10} className="text-rose-500 shrink-0 mt-0.5" /> : <CheckCircle2 size={10} className="text-emerald-500 shrink-0 mt-0.5" />}
+              <span className="break-all"><strong className="text-[var(--text-primary)]">{log.action ?? "system"}</strong>: {log.message}</span>
             </div>
           ))}
-          {logs.length === 0 && <span className="text-zinc-400">No execution logs yet.</span>}
+          {logs.length === 0 && <span className="text-[var(--text-muted)]">No execution logs yet.</span>}
         </div>
       </div>
 
       {/* Metrics */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Metrics</div>
-        <div className="mt-1 grid grid-cols-2 gap-1 text-zinc-500">
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          Orchestration Metrics
+        </div>
+        <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-secondary)]">
           {metrics.slice(0, 6).map((metric) => (
-            <span key={`${metric.agent}:${metric.action}`} className="truncate">
-              {metric.action}: {metric.runs - metric.failures}/{metric.runs}
+            <span key={`${metric.agent}:${metric.action}`} className="truncate" title={metric.action}>
+              {metric.action}: <strong className="text-[var(--text-primary)]">{metric.runs - metric.failures}/{metric.runs}</strong>
             </span>
           ))}
-          {metrics.length === 0 && <span className="text-zinc-400">No metrics yet.</span>}
+          {metrics.length === 0 && <span className="text-[var(--text-muted)]">No metrics yet.</span>}
         </div>
       </div>
 
       {/* Memory snapshot */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Memory Snapshot</div>
-        <div className="mt-1 grid grid-cols-2 gap-1 text-zinc-500">
-          <span>Saved jobs: {memory?.savedJobs.length ?? 0}</span>
-          <span>Letters: {memory?.generatedCoverLetters.length ?? 0}</span>
-          <span>Companies: {memory?.favoriteCompanies.length ?? 0}</span>
-          <span>Successful: {memory?.successfulApplications.length ?? 0}</span>
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          Memory State Snapshot
+        </div>
+        <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-muted)]">
+          <span>Saved Jobs: <strong className="text-[var(--text-primary)]">{memory?.savedJobs.length ?? 0}</strong></span>
+          <span>Letters: <strong className="text-[var(--text-primary)]">{memory?.generatedCoverLetters.length ?? 0}</strong></span>
+          <span>Companies: <strong className="text-[var(--text-primary)]">{memory?.favoriteCompanies.length ?? 0}</strong></span>
+          <span>Successful: <strong className="text-[var(--text-primary)]">{memory?.successfulApplications.length ?? 0}</strong></span>
         </div>
       </div>
 
       {/* Health */}
-      <div className="rounded border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="font-semibold text-zinc-700 dark:text-zinc-300">Health</div>
-        <div className="mt-1 space-y-1 text-zinc-500">
+      <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+        <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+          System Core Diagnostics
+        </div>
+        <div className="space-y-1.5 text-[9px] text-[var(--text-muted)]">
           {healthChecks.map((check) => (
-            <div key={check.name} className="flex items-center gap-1">
+            <div key={check.name} className="flex items-center gap-1.5">
               {check.ok ? <CheckCircle2 size={10} className="text-emerald-500" /> : <AlertTriangle size={10} className="text-amber-500" />}
-              <span className="truncate">{check.name}: {check.message}</span>
+              <span className="truncate">{check.name}: <strong className="text-[var(--text-secondary)]">{check.message}</strong></span>
             </div>
           ))}
-          {healthChecks.length === 0 && <span className="text-zinc-400">Diagnostics have not run yet.</span>}
+          {healthChecks.length === 0 && <span className="text-[var(--text-muted)]">Diagnostics have not run yet.</span>}
         </div>
       </div>
-
     </div>
   </section>
 );

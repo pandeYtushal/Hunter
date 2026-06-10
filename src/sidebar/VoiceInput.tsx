@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, Sidebar } from "lucide-react";
 import { Button } from "../shared/components/Button";
 import {
   getMicrophonePermissionState,
@@ -64,14 +64,15 @@ export const VoiceInput = ({
   };
 
   return (
-    <Button
+    <button
+      type="button"
       aria-label={isListening ? "Stop voice input" : "Start voice input"}
       aria-pressed={isListening}
-      className={`h-10 w-10 px-0 ${isListening ? "ring-2 ring-zinc-400 ring-offset-2 ring-offset-white dark:ring-zinc-500 dark:ring-offset-black" : ""}`}
+      className={`h-[28px] w-[28px] shrink-0 rounded-[8px] border border-zinc-700/60 text-zinc-400 flex items-center justify-center hover:bg-[#323232] hover:text-zinc-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${isListening ? "ring-1 ring-[#ff6b35] text-[#ff6b35]" : ""}`}
       disabled={disabled}
-      icon={isListening ? <MicOff size={16} /> : <Mic size={16} />}
-      variant={isListening ? "primary" : "secondary"}
       onClick={toggleListening}
-    />
+    >
+      {isListening ? <MicOff size={12} /> : <Sidebar size={12} />}
+    </button>
   );
 };

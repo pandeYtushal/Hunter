@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Header } from "./components/Header";
 import { useChromeStorage } from "./hooks/useChromeStorage";
 import { useTheme } from "./hooks/useTheme";
 import { sendMessageToActiveTab } from "../shared/chromeRuntime";
 import type { PageSnapshot, SidebarStatus } from "../shared/types/messages";
-import type { AgentSettings } from "../shared/types/storage";
+import { Settings, Key, X, Bot, AlertCircle, Zap } from "lucide-react";
 
 const emptySnapshot: PageSnapshot = {
   title: "No page connected",
@@ -20,9 +19,9 @@ export const App = () => {
   const [error, setError] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [showKey, setShowKey] = useState(false);
-  const { theme, setTheme, settings, setSettings } = useTheme();
+  const { settings, setSettings } = useTheme();
   const { value: applications } = useChromeStorage("applications");
-  
+
   const hasApiKey = Boolean(
     settings?.provider === "openai"
       ? settings.openaiApiKey?.trim()
@@ -41,11 +40,11 @@ export const App = () => {
           setSnapshot(response.snapshot);
           setError("");
         } else {
-          setError("Refresh the tab or navigate to a job post to enable the assistant.");
+          setError("Navigate to a webpage to connect the assistant.");
         }
       })
       .catch(() => {
-        setError("Refresh the tab or navigate to a job post to enable the assistant.");
+        setError("Navigate to a webpage to connect the assistant.");
       });
 
     chrome.storage.sync.get("sidebarOpen").then((result) => {
@@ -61,6 +60,7 @@ export const App = () => {
     return () => chrome.storage.onChanged.removeListener(storageListener);
   }, []);
 
+  // Autofill configuration panel on missing API keys
   useEffect(() => {
     if (settings) {
       const activeKey =
@@ -88,253 +88,245 @@ export const App = () => {
     }
   };
 
-  const isConnected = !!(snapshot?.url && !snapshot.url.startsWith("chrome://"));
+  const isConnected = !!(snapshot?.url && !snapshot.url.startsWith("chrome://") && !snapshot.url.startsWith("about:"));
 
   return (
-    <main className="flex min-h-[380px] w-[340px] flex-col bg-white text-slate-800 select-none font-sans dark:bg-zinc-950 dark:text-zinc-100">
-      <Header theme={theme} onThemeChange={setTheme} />
-
-      <div className="flex flex-1 flex-col justify-between p-4 gap-4">
-        {/* Status Area */}
-        {isConnected ? (
-          <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-3 shadow-[0_1px_2px_rgba(0,0,0,0.01)] dark:border-zinc-800 dark:bg-black/40">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="font-mono text-[9px] uppercase tracking-widest text-slate-400">
-                Connected Tab
-              </p>
-            </div>
-            <h2 className="truncate text-xs font-semibold text-slate-850 dark:text-zinc-100" title={snapshot.title}>
-              {snapshot.title}
-            </h2>
-            <p className="font-mono text-[9px] text-slate-400 mt-0.5 dark:text-zinc-500">{snapshot.host}</p>
+    <main className="flex h-[360px] w-[350px] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[#ff6b35]/30 select-none overflow-hidden">
+      {/* Header */}
+      <header className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-3 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex h-5 w-5 items-center justify-center rounded border border-[#ff6b35]/30 bg-[var(--bg-secondary)] text-[10px] font-mono font-bold text-[#ff6b35] shadow-[0_0_8px_rgba(255,107,53,0.15)]">
+            H
           </div>
-        ) : (
-          <div className="rounded-lg border border-slate-100 bg-slate-50/50 p-4 text-center dark:border-zinc-800 dark:bg-black/40">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-slate-400 mb-1">
-              Connection Idle
-            </p>
-            <p className="text-xs leading-relaxed text-slate-500 dark:text-zinc-400">
-              Open the AI chat on any normal webpage.
-            </p>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold tracking-widest text-[var(--text-primary)] font-mono leading-none">HUNTER</span>
+            <span className="text-[8px] font-mono text-[var(--text-muted)] leading-none mt-0.5">AI Browser Agent v0.1.0</span>
           </div>
-        )}
-
-        {/* Action button */}
-        <div className="flex flex-col gap-2">
-          {!hasApiKey && (
-            <p className="text-center font-mono text-[9px] text-amber-700 leading-normal bg-amber-500/10 py-1.5 px-2.5 rounded border border-amber-500/20 dark:text-amber-300 dark:bg-amber-400/10 dark:border-amber-400/20">
-              Add your Gemini API key before using AI chat.
-            </p>
-          )}
-
-          <button
-            onClick={handleToggleSidebar}
-            className="flex h-10 w-full items-center justify-center rounded-lg bg-slate-900 text-white hover:bg-slate-850 transition active:scale-[0.98] text-xs font-semibold uppercase tracking-wider font-sans shadow-sm dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-          >
-            {sidebarStatus === "open" ? "Close AI Chat" : "Open AI Chat"}
-          </button>
-
-          {error && !isConnected && (
-            <p className="text-center font-mono text-[9px] text-indigo-600 leading-normal bg-indigo-500/5 py-1.5 px-2.5 rounded border border-indigo-500/10 dark:text-indigo-400 dark:bg-indigo-400/10 dark:border-indigo-400/20">
-              Use this on a normal website. Chrome blocks sidebars on internal pages like chrome://extensions.
-            </p>
-          )}
         </div>
 
-        {/* Stats and status row */}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-[10px] text-slate-450 dark:border-zinc-800 dark:text-zinc-500">
-          <span className="font-mono uppercase tracking-wider text-slate-400">
-            {applications?.length ?? 0} jobs saved
-          </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)]/50 border border-[var(--border-color)] rounded-full px-2 py-0.5 text-[8.5px] font-mono text-[var(--text-secondary)]">
+            <span className={`h-1.5 w-1.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-zinc-550"}`} />
+            <span className={`${isConnected ? "text-emerald-500" : "text-[var(--text-muted)]"} uppercase tracking-wider font-semibold`}>
+              {isConnected ? "Active" : "Idle"}
+            </span>
+          </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="font-mono uppercase tracking-wider text-indigo-600 hover:text-indigo-700 transition dark:text-indigo-400 dark:hover:text-indigo-300"
+            aria-label="Settings"
+            className={`flex h-7 w-7 items-center justify-center rounded border transition-all duration-200 cursor-pointer ${
+              showSettings 
+                ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]" 
+                : "border-[var(--border-color)] hover:border-zinc-400 bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            }`}
           >
-            {showSettings ? "Close Setup" : "API Config"}
+            <Settings size={12} />
           </button>
         </div>
+      </header>
 
-        {/* Collapsible config panel */}
-        {showSettings && settings && (
-          <div className="space-y-3.5 border-t border-slate-100 pt-3 animate-fade-in dark:border-zinc-800">
-            <div className="space-y-1.5">
-              <label className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                AI Provider
-              </label>
-              <select
-                value={settings.provider || "gemini"}
-                onChange={(e) => setSettings({ ...settings, provider: e.target.value as AgentSettings["provider"] })}
-                className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
-              >
-                <option value="gemini">Google Gemini</option>
-                <option value="openai">OpenAI (ChatGPT)</option>
-                <option value="anthropic">Anthropic Claude</option>
-                <option value="groq">Groq (Llama 3)</option>
-              </select>
-            </div>
-
-            {/* Gemini Key Input */}
-            {(settings.provider === "gemini" || !settings.provider) && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                    Gemini API Key
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowKey(!showKey)}
-                    className="font-mono text-[8px] uppercase tracking-wider text-slate-400 hover:text-slate-900"
-                  >
-                    {showKey ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <input
-                  type={showKey ? "text" : "password"}
-                  value={settings.apiKey || ""}
-                  onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
-                  placeholder="AI Studio API Key"
-                  className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
-                />
-                <p className="font-sans text-[10px] text-slate-400 leading-normal">
-                  Keys can be generated for free at{" "}
-                  <a
-                    href="https://aistudio.google.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 font-semibold underline hover:text-indigo-700"
-                  >
-                    AI Studio
-                  </a>.
-                </p>
-              </div>
-            )}
-
-            {/* OpenAI Key Input */}
-            {settings.provider === "openai" && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                    OpenAI API Key
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowKey(!showKey)}
-                    className="font-mono text-[8px] uppercase tracking-wider text-slate-400 hover:text-slate-900"
-                  >
-                    {showKey ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <input
-                  type={showKey ? "text" : "password"}
-                  value={settings.openaiApiKey || ""}
-                  onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
-                  placeholder="sk-..."
-                  className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
-                />
-                <p className="font-sans text-[10px] text-slate-400 leading-normal">
-                  Keys can be managed at{" "}
-                  <a
-                    href="https://platform.openai.com/api-keys"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 font-semibold underline hover:text-indigo-700"
-                  >
-                    OpenAI API Keys
-                  </a>.
-                </p>
-              </div>
-            )}
-
-            {/* Anthropic Key Input */}
-            {settings.provider === "anthropic" && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                    Anthropic API Key
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowKey(!showKey)}
-                    className="font-mono text-[8px] uppercase tracking-wider text-slate-400 hover:text-slate-900"
-                  >
-                    {showKey ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <input
-                  type={showKey ? "text" : "password"}
-                  value={settings.anthropicApiKey || ""}
-                  onChange={(e) => setSettings({ ...settings, anthropicApiKey: e.target.value })}
-                  placeholder="sk-ant-..."
-                  className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
-                />
-                <p className="font-sans text-[10px] text-slate-400 leading-normal">
-                  Keys can be managed at{" "}
-                  <a
-                    href="https://console.anthropic.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 font-semibold underline hover:text-indigo-700"
-                  >
-                    Anthropic Console
-                  </a>.
-                </p>
-              </div>
-            )}
-
-            {/* Groq Key Input */}
-            {settings.provider === "groq" && (
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                    Groq API Key
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowKey(!showKey)}
-                    className="font-mono text-[8px] uppercase tracking-wider text-slate-400 hover:text-slate-900"
-                  >
-                    {showKey ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <input
-                  type={showKey ? "text" : "password"}
-                  value={settings.groqApiKey || ""}
-                  onChange={(e) => setSettings({ ...settings, groqApiKey: e.target.value })}
-                  placeholder="gsk_..."
-                  className="hunter-input h-8 w-full rounded border border-slate-200 bg-white px-2.5 text-xs outline-none dark:border-zinc-800 dark:bg-black"
-                />
-                <p className="font-sans text-[10px] text-slate-400 leading-normal">
-                  Keys can be managed at{" "}
-                  <a
-                    href="https://console.groq.com/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 font-semibold underline hover:text-indigo-700"
-                  >
-                    Groq Console
-                  </a>.
-                </p>
-              </div>
-            )}
-
+      {/* Main Panel Content */}
+      <div className="flex flex-1 flex-col justify-between p-3.5 gap-3 overflow-hidden">
+        
+        {/* Settings view */}
+        {showSettings && settings ? (
+          <div className="border border-[var(--border-color)] bg-[var(--bg-secondary)]/90 backdrop-blur-md rounded-xl p-3 animate-slide-down space-y-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                Sidebar Layout Mode
-              </span>
+              <div className="flex items-center gap-1.5">
+                <Key size={11} className="text-[#ff6b35]" />
+                <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--text-secondary)] font-bold">
+                  AI Credentials Setup
+                </span>
+              </div>
               <button
-                onClick={() => setSettings({ ...settings, sidebarPinned: !settings.sidebarPinned })}
-                className={`font-mono text-[9px] uppercase tracking-wider rounded border px-2 py-0.5 transition ${
-                  settings.sidebarPinned
-                    ? "border-indigo-600 bg-indigo-600/5 text-indigo-600 font-semibold"
-                    : "border-slate-200 text-slate-450 hover:border-slate-800 hover:text-slate-800 dark:border-zinc-800 dark:text-zinc-500 dark:hover:border-zinc-500 dark:hover:text-zinc-200"
-                }`}
+                onClick={() => setShowSettings(false)}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
               >
-                {settings.sidebarPinned ? "Pinned" : "Floating"}
+                <X size={11} />
               </button>
             </div>
+
+            <div className="space-y-2 text-[10.5px]">
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Model Provider</label>
+                <select
+                  value={settings.provider || "gemini"}
+                  onChange={(e) => setSettings({ ...settings, provider: e.target.value as any })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+                >
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI (ChatGPT)</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="groq">Groq (Llama 3)</option>
+                </select>
+              </div>
+
+              {settings.provider === "gemini" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Gemini Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={settings.apiKey || ""}
+                    onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
+                    placeholder="AI Studio API Key"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              {settings.provider === "openai" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">OpenAI Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={settings.openaiApiKey || ""}
+                    onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
+                    placeholder="sk-..."
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              {settings.provider === "anthropic" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Anthropic Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={settings.anthropicApiKey || ""}
+                    onChange={(e) => setSettings({ ...settings, anthropicApiKey: e.target.value })}
+                    placeholder="sk-ant-..."
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              {settings.provider === "groq" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Groq Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={settings.groqApiKey || ""}
+                    onChange={(e) => setSettings({ ...settings, groqApiKey: e.target.value })}
+                    placeholder="gsk_..."
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-2 text-[9.5px]">
+                <span className="font-mono text-[var(--text-muted)] uppercase tracking-wider">Sidebar Layout</span>
+                <button
+                  onClick={() => setSettings({ ...settings, sidebarPinned: !settings.sidebarPinned })}
+                  className={`font-mono px-2 py-0.5 rounded border transition-all uppercase cursor-pointer ${
+                    settings.sidebarPinned
+                      ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
+                      : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[#ff6b35] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  {settings.sidebarPinned ? "Pinned" : "Floating"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Normal Connection Info */
+          <div className="flex flex-col gap-2.5">
+            {isConnected ? (
+              <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 flex flex-col gap-1 shadow-sm transition hover:border-[#ff6b35]/20">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="font-mono text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-bold">
+                    Connected Active Tab
+                  </p>
+                </div>
+                <h2 className="text-[11px] font-bold text-[var(--text-primary)] truncate" title={snapshot.title}>
+                  {snapshot.title}
+                </h2>
+                <p className="font-mono text-[8.5px] text-[var(--text-muted)] truncate mt-0.5">{snapshot.url}</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/40 p-3.5 text-center transition hover:border-zinc-400 dark:hover:border-zinc-800">
+                <p className="font-mono text-[8px] uppercase tracking-widest text-[var(--text-muted)] mb-1 font-bold">
+                  Connection Standby
+                </p>
+                <p className="text-[10px] leading-relaxed text-[var(--text-secondary)]">
+                  Open Hunter on any webpage to activate the browser AI copilot.
+                </p>
+              </div>
+            )}
+
+            {!hasApiKey && (
+              <p className="font-mono text-[8.5px] text-[#ff6b35] leading-normal bg-[#ff6b35]/5 py-1.5 px-2 rounded border border-[#ff6b35]/10 flex items-center gap-1.5 animate-pulse-glow">
+                <AlertCircle size={9} className="shrink-0" />
+                Configure your API credentials to enable autonomous AI goals.
+              </p>
+            )}
+
+            {error && !isConnected && (
+              <p className="font-mono text-[8.5px] text-[var(--text-secondary)] leading-normal bg-[var(--bg-tertiary)]/40 py-1.5 px-2 rounded border border-[var(--border-color)]">
+                {error}
+              </p>
+            )}
           </div>
         )}
+
+        {/* Action Button Section */}
+        <div className="flex flex-col gap-2.5 border-t border-[var(--border-color)] pt-2.5 shrink-0">
+          <button
+            onClick={handleToggleSidebar}
+            className="flex h-9 w-full items-center justify-center rounded-xl border border-[var(--border-color)] hover:border-[#ff6b35]/40 bg-[var(--bg-secondary)] hover:bg-[#ff6b35]/5 text-xs font-mono uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-[0.98] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] cursor-pointer"
+          >
+            <Zap size={11} className="mr-1.5 text-[#ff6b35] fill-[#ff6b35]" />
+            {sidebarStatus === "open" ? "Close AI Sidebar" : "Open AI Sidebar"}
+          </button>
+
+          <div className="flex items-center justify-between text-[8px] text-[var(--text-muted)] font-mono uppercase tracking-wider">
+            <span>{applications?.length ?? 0} jobs tracked</span>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="text-[#ff6b35] hover:text-[#ff8255] transition-all font-bold cursor-pointer"
+            >
+              {showSettings ? "Show Dashboard" : "Setup Keys"}
+            </button>
+          </div>
+        </div>
+
       </div>
     </main>
   );
