@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Loader2, Send, Trash2, X, MapPin, DollarSign, Award, Check, Plus, User, Sparkles, AlertCircle, Copy, Download, Activity, ChevronDown, ChevronUp, FileSearch, ClipboardList, Zap, PenTool, Briefcase, Brain, Database, History, RefreshCw, AlertTriangle, CheckCircle2, Play, ChevronRight, Target, Building2, Search, FileText, Sidebar } from "lucide-react";
+import { Bot, Loader2, Send, Trash2, X, MapPin, DollarSign, Award, Check, Plus, User, Sparkles, AlertCircle, Copy, Download, Activity, ChevronDown, ChevronUp, FileSearch, ClipboardList, Zap, PenTool, Briefcase, Brain, Database, History, RefreshCw, AlertTriangle, CheckCircle2, Play, ChevronRight, Target, Building2, Search, FileText, Sidebar, Sun, Moon } from "lucide-react";
 import { Button } from "../shared/components/Button";
 import { storage } from "../shared/storage";
 import { applyDocumentTheme } from "../shared/theme";
@@ -673,16 +673,7 @@ const OrchestrationResultCard = ({
 // Static data (single source of truth)
 // ---------------------------------------------------------------------------
 
-const commandPrompts = [
-  { label: "Analyze Job", prompt: "Extract job", description: "Role, skills, salary info", icon: ClipboardList },
-  { label: "Research Company", prompt: "Research company", description: "Overview, funding, values", icon: Briefcase },
-  { label: "Generate Cover Letter", prompt: "Generate cover letter", description: "Tailored cover letter draft", icon: PenTool },
-  { label: "Match Resume", prompt: "Analyze match", description: "Skills and gap analysis", icon: Sparkles },
-  { label: "Autofill Application", prompt: "Autofill form", description: "Populate inputs instantly", icon: Zap },
-  { label: "Summarize Page", prompt: "Summarize this page", description: "Quick summary of contents", icon: FileSearch },
-];
 
-const quickChips = ["Analyze this job", "Research company", "Help me apply", "Match my resume", "Summarize page"];
 
 const tryAskingPrompts = [
   {
@@ -711,7 +702,14 @@ const tryAskingPrompts = [
     desc: "Tailored to this job and your profile",
     prompt: "Generate a cover letter",
     icon: FileText,
-    badgeBg: "bg-zinc-800 text-zinc-300 border border-zinc-700",
+    badgeBg: "bg-[#f3e8ff] text-[#a855f7] border border-[#a855f7]/20",
+  },
+  {
+    label: "Summarize this page",
+    desc: "Get a quick overview of the content",
+    prompt: "Summarize this page",
+    icon: FileSearch,
+    badgeBg: "bg-[#fffbeb] text-[#f59e0b] border border-[#f59e0b]/20",
   },
 ];
 
@@ -720,6 +718,7 @@ const pillGoals = [
   { label: "Research company", prompt: "Research this company", icon: Building2 },
   { label: "Match resume", prompt: "Match my resume to requirements", icon: Target },
   { label: "Autofill form", prompt: "Autofill application form", icon: Zap },
+  { label: "Summarize page", prompt: "Summarize this page", icon: FileSearch },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1059,10 +1058,75 @@ export const ChatWindow = () => {
     return <ProfileSettings onBack={() => setUiFlag("showProfile", false)} />;
   }
 
+  if (ui.showMemory) {
+    return (
+      <div className="flex h-screen flex-col font-sans bg-[#090909] text-zinc-100">
+        <header className="flex h-[52px] items-center px-4 shrink-0 border-b border-[rgba(255,255,255,0.06)] bg-[#090909]">
+          <button onClick={() => setUiFlag("showMemory", false)} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 transition text-xs font-bold cursor-pointer">
+            <ChevronDown size={14} className="rotate-90" />
+            Back to Chat
+          </button>
+        </header>
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+          <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+            <History size={18} className="text-[#ff6b35]" />
+            Recent Activity
+          </h2>
+
+          <div>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-1.5">
+              <Briefcase size={12} />
+              Saved Jobs ({applications.filter((a) => a.status === "saved").length})
+            </h5>
+            {applications.filter((a) => a.status === "saved").length > 0 ? (
+              <div className="space-y-2">
+                {applications.filter((a) => a.status === "saved").map((app) => (
+                  <div key={app.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded-lg p-3">
+                    <div className="min-w-0 pr-4">
+                      <span className="font-bold text-zinc-200 truncate block text-sm">{app.role}</span>
+                      <span className="text-zinc-400 block text-xs truncate mt-0.5">{app.company}</span>
+                    </div>
+                    <span className="px-2 py-1 rounded border border-zinc-800 text-zinc-400 text-[10px] uppercase font-bold shrink-0">{app.status}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-500 italic">No applications tracked yet.</p>
+            )}
+          </div>
+
+          <div>
+            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-1.5">
+              <PenTool size={12} />
+              Generated Cover Letters ({coverLetters.length})
+            </h5>
+            {coverLetters.length > 0 ? (
+              <div className="space-y-2">
+                {coverLetters.map((cl) => (
+                  <div key={cl.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded-lg p-3">
+                    <div className="min-w-0 pr-4">
+                      <span className="font-bold text-zinc-200 truncate block text-sm">Letter - {cl.company}</span>
+                      <span className="text-zinc-400 block text-xs truncate mt-0.5">{cl.role}</span>
+                    </div>
+                    <span className="text-zinc-500 text-[10px] shrink-0 font-mono">
+                      {new Date(cl.createdAt || "").toLocaleDateString([], { month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-500 italic">No cover letters generated yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <main className="flex h-screen min-h-0 flex-col font-sans bg-[#282828] text-zinc-100">
+    <main className="flex h-screen min-h-0 flex-col font-sans bg-[#090909] text-zinc-100">
       {/* Header */}
-      <header className="flex h-[52px] items-center justify-between border-b border-[rgba(255,255,255,0.06)] px-4 shrink-0 bg-[#282828]">
+      <header className="flex h-[52px] items-center justify-between border-b border-[rgba(255,255,255,0.06)] px-4 shrink-0 bg-[#090909]">
         {/* Left Side: Logo & Title */}
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#ffece5] text-[#ff6b35] shrink-0">
@@ -1070,7 +1134,6 @@ export const ChatWindow = () => {
           </div>
           <div className="flex items-baseline gap-2">
             <h1 className="text-sm font-bold text-zinc-100 tracking-wide">Hunter</h1>
-            <span className="text-sm text-zinc-500 font-medium tracking-wide">AI job copilot</span>
           </div>
         </div>
 
@@ -1084,8 +1147,9 @@ export const ChatWindow = () => {
             <button
               onClick={toggleTheme}
               className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
+              title="Toggle Theme"
             >
-              <Sidebar size={12} />
+              {settings?.theme === "light" ? <Moon size={12} /> : <Sun size={12} />}
             </button>
             <button
               onClick={() => setUiFlag("showProfile", true)}
@@ -1094,10 +1158,19 @@ export const ChatWindow = () => {
               <User size={12} />
             </button>
             <button
-              onClick={closeSidebar}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
+              onClick={() => setUiFlag("showMemory", true)}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
+              title="Recent Activity"
             >
-              <X size={12} />
+              <History size={12} />
+            </button>
+            <div className="w-[1px] h-4 bg-[var(--border-color)] mx-0.5"></div>
+            <button
+              onClick={() => window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*")}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 hover:border-[#ef4444]/30 transition cursor-pointer"
+              title="Close Sidebar"
+            >
+              <X size={14} />
             </button>
           </div>
         </div>
@@ -1161,8 +1234,7 @@ export const ChatWindow = () => {
             </span>
             <button
               onClick={handleStopAgent}
-              className="text-[10px] font-semibold text-rose-400 hover:text-rose-300 cursor-pointer transition font-mono uppercase tracking-wider"
-            >
+              className="text-[10px] font-semibold text-rose-400 hover:text-rose-300 cursor-pointer transition font-mono uppercase tracking-wider">
               Abort Goal
             </button>
           </div>
@@ -1197,21 +1269,21 @@ export const ChatWindow = () => {
                   <Bot size={30} className="stroke-[2]" />
                 </div>
               </div>
-              <h2 className="text-[22px] font-bold text-zinc-100 tracking-tight leading-tight">
+              <h2 className="text-[22px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
                 How can Hunter help today?
               </h2>
-              <p className="text-[13px] text-zinc-400 mt-2.5 max-w-[340px] leading-relaxed mx-auto font-medium">
+              <p className="text-[13px] text-[var(--text-secondary)] mt-2.5 max-w-[340px] leading-relaxed mx-auto font-medium">
                 Analyze jobs, match your resume, research companies, and autofill applications — all from this panel.
               </p>
             </div>
 
             {/* Try Asking Container */}
             <div className="w-full space-y-4 px-1 pt-4">
-              <div className="font-semibold text-zinc-400 text-[11px] flex items-center gap-2 mb-2 px-1">
-                <Sidebar size={13} className="text-zinc-500" />
+              <div className="font-semibold text-[var(--text-secondary)] text-[11px] flex items-center gap-2 mb-2 px-1">
+                <Sidebar size={13} className="text-[var(--text-secondary)] opacity-70" />
                 <span>Try asking</span>
               </div>
-              
+
               <div className="space-y-2.5">
                 {tryAskingPrompts.map((item, index) => {
                   const Icon = item.icon;
@@ -1221,95 +1293,29 @@ export const ChatWindow = () => {
                       type="button"
                       disabled={isSending}
                       onClick={() => void submitPrompt(item.prompt)}
-                      className="w-full flex items-center justify-between rounded-[14px] border border-zinc-700/60 bg-[#282828] p-3 text-left transition-all duration-200 hover:bg-[#323232] cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-between rounded-[14px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 text-left transition-all duration-200 hover:bg-[var(--bg-tertiary)] cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center min-w-0 flex-1">
                         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.badgeBg} mr-4 transition-transform duration-200 group-hover:scale-105`}>
                           <Icon size={18} className="stroke-[2]" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-zinc-100 text-[13px] leading-tight tracking-wide">
+                          <span className="font-bold text-[var(--text-primary)] text-[13px] leading-tight tracking-wide">
                             {item.label}
                           </span>
-                          <span className="text-zinc-400 text-[11px] leading-tight">
+                          <span className="text-[var(--text-secondary)] text-[11px] leading-tight">
                             {item.desc}
                           </span>
                         </div>
                       </div>
-                      <ChevronRight size={14} className="text-zinc-500 group-hover:text-zinc-300 transition-colors shrink-0" />
+                      <ChevronRight size={14} className="text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors shrink-0" />
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Technical logs / Recent Activity, rendered ONLY in Developer Mode */}
-            {settings?.developerMode && (
-              <>
-                <div className="w-full border-t border-[rgba(255,255,255,0.08)] pt-3 shrink-0">
-                  <button
-                    onClick={() => setUiFlag("showMemory", !ui.showMemory)}
-                    className="w-full flex items-center justify-between py-1 text-[8.5px] font-bold tracking-wider text-zinc-500 hover:text-zinc-300 transition uppercase cursor-pointer font-mono"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Database size={10} className="text-[#ff6b35]" />
-                      <span>Cognitive Memory Panel ({applications.length + coverLetters.length})</span>
-                    </div>
-                    {ui.showMemory ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-                  </button>
 
-                  {ui.showMemory && (
-                    <div className="mt-2 space-y-2.5 animate-scale-up text-[8.5px] font-mono">
-                      <div>
-                        <h5 className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1">
-                          <Briefcase size={8} />
-                          Saved Jobs ({applications.filter((a) => a.status === "saved").length})
-                        </h5>
-                        {applications.filter((a) => a.status === "saved").length > 0 ? (
-                          <div className="space-y-1">
-                            {applications.filter((a) => a.status === "saved").slice(0, 2).map((app) => (
-                              <div key={app.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded p-1.5">
-                                <div className="min-w-0 pr-2">
-                                  <span className="font-bold text-zinc-300 truncate block">{app.role}</span>
-                                  <span className="text-zinc-500 block text-[7.5px] truncate">{app.company}</span>
-                                </div>
-                                <span className="px-1 py-0.2 rounded border border-zinc-800 text-zinc-400 text-[7px] uppercase font-bold shrink-0">{app.status}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-[8px] leading-relaxed text-zinc-600 pl-1 font-mono">No applications tracked yet.</p>
-                        )}
-                      </div>
-
-                      <div>
-                        <h5 className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1">
-                          <PenTool size={8} />
-                          Generated Cover Letters ({coverLetters.length})
-                        </h5>
-                        {coverLetters.length > 0 ? (
-                          <div className="space-y-1">
-                            {coverLetters.slice(0, 2).map((cl) => (
-                              <div key={cl.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded p-1.5">
-                                <div className="min-w-0 pr-2">
-                                  <span className="font-bold text-zinc-300 truncate block">Letter - {cl.company}</span>
-                                  <span className="text-zinc-500 block text-[7.5px] truncate">{cl.role}</span>
-                                </div>
-                                <span className="text-zinc-500 text-[7px] shrink-0">
-                                  {new Date(cl.createdAt || "").toLocaleDateString([], { month: "short", day: "numeric" })}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="italic text-zinc-600 pl-1">No cover letters generated yet.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
           </div>
         ) : (
           /* Conversation Stream */
@@ -1376,9 +1382,9 @@ export const ChatWindow = () => {
       )}
 
       {/* Footer */}
-      <div className="bg-[#282828] flex flex-col shrink-0 px-3.5 pb-3">
+      <div className="bg-[#090909] flex flex-col shrink-0 px-3.5 pb-3">
         {/* Quick chips / Pills */}
-        {input.trim().length === 0 && (
+        {input.trim().length === 0 && messages.length > 0 && (
           <div className="flex gap-2 py-3 overflow-x-auto custom-scrollbar select-none shrink-0 border-b border-zinc-700/40 mb-3">
             {pillGoals.map((pill) => {
               const Icon = pill.icon;
@@ -1400,7 +1406,7 @@ export const ChatWindow = () => {
 
         {/* Input form */}
         <form
-          className="border border-zinc-700/60 bg-[#282828] rounded-[14px] flex items-center p-1.5 transition-all duration-200 focus-within:border-zinc-500 shadow-sm"
+          className="border border-zinc-700/60 bg-[#111111] rounded-[14px] flex items-center p-1.5 transition-all duration-200 focus-within:border-zinc-500 shadow-sm"
           onSubmit={sendMessage}
         >
           {/* FIX 9: label paired with id for screen readers */}
@@ -1432,12 +1438,11 @@ export const ChatWindow = () => {
               onTranscriptSubmit={submitVoiceTranscript}
             />
             <button
-              aria-label="Send message"
               className="h-[28px] w-[28px] shrink-0 rounded-[8px] border border-zinc-700/60 text-zinc-400 flex items-center justify-center hover:bg-[#323232] hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
               disabled={isSending || input.trim().length === 0}
               type="submit"
             >
-              {isSending ? <Loader2 className="animate-spin" size={12} /> : <Sidebar size={12} />}
+              {isSending ? <Loader2 className="animate-spin" size={12} /> : <Send size={12} />}
             </button>
           </div>
         </form>

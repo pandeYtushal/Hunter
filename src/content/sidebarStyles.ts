@@ -54,6 +54,15 @@ export const sidebarStyles = `
   gap: 10px;
   color: var(--agent-fg);
   pointer-events: none !important;
+  transition: top 350ms cubic-bezier(0.16, 1, 0.3, 1), right 350ms cubic-bezier(0.16, 1, 0.3, 1), height 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agent-shell.pinned {
+  top: 0 !important;
+  right: 0 !important;
+  height: 100vh !important;
+  gap: 0;
+  justify-items: stretch;
 }
 
 /* ───── Toggle Button ───── */
@@ -137,6 +146,10 @@ export const sidebarStyles = `
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+.agent-shell.pinned .agent-toggle {
+  display: none !important;
+}
+
 /* ───── Panel (Sidebar) ───── */
 .agent-panel {
   width: min(380px, calc(100vw - 32px));
@@ -155,7 +168,18 @@ export const sidebarStyles = `
   transition:
     opacity 350ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 350ms cubic-bezier(0.16, 1, 0.3, 1);
+    visibility 350ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 350ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agent-panel.pinned {
+  height: 100vh;
+  border-radius: 16px 0 0 16px;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.12);
 }
 
 .agent-panel-visible {

@@ -19,13 +19,13 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     linkedIn: "",
     portfolio: ""
   });
-  
+
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  
+
   const [skillInput, setSkillInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +123,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     try {
       const arrayBuffer = await file.arrayBuffer();
       const text = await extractTextFromPdf(arrayBuffer);
-      
+
       if (!text.trim()) {
         throw new Error("No readable text could be extracted from this PDF.");
       }
@@ -148,7 +148,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         });
         setSuccessMsg("Resume parsed successfully!");
       } else {
-        throw new Error(response?.error || "Gemini was unable to extract structured details from the resume.");
+        throw new Error(response?.error || "Hunter was unable to extract structured details from the resume.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to extract and parse resume.");
@@ -239,11 +239,10 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`group flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${
-              isParsing
-                ? "border-zinc-300 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-950/20 pointer-events-none"
-                : "border-zinc-200 bg-white/30 dark:border-zinc-800/40 hover:border-[#f97316]/50 hover:bg-white/80 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/50 shadow-sm"
-            }`}
+            className={`group flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${isParsing
+              ? "border-zinc-300 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-950/20 pointer-events-none"
+              : "border-zinc-200 bg-white/30 dark:border-zinc-800/40 hover:border-[#f97316]/50 hover:bg-white/80 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/50 shadow-sm"
+              }`}
           >
             <input
               type="file"
@@ -256,7 +255,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               <div className="space-y-2.5">
                 <Loader2 className="mx-auto animate-spin text-[#f97316]" size={22} />
                 <p className="text-xs font-bold text-[#f97316]">
-                  Parsing resume with Gemini...
+                  Parsing resume.....
                 </p>
               </div>
             ) : profile.resumeFileName ? (
@@ -539,11 +538,10 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         <button
           onClick={handleSaveProfile}
           disabled={isSaving || isParsing}
-          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${
-            saveSuccess
-              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10"
-              : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:opacity-60"
-          }`}
+          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${saveSuccess
+            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10"
+            : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:opacity-60"
+            }`}
         >
           {isSaving && <Loader2 size={14} className="animate-spin text-[#f97316]" />}
           {saveSuccess ? (

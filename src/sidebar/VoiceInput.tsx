@@ -72,7 +72,7 @@ export const VoiceInput = ({
       disabled={disabled}
       onClick={toggleListening}
     >
-      {isListening ? <MicOff size={12} /> : <Sidebar size={12} />}
+      {isListening ? <MicOff size={12} /> : <Mic size={12} />}
     </button>
   );
 };

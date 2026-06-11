@@ -16,6 +16,18 @@ export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
       .map((item) => ("str" in item ? item.str : ""))
       .join(" ");
     fullText += pageText + "\n";
+
+    try {
+      const annotations = await page.getAnnotations();
+      const links = annotations
+        .filter((a: any) => a.subtype === "Link" && a.url)
+        .map((a: any) => a.url);
+      if (links.length > 0) {
+        fullText += "\nLinks found on this page:\n" + links.join("\n") + "\n";
+      }
+    } catch (err) {
+      console.warn(`Failed to extract annotations for page ${i}`, err);
+    }
   }
 
   return fullText;

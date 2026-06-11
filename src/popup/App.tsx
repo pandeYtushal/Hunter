@@ -3,7 +3,7 @@ import { useChromeStorage } from "./hooks/useChromeStorage";
 import { useTheme } from "./hooks/useTheme";
 import { sendMessageToActiveTab } from "../shared/chromeRuntime";
 import type { PageSnapshot, SidebarStatus } from "../shared/types/messages";
-import { Settings, Key, X, Bot, AlertCircle, Zap } from "lucide-react";
+import { Settings, Key, X, Bot, AlertCircle, Zap, Sun, Moon } from "lucide-react";
 
 const emptySnapshot: PageSnapshot = {
   title: "No page connected",
@@ -26,10 +26,10 @@ export const App = () => {
     settings?.provider === "openai"
       ? settings.openaiApiKey?.trim()
       : settings?.provider === "anthropic"
-      ? settings.anthropicApiKey?.trim()
-      : settings?.provider === "groq"
-      ? settings.groqApiKey?.trim()
-      : settings?.apiKey?.trim()
+        ? settings.anthropicApiKey?.trim()
+        : settings?.provider === "groq"
+          ? settings.groqApiKey?.trim()
+          : settings?.apiKey?.trim()
   );
 
   // Fetch active tab snapshot & read current sidebar status
@@ -67,10 +67,10 @@ export const App = () => {
         settings.provider === "openai"
           ? settings.openaiApiKey
           : settings.provider === "anthropic"
-          ? settings.anthropicApiKey
-          : settings.provider === "groq"
-          ? settings.groqApiKey
-          : settings.apiKey;
+            ? settings.anthropicApiKey
+            : settings.provider === "groq"
+              ? settings.groqApiKey
+              : settings.apiKey;
       if (!activeKey?.trim()) {
         setShowSettings(true);
       }
@@ -95,12 +95,8 @@ export const App = () => {
       {/* Header */}
       <header className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-3 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded border border-[#ff6b35]/30 bg-[var(--bg-secondary)] text-[10px] font-mono font-bold text-[#ff6b35] shadow-[0_0_8px_rgba(255,107,53,0.15)]">
-            H
-          </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold tracking-widest text-[var(--text-primary)] font-mono leading-none">HUNTER</span>
-            <span className="text-[8px] font-mono text-[var(--text-muted)] leading-none mt-0.5">AI Browser Agent v0.1.0</span>
           </div>
         </div>
 
@@ -112,13 +108,19 @@ export const App = () => {
             </span>
           </div>
           <button
+            onClick={() => setSettings({ ...settings!, theme: settings?.theme === "dark" ? "light" : "dark" })}
+            aria-label="Toggle Theme"
+            className="flex h-7 w-7 items-center justify-center rounded border border-[var(--border-color)] hover:border-zinc-400 bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all duration-200 cursor-pointer"
+          >
+            {settings?.theme === "dark" ? <Sun size={12} /> : <Moon size={12} />}
+          </button>
+          <button
             onClick={() => setShowSettings(!showSettings)}
             aria-label="Settings"
-            className={`flex h-7 w-7 items-center justify-center rounded border transition-all duration-200 cursor-pointer ${
-              showSettings 
-                ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]" 
-                : "border-[var(--border-color)] hover:border-zinc-400 bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`flex h-7 w-7 items-center justify-center rounded border transition-all duration-200 cursor-pointer ${showSettings
+              ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
+              : "border-[var(--border-color)] hover:border-zinc-400 bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
           >
             <Settings size={12} />
           </button>
@@ -127,7 +129,7 @@ export const App = () => {
 
       {/* Main Panel Content */}
       <div className="flex flex-1 flex-col justify-between p-3.5 gap-3 overflow-hidden">
-        
+
         {/* Settings view */}
         {showSettings && settings ? (
           <div className="border border-[var(--border-color)] bg-[var(--bg-secondary)]/90 backdrop-blur-md rounded-xl p-3 animate-slide-down space-y-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
@@ -140,8 +142,7 @@ export const App = () => {
               </div>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
-              >
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer">
                 <X size={11} />
               </button>
             </div>
@@ -253,11 +254,10 @@ export const App = () => {
                 <span className="font-mono text-[var(--text-muted)] uppercase tracking-wider">Sidebar Layout</span>
                 <button
                   onClick={() => setSettings({ ...settings, sidebarPinned: !settings.sidebarPinned })}
-                  className={`font-mono px-2 py-0.5 rounded border transition-all uppercase cursor-pointer ${
-                    settings.sidebarPinned
-                      ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
-                      : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[#ff6b35] hover:text-[var(--text-primary)]"
-                  }`}
+                  className={`font-mono px-2 py-0.5 rounded border transition-all uppercase cursor-pointer ${settings.sidebarPinned
+                    ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
+                    : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[#ff6b35] hover:text-[var(--text-primary)]"
+                    }`}
                 >
                   {settings.sidebarPinned ? "Pinned" : "Floating"}
                 </button>

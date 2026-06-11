@@ -74,6 +74,7 @@ class SidebarController {
   private host: HTMLElement | null = null;
   private appRoot: HTMLElement | null = null;
   private isOpen = false;
+  private isPinned = false;
   private theme: ThemeMode = "system";
 
   async mount() {
@@ -91,8 +92,9 @@ class SidebarController {
       console.log("HUNTERR: Fetching storage state...");
       const state = await getStorageState();
       this.isOpen = state.sidebarOpen;
+      this.isPinned = state.settings.sidebarPinned;
       this.theme = state.settings.theme;
-      console.log("HUNTERR: Storage loaded. isOpen:", this.isOpen, "theme:", this.theme);
+      console.log("HUNTERR: Storage loaded. isOpen:", this.isOpen, "isPinned:", this.isPinned, "theme:", this.theme);
 
       this.host = document.createElement("ai-job-agent");
       this.host.id = rootId;
@@ -172,6 +174,11 @@ class SidebarController {
     this.render();
   }
 
+  setPinned(pinned: boolean) {
+    this.isPinned = pinned;
+    this.render();
+  }
+
   private resolveTheme() {
     if (this.theme === "system") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -190,6 +197,8 @@ class SidebarController {
     const frame = this.appRoot.querySelector(".agent-frame") as HTMLIFrameElement | null;
     const toggleBtn = this.appRoot.querySelector(".agent-toggle") as HTMLElement | null;
 
+    const shell = this.appRoot.querySelector(".agent-shell") as HTMLElement | null;
+
     if (panel) {
       if (this.isOpen) {
         if (frame && !frame.getAttribute("src")) {
@@ -205,6 +214,23 @@ class SidebarController {
           }
         }, 350);
       }
+
+      if (this.isPinned) {
+        shell?.classList.add("pinned");
+        panel.classList.add("pinned");
+      } else {
+        shell?.classList.remove("pinned");
+        panel.classList.remove("pinned");
+      }
+    }
+
+    // Handle body margin pushing
+    if (this.isOpen && this.isPinned) {
+      const panelWidth = panel ? panel.offsetWidth : 380;
+      document.body.style.marginRight = `${panelWidth}px`;
+      document.body.style.transition = "margin-right 350ms cubic-bezier(0.16, 1, 0.3, 1)";
+    } else {
+      document.body.style.marginRight = "";
     }
 
     // Swap icon between chat and close
@@ -237,7 +263,7 @@ class SidebarController {
     let isTouchDragging = false;
 
     const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0 || e.target === removeBtn || removeBtn.contains(e.target as Node)) return;
+      if (e.button !== 0 || e.target === removeBtn || removeBtn.contains(e.target as Node) || this.isPinned) return;
       
       startX = e.clientX;
       startY = e.clientY;
@@ -284,7 +310,7 @@ class SidebarController {
     };
 
     const onTouchStart = (e: TouchEvent) => {
-      if (e.target === removeBtn || removeBtn.contains(e.target as Node)) return;
+      if (e.target === removeBtn || removeBtn.contains(e.target as Node) || this.isPinned) return;
       if (e.touches.length === 0) return;
       
       const touch = e.touches[0];
@@ -438,6 +464,16 @@ const sendPageContentToBackground = async () => {
 };
 
 void sendPageContentToBackground();
+
+// Listen for storage changes to instantly apply pinning changes
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "sync" && changes.settings) {
+    const newSettings = changes.settings.newValue;
+    if (newSettings && typeof newSettings.sidebarPinned === "boolean") {
+      controller.setPinned(newSettings.sidebarPinned);
+    }
+  }
+});
 
 window.addEventListener("message", (event) => {
   if (event.source !== document.getElementById(rootId)?.shadowRoot?.querySelector("iframe")?.contentWindow) {
