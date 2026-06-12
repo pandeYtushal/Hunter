@@ -1820,6 +1820,66 @@
         text-align: center;
       }
     }
+    /* Tooltip styles */
+    [data-tooltip] {
+      position: relative;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--ink-2);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      border: 1px solid var(--border-dim);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    [data-theme="light"] [data-tooltip]::after {
+      background: var(--card);
+      border-color: var(--border);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-tooltip]::before {
+      content: '';
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      border: 6px solid transparent;
+      border-top-color: var(--border-dim);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    [data-theme="light"] [data-tooltip]::before {
+      border-top-color: var(--border);
+    }
+
+    [data-tooltip]:hover::after,
+    [data-tooltip]:hover::before {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 
@@ -1863,7 +1923,7 @@
       </p>
 
       <div class="hero-actions">
-        <a href="#" class="btn btn-amber" onclick="alert('Update with Chrome Web Store URL after publishing.')">
+        <a href="#" class="btn btn-amber" onclick="alert('Update with Chrome Web Store URL after publishing.')" data-tooltip="Coming Soon">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="10.88" x2="15.46" y1="21.94" y2="14"/></svg>
           Add to Chrome — Free
         </a>
