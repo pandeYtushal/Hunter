@@ -161,89 +161,37 @@ const MatchAnalysisCard = ({
   const score = analysis.matchScore;
 
   return (
-    <div className="my-3 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111111] p-4 shadow-lg text-xs transition-all duration-200 hover:-translate-y-0.5">
-      <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.08)] pb-3 mb-3.5 select-none">
-        <h4 className="text-[10.5px] font-bold text-zinc-300 font-sans flex items-center gap-1.5">
-          <Sparkles size={12} className="text-[#ff6b35]" />
-          Resume Match Analysis
-        </h4>
-        <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Score Index</span>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="relative flex items-center justify-center w-14 h-14 shrink-0">
-          <svg className="w-14 h-14 transform -rotate-90">
-            <circle cx="28" cy="28" r="22" className="stroke-zinc-200 dark:stroke-[#090909]" strokeWidth="4" fill="transparent" />
-            <circle
-              cx="28" cy="28" r="22"
-              className="stroke-[#ff6b35] transition-all duration-1000 ease-out"
-              strokeWidth="4" fill="transparent"
-              strokeDasharray={2 * Math.PI * 22}
-              strokeDashoffset={2 * Math.PI * 22 - (score / 100) * (2 * Math.PI * 22)}
-              strokeLinecap="round"
-            />
-          </svg>
-          <span className="absolute text-xs font-black text-[var(--text-primary)] font-mono">{score}%</span>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="text-[11px] leading-relaxed text-zinc-355">
-            Hunter calculated a <strong className="text-[#ff6b35]">{score}% qualifications match</strong> for this position.
-          </div>
-          <div className="mt-2 w-full bg-zinc-900 rounded-full h-1 overflow-hidden">
-            <div className="bg-[#ff6b35] h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${score}%` }} />
-          </div>
+    <div className="my-2 p-3.5 rounded-[14px] border border-zinc-800/80 bg-[#141414] shadow-sm text-[12px] font-sans">
+      <div className="flex items-center gap-3.5 border-b border-[rgba(255,255,255,0.04)] pb-3">
+        <div className="text-2xl font-bold text-emerald-400">{score}%</div>
+        <div>
+          <div className="font-semibold text-zinc-100">Resume Match</div>
+          <div className="text-zinc-400 text-[11px] leading-tight mt-0.5">Hunter analyzed your fit for this role.</div>
         </div>
       </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-3.5 border-t border-zinc-900 pt-3.5">
+      <div className="mt-3 space-y-3">
         <div>
-          <h5 className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 font-mono mb-2">Matched Skills</h5>
-          <ul className="space-y-1 text-[11px] text-zinc-355 font-medium">
-            {analysis.matchedSkills.slice(0, 3).map((skill, i) => (
-              <li key={i} className="flex items-center gap-1.5 truncate">
-                <span className="h-1 w-1 rounded-full bg-[#ff6b35]" />
-                <span className="truncate">{skill}</span>
-              </li>
-            ))}
-            {analysis.matchedSkills.length > 3 && (
-              <li className="text-[9px] font-mono text-zinc-500 pl-2.5">+{analysis.matchedSkills.length - 3} more</li>
-            )}
-            {analysis.matchedSkills.length === 0 && <li className="text-[10px] text-zinc-650 italic">None</li>}
-          </ul>
+          <div className="text-zinc-500 font-semibold text-[11px] mb-1">Matched Skills</div>
+          <div className="text-zinc-200 leading-relaxed text-[11.5px] font-medium">{analysis.matchedSkills.slice(0, 5).join(", ")}{analysis.matchedSkills.length > 5 ? "..." : ""}</div>
         </div>
-
         <div>
-          <h5 className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 font-mono mb-2">Missing Skills</h5>
-          <ul className="space-y-1 text-[11px] text-zinc-355 font-medium">
-            {analysis.missingSkills.slice(0, 3).map((skill, i) => (
-              <li key={i} className="flex items-center gap-1.5 truncate">
-                <span className="h-1 w-1 rounded-full bg-zinc-700" />
-                <span className="truncate">{skill}</span>
-              </li>
-            ))}
-            {analysis.missingSkills.length > 3 && (
-              <li className="text-[9px] font-mono text-zinc-500 pl-2.5">+{analysis.missingSkills.length - 3} more</li>
-            )}
-            {analysis.missingSkills.length === 0 && <li className="text-[10px] text-zinc-450 italic">All matched!</li>}
-          </ul>
+          <div className="text-zinc-500 font-semibold text-[11px] mb-1">Missing Skills</div>
+          <div className="text-zinc-200 leading-relaxed text-[11.5px] font-medium">{analysis.missingSkills.slice(0, 5).join(", ") || "None!"}</div>
         </div>
       </div>
 
       {onSubmitPrompt && (
-        <div className="flex gap-2 mt-4 pt-3 border-t border-[var(--border-color)]">
+        <div className="flex gap-2 mt-4 pt-3 border-t border-[rgba(255,255,255,0.04)]">
           <button
             onClick={() => onSubmitPrompt("Improve my resume")}
-            className="flex-1 flex h-7 items-center justify-center gap-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)]/60 text-[10px] font-mono text-[var(--text-secondary)] hover:border-[#ff6b35]/30 hover:text-[var(--text-primary)] transition cursor-pointer"
+            className="flex-1 h-8 rounded-lg border border-zinc-800 bg-[#1a1a1a] text-[11px] font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition cursor-pointer"
           >
-            <ClipboardList size={11} className="text-[var(--text-muted)]" />
             Improve Resume
           </button>
           <button
             onClick={() => onSubmitPrompt("Generate cover letter")}
-            className="flex-1 flex h-7 items-center justify-center gap-1.5 rounded border border-[var(--border-color)] bg-[var(--bg-primary)]/60 text-[10px] font-mono text-[var(--text-secondary)] hover:border-[#ff6b35]/30 hover:text-[var(--text-primary)] transition cursor-pointer"
+            className="flex-1 h-8 rounded-lg border border-zinc-800 bg-[#1a1a1a] text-[11px] font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition cursor-pointer"
           >
-            <PenTool size={11} className="text-[var(--text-muted)]" />
             Cover Letter
           </button>
         </div>
@@ -271,7 +219,6 @@ const CoverLetterCard = ({ coverLetter }: { coverLetter: CoverLetter }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    // FIX 5: label and filename both use .txt — no mismatch
     a.download = `Cover_Letter_${coverLetter.company.replace(/\s+/g, "_")}.txt`;
     document.body.appendChild(a);
     a.click();
@@ -280,49 +227,45 @@ const CoverLetterCard = ({ coverLetter }: { coverLetter: CoverLetter }) => {
   };
 
   return (
-    <div className="my-2.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden text-xs">
-      <div className="flex items-center justify-between gap-3 p-3.5 bg-[var(--bg-primary)]/40">
+    <div className="my-2 rounded-[14px] border border-zinc-800/80 bg-[#141414] overflow-hidden text-[12px] shadow-sm font-sans">
+      <div className="flex items-center justify-between gap-3 p-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 shrink-0 rounded-xl bg-[var(--bg-primary)] text-[#ff6b35] flex items-center justify-center border border-[var(--border-color)] shadow-sm">
-            <ClipboardList size={20} className="stroke-[1.8]" />
-          </div>
           <div className="min-w-0">
-            {/* FIX 5: display label now matches the actual downloaded file extension */}
-            <h4 className="text-xs font-bold text-[var(--text-primary)] truncate" title={`Cover Letter - ${coverLetter.company}.txt`}>
+            <h4 className="text-[13px] font-bold text-zinc-100 truncate" title={`Cover Letter - ${coverLetter.company}.txt`}>
               Cover Letter - {coverLetter.company}.txt
             </h4>
-            <p className="text-[10px] text-[var(--text-muted)] font-mono">Tailored Letter · 1.2 KB</p>
+            <p className="text-[11px] text-zinc-400 font-medium">Tailored Letter</p>
           </div>
         </div>
         <div className="flex gap-1.5 shrink-0">
           <button
             onClick={handleCopy}
             title="Copy text"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[#ff6b35]/30 transition-all cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-[#1a1a1a] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-all cursor-pointer"
           >
-            {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+            {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
           </button>
           <button
             onClick={handleDownload}
             title="Download cover letter (.txt)"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[#ff6b35]/30 transition-all cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-[#1a1a1a] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-all cursor-pointer"
           >
-            <Download size={14} />
+            <Download size={12} />
           </button>
         </div>
       </div>
 
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-3.5 py-2 text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-primary)]/20 border-t border-[var(--border-color)] transition font-mono uppercase tracking-wider cursor-pointer"
+        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:text-zinc-200 bg-[#1a1a1a] border-t border-[rgba(255,255,255,0.04)] transition cursor-pointer"
       >
         <span>{isExpanded ? "Hide Preview" : "View Letter Preview"}</span>
-        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </button>
 
       {isExpanded && (
-        <div className="p-3.5 border-t border-[var(--border-color)] bg-[var(--bg-primary)]/20">
-          <div className="max-h-56 overflow-y-auto rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-3 text-xs leading-relaxed text-[var(--text-secondary)] font-mono whitespace-pre-wrap select-text custom-scrollbar">
+        <div className="p-3 border-t border-[rgba(255,255,255,0.04)] bg-[#111111]">
+          <div className="max-h-56 overflow-y-auto rounded-lg border border-zinc-800/80 bg-[#141414] p-3 text-[11.5px] leading-relaxed text-zinc-300 whitespace-pre-wrap select-text custom-scrollbar">
             {coverLetter.content}
           </div>
         </div>
@@ -377,56 +320,45 @@ const JobDetailsCard = ({
   };
 
   return (
-    <div className="my-2.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 shadow-sm text-xs">
+    <div className="my-2 p-3.5 rounded-[14px] border border-zinc-800/80 bg-[#141414] shadow-sm text-[12px] font-sans">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold text-[var(--text-primary)] truncate" title={job.title}>{job.title}</h3>
-          <p className="text-xs font-semibold text-[var(--text-secondary)] truncate font-mono mt-0.5" title={job.company}>{job.company}</p>
+          <h3 className="text-[14px] font-bold text-zinc-100 truncate">{job.title}</h3>
+          <p className="text-[12px] text-zinc-400 truncate mt-0.5">{job.company}</p>
         </div>
 
         <div className="flex gap-1.5 shrink-0">
           {onAnalyzeFit && (
             <button
               onClick={onAnalyzeFit}
-              className="flex h-7 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] px-2.5 py-1 text-[10px] font-mono text-[var(--text-secondary)] shadow-sm transition hover:border-[#ff6b35]/30 hover:text-[var(--text-primary)] cursor-pointer"
+              className="h-7 px-2.5 rounded-lg border border-zinc-800 bg-[#1a1a1a] text-[11px] font-medium text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition cursor-pointer"
             >
-              <Sparkles size={11} className="text-[#ff6b35]" />
-              Match
+              Match Fit
             </button>
           )}
           <button
             onClick={handleTrackJob}
             disabled={isSaved || isSaving}
-            className={`flex h-7 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-mono transition-all cursor-pointer ${isSaved
-              ? "bg-[#ff6b35]/5 text-[#ff6b35] border-[#ff6b35]/20"
-              : "bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:border-zinc-400 hover:text-[var(--text-primary)]"
+            className={`flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium transition cursor-pointer ${isSaved
+              ? "bg-emerald-500/10 text-emerald-400"
+              : "border border-zinc-800 bg-[#1a1a1a] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800"
               }`}
           >
-            {isSaved ? <Check size={11} /> : isSaving ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-            {isSaved ? "Tracked" : "Track"}
+            {isSaved ? "Saved" : isSaving ? <Loader2 size={12} className="animate-spin" /> : "Save"}
           </button>
         </div>
       </div>
 
-      <div className="mt-3.5 grid grid-cols-1 gap-1.5 border-t border-[rgba(255,255,255,0.08)] pt-3 text-[11px] text-zinc-350 font-mono">
-        <div className="flex items-center gap-2">
-          <MapPin size={12} className="text-zinc-500 shrink-0" />
-          <span className="truncate"><b>Location:</b> {job.location}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <DollarSign size={12} className="text-zinc-500 shrink-0" />
-          <span className="truncate"><b>Salary:</b> {job.salary}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Award size={12} className="text-zinc-500 shrink-0" />
-          <span className="truncate"><b>Experience:</b> {job.experience}</span>
-        </div>
+      <div className="mt-4 space-y-1.5 text-[11.5px] text-zinc-300">
+        <div><span className="text-zinc-500 inline-block w-[75px]">Location:</span> {job.location}</div>
+        <div><span className="text-zinc-500 inline-block w-[75px]">Salary:</span> {job.salary}</div>
+        <div><span className="text-zinc-500 inline-block w-[75px]">Experience:</span> {job.experience}</div>
       </div>
 
       {job.skills && job.skills.length > 0 && (
-        <div className="mt-3.5 flex flex-wrap gap-1.5 border-t border-[rgba(255,255,255,0.08)] pt-2.5">
-          {job.skills.map((skill, index) => (
-            <span key={index} className="rounded bg-[#090909] border border-[rgba(255,255,255,0.08)] px-2 py-0.5 text-[9px] font-mono text-zinc-450">
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {job.skills.slice(0, 8).map((skill, index) => (
+            <span key={index} className="rounded bg-zinc-800/80 px-2 py-0.5 text-[10.5px] text-zinc-300 font-medium">
               {skill}
             </span>
           ))}
@@ -1074,8 +1006,8 @@ export const ChatWindow = () => {
           </h2>
 
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-1.5">
-              <Briefcase size={12} />
+            <h5 className="text-[13px] font-semibold text-zinc-400 mb-2 flex items-center gap-1.5">
+              <Briefcase size={14} />
               Saved Jobs ({applications.filter((a) => a.status === "saved").length})
             </h5>
             {applications.filter((a) => a.status === "saved").length > 0 ? (
@@ -1086,18 +1018,18 @@ export const ChatWindow = () => {
                       <span className="font-bold text-zinc-200 truncate block text-sm">{app.role}</span>
                       <span className="text-zinc-400 block text-xs truncate mt-0.5">{app.company}</span>
                     </div>
-                    <span className="px-2 py-1 rounded border border-zinc-800 text-zinc-400 text-[10px] uppercase font-bold shrink-0">{app.status}</span>
+                    <span className="px-2 py-1 rounded border border-zinc-800 text-zinc-400 text-[10px] font-medium shrink-0">{app.status}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-zinc-500 italic">No applications tracked yet.</p>
+              <p className="text-[12px] text-zinc-500 italic">No applications tracked yet.</p>
             )}
           </div>
 
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-1.5">
-              <PenTool size={12} />
+            <h5 className="text-[13px] font-semibold text-zinc-400 mb-2 flex items-center gap-1.5">
+              <PenTool size={14} />
               Generated Cover Letters ({coverLetters.length})
             </h5>
             {coverLetters.length > 0 ? (
@@ -1108,7 +1040,7 @@ export const ChatWindow = () => {
                       <span className="font-bold text-zinc-200 truncate block text-sm">Letter - {cl.company}</span>
                       <span className="text-zinc-400 block text-xs truncate mt-0.5">{cl.role}</span>
                     </div>
-                    <span className="text-zinc-500 text-[10px] shrink-0 font-mono">
+                    <span className="text-zinc-500 text-[11px] shrink-0 font-mono">
                       {new Date(cl.createdAt || "").toLocaleDateString([], { month: "short", day: "numeric" })}
                     </span>
                   </div>
@@ -1124,54 +1056,67 @@ export const ChatWindow = () => {
   }
 
   return (
-    <main className="flex h-screen min-h-0 flex-col font-sans bg-[#090909] text-zinc-100">
+    <main className="flex h-screen min-h-0 flex-col font-sans bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* Header */}
-      <header className="flex h-[52px] items-center justify-between border-b border-[rgba(255,255,255,0.06)] px-4 shrink-0 bg-[#090909]">
+      <header className="flex h-[52px] items-center justify-between border-b border-[rgba(255,255,255,0.06)] px-4 shrink-0 bg-[var(--bg-primary)]">
         {/* Left Side: Logo & Title */}
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#ffece5] text-[#ff6b35] shrink-0">
-            <Search size={14} className="stroke-[2.5]" />
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex items-center justify-center text-[#ff6b35] shrink-0">
+            <Search size={18} className="stroke-[2.5]" />
           </div>
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-sm font-bold text-zinc-100 tracking-wide">Hunter</h1>
+          <div className="flex flex-col">
+            <h1 className="text-[13px] font-bold text-zinc-100 tracking-wide leading-tight">Hunter</h1>
+            <span className="text-[10px] text-zinc-500 font-medium leading-none">AI Browser Copilot</span>
           </div>
         </div>
 
         {/* Right Side: Status & Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex items-center gap-2 border border-zinc-700/60 rounded-full px-3 py-1.5 text-xs text-zinc-300 font-medium">
+          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
             <span className={`h-1.5 w-1.5 rounded-full ${agentState?.isActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`} />
-            <span className="leading-none">{agentState?.isActive ? "Active" : "Ready"}</span>
+            <span>Status: {agentState?.isActive ? "Active" : "Ready"}</span>
           </div>
           <div className="flex items-center gap-1.5 ml-1">
             <button
+              onClick={clearHistory}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-400/10 transition cursor-pointer"
+              title="Clear Chat"
+            >
+              <Trash2 size={14} />
+            </button>
+            <button
               onClick={toggleTheme}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
               title="Toggle Theme"
             >
-              {settings?.theme === "light" ? <Moon size={12} /> : <Sun size={12} />}
+              {settings?.theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
             </button>
             <button
               onClick={() => setUiFlag("showProfile", true)}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-zinc-700/60 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition cursor-pointer"
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
+              title="Settings & Profile"
             >
-              <User size={12} />
+              <User size={14} />
             </button>
             <button
               onClick={() => setUiFlag("showMemory", true)}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
               title="Recent Activity"
             >
-              <History size={12} />
+              <History size={14} />
             </button>
-            <div className="w-[1px] h-4 bg-[var(--border-color)] mx-0.5"></div>
-            <button
-              onClick={() => window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*")}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 hover:border-[#ef4444]/30 transition cursor-pointer"
-              title="Close Sidebar"
-            >
-              <X size={14} />
-            </button>
+            {settings?.sidebarPinned && (
+              <>
+                <div className="w-[1px] h-3.5 bg-zinc-800 mx-0.5"></div>
+                <button
+                  onClick={() => window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*")}
+                  className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition cursor-pointer"
+                  title="Close Sidebar"
+                >
+                  <X size={16} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -1226,27 +1171,21 @@ export const ChatWindow = () => {
 
       {/* Pinned Active Agent Status Card */}
       {agentState && agentState.isActive && (
-        <div className="mx-3.5 my-2.5 rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111111]/90 backdrop-blur-md p-3.5 space-y-2.5 text-[11px] font-sans animate-fade-in shadow-lg shrink-0 select-none">
+        <div className="mx-3.5 my-2.5 rounded-xl border border-zinc-800 bg-[#111111] p-3 space-y-2 text-[12px] font-sans animate-fade-in shadow-sm shrink-0 select-none">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 font-bold text-zinc-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              {agentState.goal || "Orchestrating workflow"}
+            <span className="font-bold text-zinc-100">
+              Current Goal: <span className="font-normal text-zinc-300">{agentState.goal || "Orchestrating workflow"}</span>
             </span>
-            <button
-              onClick={handleStopAgent}
-              className="text-[10px] font-semibold text-rose-400 hover:text-rose-300 cursor-pointer transition font-mono uppercase tracking-wider">
-              Abort Goal
-            </button>
           </div>
           <div className="space-y-1.5">
-            <div className="flex justify-between text-zinc-400 text-[10px]">
+            <div className="flex justify-between text-zinc-400 text-[11px]">
               <span className="truncate pr-4">
-                Active Step: <strong className="text-zinc-200 font-medium">{agentState.currentStep.replace("Thinking:", "").replace(/_/g, " ").trim()}</strong>
+                Current Step: <strong className="text-zinc-200 font-medium">{agentState.currentStep.replace("Thinking:", "").replace(/_/g, " ").trim()}</strong>
               </span>
-              <span className="shrink-0 font-mono font-bold text-[#ff6b35]">{agentState.progress}%</span>
+              <span className="shrink-0 font-medium">{agentState.progress}%</span>
             </div>
-            <div className="w-full bg-[#090909] rounded-full h-1.5 overflow-hidden border border-[rgba(255,255,255,0.04)]">
-              <div className="bg-[#ff6b35] h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${agentState.progress}%` }} />
+            <div className="w-full bg-[#090909] rounded-full h-1 overflow-hidden">
+              <div className="bg-emerald-500 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${agentState.progress}%` }} />
             </div>
           </div>
         </div>
@@ -1260,62 +1199,36 @@ export const ChatWindow = () => {
             INITIALIZING CORE ENGINE...
           </div>
         ) : messages.length === 0 && !(agentState?.isActive) ? (
-          /* Standby Dashboard */
-          <div className="flex h-full flex-col px-1 justify-start space-y-6 select-none font-sans">
-            <div className="flex flex-col items-center justify-center text-center py-4 px-3">
-              <div className="relative flex items-center justify-center mb-5 mt-4">
-                <div className="absolute h-18 w-18 rounded-full bg-[#ffece5]/5 blur-xl animate-pulse" />
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-[#ffece5] text-[#ff6b35] shadow-lg animate-scale-up">
-                  <Bot size={30} className="stroke-[2]" />
-                </div>
-              </div>
-              <h2 className="text-[22px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
-                How can Hunter help today?
+          <div className="flex h-full flex-col px-1 justify-center space-y-6 select-none font-sans mt-[-40px]">
+            <div className="flex flex-col text-left py-4 px-3">
+              <h2 className="text-[24px] font-bold text-zinc-100 tracking-tight leading-tight">
+                What would you like Hunter to do?
               </h2>
-              <p className="text-[13px] text-[var(--text-secondary)] mt-2.5 max-w-[340px] leading-relaxed mx-auto font-medium">
-                Analyze jobs, match your resume, research companies, and autofill applications — all from this panel.
-              </p>
             </div>
 
-            {/* Try Asking Container */}
-            <div className="w-full space-y-4 px-1 pt-4">
-              <div className="font-semibold text-[var(--text-secondary)] text-[11px] flex items-center gap-2 mb-2 px-1">
-                <Sidebar size={13} className="text-[var(--text-secondary)] opacity-70" />
-                <span>Try asking</span>
-              </div>
-
-              <div className="space-y-2.5">
-                {tryAskingPrompts.map((item, index) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      disabled={isSending}
-                      onClick={() => void submitPrompt(item.prompt)}
-                      className="w-full flex items-center justify-between rounded-[14px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 text-left transition-all duration-200 hover:bg-[var(--bg-tertiary)] cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center min-w-0 flex-1">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.badgeBg} mr-4 transition-transform duration-200 group-hover:scale-105`}>
-                          <Icon size={18} className="stroke-[2]" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-bold text-[var(--text-primary)] text-[13px] leading-tight tracking-wide">
-                            {item.label}
-                          </span>
-                          <span className="text-[var(--text-secondary)] text-[11px] leading-tight">
-                            {item.desc}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight size={14} className="text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors shrink-0" />
-                    </button>
-                  );
-                })}
+            {/* Quick Chips Container */}
+            <div className="w-full px-3">
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "Analyze this job",
+                  "Research this company",
+                  "Match my resume",
+                  "Generate cover letter",
+                  "Help me apply",
+                  "Summarize this page"
+                ].map((promptText, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    disabled={isSending}
+                    onClick={() => void submitPrompt(promptText)}
+                    className="rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-1.5 text-[12px] text-[var(--text-muted)] transition-all hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {promptText}
+                  </button>
+                ))}
               </div>
             </div>
-
-
           </div>
         ) : (
           /* Conversation Stream */
@@ -1376,44 +1289,47 @@ export const ChatWindow = () => {
       </section>
 
       {error && (
-        <div className="border-t border-[rgba(255,255,255,0.08)] bg-[#090909] px-3 py-2 text-xs leading-5 text-rose-400 font-mono">
+        <div className="border-t border-[var(--border-color)] bg-[var(--bg-primary)] px-3 py-2 text-xs leading-5 text-rose-400 font-mono">
           {error}
         </div>
       )}
 
       {/* Footer */}
-      <div className="bg-[#090909] flex flex-col shrink-0 px-3.5 pb-3">
-        {/* Quick chips / Pills */}
-        {input.trim().length === 0 && messages.length > 0 && (
-          <div className="flex gap-2 py-3 overflow-x-auto custom-scrollbar select-none shrink-0 border-b border-zinc-700/40 mb-3">
-            {pillGoals.map((pill) => {
-              const Icon = pill.icon;
-              return (
+      <div className="bg-[var(--bg-primary)] flex flex-col shrink-0 px-3.5 pb-3">
+        {/* Quick Chips (Visible during chat) */}
+        {messages.length > 0 && !(agentState?.isActive) && (
+          <div className="flex overflow-x-auto gap-1.5 pb-2 mb-1 custom-scrollbar">
+            <div className="flex gap-1.5 min-w-max">
+              {[
+                "Analyze this job",
+                "Research this company",
+                "Match my resume",
+                "Generate cover letter",
+                "Help me apply",
+                "Summarize this page"
+              ].map((promptText, index) => (
                 <button
-                  key={pill.label}
+                  key={index}
                   type="button"
                   disabled={isSending}
-                  onClick={() => void submitPrompt(pill.prompt)}
-                  className="inline-flex items-center gap-1.5 shrink-0 rounded-full border border-zinc-700/60 bg-transparent px-3 py-1 text-[11px] font-semibold text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-colors duration-200 cursor-pointer disabled:opacity-50"
+                  onClick={() => void submitPrompt(promptText)}
+                  className="whitespace-nowrap shrink-0 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <Icon size={12} className="text-[#ff6b35]" />
-                  {pill.label}
+                  {promptText}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
         )}
-
         {/* Input form */}
         <form
-          className="border border-zinc-700/60 bg-[#111111] rounded-[14px] flex items-center p-1.5 transition-all duration-200 focus-within:border-zinc-500 shadow-sm"
+          className="border border-[var(--border-color)] bg-[var(--bg-secondary)] rounded-[16px] flex items-center p-2 transition-all duration-200 focus-within:border-[#ff6b35]/50 shadow-sm"
           onSubmit={sendMessage}
         >
-          {/* FIX 9: label paired with id for screen readers */}
           <label htmlFor="chat-input" className="sr-only">Message to Hunter</label>
           <textarea
             id="chat-input"
-            className="flex-1 min-h-[32px] max-h-32 resize-none bg-transparent border-0 outline-none text-[13px] leading-relaxed text-zinc-100 placeholder:text-zinc-400 font-sans p-1.5 focus:ring-0 focus:outline-none ml-1"
+            className="flex-1 min-h-[36px] max-h-32 resize-none bg-transparent border-0 outline-none text-[14px] leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)] font-sans p-2 focus:ring-0 focus:outline-none ml-1 custom-scrollbar"
             disabled={isSending}
             placeholder="Ask Hunter anything..."
             rows={1}
@@ -1426,11 +1342,7 @@ export const ChatWindow = () => {
               }
             }}
           />
-          <div className="flex items-center gap-1.5 shrink-0 ml-2 mr-0.5">
-            <div className="flex flex-col items-center justify-center text-zinc-500 cursor-pointer hover:text-zinc-300 px-1">
-              <ChevronUp size={12} />
-              <ChevronDown size={12} />
-            </div>
+          <div className="flex items-center gap-1.5 shrink-0 ml-2 mr-1">
             <VoiceInput
               disabled={isSending}
               onError={setError}
@@ -1438,11 +1350,11 @@ export const ChatWindow = () => {
               onTranscriptSubmit={submitVoiceTranscript}
             />
             <button
-              className="h-[28px] w-[28px] shrink-0 rounded-[8px] border border-zinc-700/60 text-zinc-400 flex items-center justify-center hover:bg-[#323232] hover:text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              className="h-[32px] w-[32px] shrink-0 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] flex items-center justify-center hover:scale-105 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm"
               disabled={isSending || input.trim().length === 0}
               type="submit"
             >
-              {isSending ? <Loader2 className="animate-spin" size={12} /> : <Send size={12} />}
+              {isSending ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
             </button>
           </div>
         </form>

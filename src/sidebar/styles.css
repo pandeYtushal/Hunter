@@ -282,6 +282,7 @@ button svg {
 /* Scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -289,7 +290,7 @@ button svg {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(var(--accent-rgb), 0.15);
+  background: rgba(var(--accent-rgb), 0.25);
   border-radius: 999px;
 }
 
