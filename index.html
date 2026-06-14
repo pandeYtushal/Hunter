@@ -1880,6 +1880,53 @@
       visibility: visible;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* Hide scrollbars for the demo chips container and add custom scroll button styling */
+    .demo-chips-container::-webkit-scrollbar {
+      display: none !important;
+    }
+    .demo-chips-container {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+      -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+      mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+    }
+    .demo-scroll-btn {
+      position: absolute !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      z-index: 10 !important;
+      display: flex !important;
+      height: 22px !important;
+      width: 22px !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 9999px !important;
+      border: 1px solid var(--border-dim) !important;
+      background: var(--ink-2) !important;
+      color: var(--text-2) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      cursor: pointer !important;
+    }
+    .demo-scroll-btn:hover {
+      transform: translateY(-50%) scale(1.1) !important;
+      border-color: var(--amber) !important;
+      color: var(--amber) !important;
+      background: var(--ink-3) !important;
+    }
+    .demo-scroll-btn:active {
+      transform: translateY(-50%) scale(0.92) !important;
+    }
+    .demo-chip-btn, .sidebar-foot .run-btn {
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .demo-chip-btn:hover, .sidebar-foot .run-btn:hover {
+      transform: translateY(-1.5px) scale(1.03) !important;
+      color: var(--amber) !important;
+      border-color: var(--amber) !important;
+      background: var(--ink-3) !important;
+    }
   </style>
 </head>
 
@@ -2001,49 +2048,12 @@
             <!-- Content Area (Welcome view or Chat view) -->
             <div class="demo-sidebar-content custom-scrollbar" id="sidebar-content">
               <!-- Welcome View -->
-              <div class="welcome-view" id="welcome-view">
-                <div class="welcome-header">
-                  <h3 class="welcome-title">Hey, I'm Hunter</h3>
-                  <p class="welcome-desc">Your AI job application copilot. Pick an action or just ask me anything.</p>
+              <div class="welcome-view" id="welcome-view" style="display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; gap: 8px; padding: 24px 12px; margin-top: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(249, 115, 22, 0.08); color: var(--amber); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px;">
+                  <i data-lucide="search" style="width: 18px; height: 18px; stroke-width: 2.5;"></i>
                 </div>
-                <div class="welcome-grid">
-                  <button class="welcome-card" onclick="runDemo()">
-                    <div class="welcome-card-icon-container orange-bg">
-                      <i data-lucide="file-text" style="width:14px;height:14px;color:var(--amber);"></i>
-                    </div>
-                    <div class="welcome-card-body">
-                      <h4 class="welcome-card-title">Summarize page</h4>
-                      <p class="welcome-card-desc">Quick overview of content</p>
-                    </div>
-                  </button>
-                  <button class="welcome-card" onclick="runDemo()">
-                    <div class="welcome-card-icon-container orange-bg">
-                      <i data-lucide="clipboard" style="width:14px;height:14px;color:var(--amber);"></i>
-                    </div>
-                    <div class="welcome-card-body">
-                      <h4 class="welcome-card-title">Extract job details</h4>
-                      <p class="welcome-card-desc">Role, skills, salary info</p>
-                    </div>
-                  </button>
-                  <button class="welcome-card" onclick="runDemo()">
-                    <div class="welcome-card-icon-container orange-bg">
-                      <i data-lucide="zap" style="width:14px;height:14px;color:var(--amber);"></i>
-                    </div>
-                    <div class="welcome-card-body">
-                      <h4 class="welcome-card-title">Autofill application</h4>
-                      <p class="welcome-card-desc">Fill fields from your profile</p>
-                    </div>
-                  </button>
-                  <button class="welcome-card" onclick="runDemo()">
-                    <div class="welcome-card-icon-container orange-bg">
-                      <i data-lucide="pen-tool" style="width:14px;height:14px;color:var(--amber);"></i>
-                    </div>
-                    <div class="welcome-card-body">
-                      <h4 class="welcome-card-title">Cover letter</h4>
-                      <p class="welcome-card-desc">Tailored for this role</p>
-                    </div>
-                  </button>
-                </div>
+                <h3 class="welcome-title" style="font-size: 13px; font-weight: 800; color: var(--text);">Hunter is ready</h3>
+                <p class="welcome-desc" style="font-size: 10px; color: var(--text-2); max-width: 200px; margin: 0 auto; line-height: 1.45;">Ask Hunter to analyze this job, match your resume, or fill application forms.</p>
               </div>
 
               <!-- Chat View -->
@@ -2062,34 +2072,23 @@
                   </div>
                   <div class="assistant-bubble">
                     <!-- Agent Running UI -->
-                    <div class="agent-running-card" id="agent-running-card">
+                    <div class="agent-running-card" id="agent-running-card" style="border-left-color: var(--green);">
                       <div class="agent-running-header">
-                        <span class="pulse-dot"></span>
-                        <h4 class="agent-running-title">Autonomous Agent Running</h4>
+                        <span class="pulse-dot" style="background: var(--green);"></span>
+                        <h4 class="agent-running-title" style="font-size: 11px;">Current Goal: Autofill application form</h4>
                       </div>
-                      <p class="agent-goal">Goal: Autofill Google Cloud Senior UI Engineer application</p>
+                      <p class="agent-current-step" id="agent-current-step" style="font-size: 10px; color: var(--text-2); margin-top: 4px;">Scanning page DOM for form inputs...</p>
 
-                      <div class="agent-badge-row">
-                        <span class="agent-badge-label">Active Agent:</span>
-                        <span class="agent-badge">FormAgent</span>
-                      </div>
-
-                      <p class="agent-current-step" id="agent-current-step">Scanning page DOM for form inputs...</p>
-
-                      <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="agent-progress-fill" style="width: 10%;"></div>
+                      <div class="progress-bar-container" style="margin-top: 6px;">
+                        <div class="progress-bar-fill" id="agent-progress-fill" style="width: 10%; background: var(--green);"></div>
                       </div>
                       <div class="progress-label-row">
                         <span>Progress</span>
                         <span id="agent-progress-percent">10%</span>
                       </div>
 
-                      <div class="agent-steps-header">
-                        Execution Steps
-                      </div>
-                      <div class="agent-steps-list" id="agent-steps-list">
-                        <!-- Steps populated dynamically -->
-                      </div>
+                      <!-- Hidden telemetry items to prevent script crash -->
+                      <div id="agent-steps-list" style="display: none;"></div>
                     </div>
 
                     <!-- Autofill Complete Card (Hidden initially) -->
@@ -2118,24 +2117,52 @@
             </div>
 
             <!-- Footer area -->
-            <div class="sidebar-foot">
-              <div class="score-row">
-                <span class="score-label">Match Score</span>
-                <span class="score-val" id="score-val">—</span>
-              </div>
-              <button class="run-btn" id="run-btn" onclick="runDemo()">
-                <i data-lucide="zap" style="width:12px;height:12px;fill:currentColor;"></i>
-                ⚡ Run Autofill Agent
-              </button>
-
+            <div class="sidebar-foot" style="padding: 10px 14px;">
               <!-- Mock Chat Input Row -->
-              <div class="mock-chat-input-row">
+              <div class="mock-chat-input-row" style="margin-top: 0;">
                 <input type="text" class="mock-chat-input" placeholder="Ask anything about this page..." disabled>
                 <button class="mock-chat-icon-btn" aria-label="Voice input" disabled><i data-lucide="mic"
                     style="width:13px;height:13px;"></i></button>
                 <button class="mock-chat-send-btn" aria-label="Send" disabled><i data-lucide="send"
                     style="width:12px;height:12px;"></i></button>
               </div>
+
+              <!-- Suggested action chips beneath input -->
+              <div class="demo-chips-wrapper" style="position: relative; display: flex; align-items: center; width: 100%; margin-top: 8px;">
+                <button class="demo-scroll-btn left" onclick="scrollDemoChips('left')" style="left: 4px; display: none;"><i data-lucide="chevron-left" style="width:11px;height:11px;"></i></button>
+
+                <div class="demo-chips-container" id="demo-chips-container" onscroll="checkDemoScroll()" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 32px; width: 100%;">
+                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="sparkles" style="width:10px;height:10px;"></i>
+                    Analyze job
+                  </button>
+                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="award" style="width:10px;height:10px;"></i>
+                    Match resume
+                  </button>
+                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="pen-tool" style="width:10px;height:10px;"></i>
+                    Cover letter
+                  </button>
+                  <button class="run-btn" id="run-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="zap" style="width:10px;height:10px;fill:currentColor;"></i>
+                    Autofill form
+                  </button>
+                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="file-text" style="width:10px;height:10px;"></i>
+                    Summarize page
+                  </button>
+                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="building-2" style="width:10px;height:10px;"></i>
+                    Company research
+                  </button>
+                </div>
+
+                <button class="demo-scroll-btn right" onclick="scrollDemoChips('right')" style="right: 4px; display: flex;"><i data-lucide="chevron-right" style="width:11px;height:11px;"></i></button>
+              </div>
+
+              <!-- Hidden match score to prevent demo script crash -->
+              <span id="score-val" style="display: none;">—</span>
             </div>
           </div>
         </div>
@@ -2322,6 +2349,30 @@
 
   <script>
     lucide.createIcons();
+
+    function scrollDemoChips(direction) {
+      const container = document.getElementById('demo-chips-container');
+      if (container) {
+        const offset = direction === 'left' ? -120 : 120;
+        container.scrollBy({ left: offset, behavior: 'smooth' });
+      }
+    }
+
+    function checkDemoScroll() {
+      const container = document.getElementById('demo-chips-container');
+      const leftBtn = document.querySelector('.demo-scroll-btn.left');
+      const rightBtn = document.querySelector('.demo-scroll-btn.right');
+      if (container && leftBtn && rightBtn) {
+        const { scrollLeft, scrollWidth, clientWidth } = container;
+        leftBtn.style.display = scrollLeft > 1 ? 'flex' : 'none';
+        rightBtn.style.display = scrollLeft < scrollWidth - clientWidth - 1 ? 'flex' : 'none';
+      }
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(checkDemoScroll, 200);
+    });
+    window.addEventListener('resize', checkDemoScroll);
 
     // Theme
     const root = document.documentElement;

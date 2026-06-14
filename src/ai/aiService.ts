@@ -29,7 +29,7 @@ export interface GenerateAiReplyInput {
   profile?: UserProfile;
 }
 
-const geminiModel = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || "gemini-2.5-flash";
+const geminiModel = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || "gemini-3.5-flash";
 const openaiModel = (import.meta.env.VITE_OPENAI_MODEL as string | undefined) || "gpt-4o-mini";
 const anthropicModel = (import.meta.env.VITE_ANTHROPIC_MODEL as string | undefined) || "claude-3-5-sonnet-20241022";
 const groqModel = (import.meta.env.VITE_GROQ_MODEL as string | undefined) || "llama-3.3-70b-versatile";

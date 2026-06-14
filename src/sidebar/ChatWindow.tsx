@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, Loader2, Send, Trash2, X, MapPin, DollarSign, Award, Check, Plus, User, Sparkles, AlertCircle, Copy, Download, Activity, ChevronDown, ChevronUp, FileSearch, ClipboardList, Zap, PenTool, Briefcase, Brain, Database, History, RefreshCw, AlertTriangle, CheckCircle2, Play, ChevronRight, Target, Building2, Search, FileText, Sidebar, Sun, Moon } from "lucide-react";
+import { Bot, Loader2, Send, Trash2, X, MapPin, DollarSign, Award, Check, Plus, User, Sparkles, AlertCircle, Copy, Download, Activity, ChevronDown, ChevronUp, FileSearch, ClipboardList, Zap, PenTool, Briefcase, Brain, Database, History, RefreshCw, AlertTriangle, CheckCircle2, Play, ChevronRight, ChevronLeft, Target, Building2, Search, FileText, Sidebar, Sun, Moon } from "lucide-react";
 import { Button } from "../shared/components/Button";
 import { storage } from "../shared/storage";
 import { applyDocumentTheme } from "../shared/theme";
@@ -726,6 +726,34 @@ export const ChatWindow = () => {
   const [longMemory, setLongMemory] = useState<LongTermMemory | null>(null);
   const [healthChecks, setHealthChecks] = useState<HealthCheckResult[]>([]);
 
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const checkScroll = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 1);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  }, []);
+
+  const scrollChips = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const offset = direction === "left" ? -150 : 150;
+      scrollRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(checkScroll, 200);
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [messages, agentState?.isActive, checkScroll]);
+
   // FIX 2 & 1: useMemo — only recalculates when messages change
   const latestMatchScore = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -990,71 +1018,6 @@ export const ChatWindow = () => {
     return <ProfileSettings onBack={() => setUiFlag("showProfile", false)} />;
   }
 
-  if (ui.showMemory) {
-    return (
-      <div className="flex h-screen flex-col font-sans bg-[#090909] text-zinc-100">
-        <header className="flex h-[52px] items-center px-4 shrink-0 border-b border-[rgba(255,255,255,0.06)] bg-[#090909]">
-          <button onClick={() => setUiFlag("showMemory", false)} className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 transition text-xs font-bold cursor-pointer">
-            <ChevronDown size={14} className="rotate-90" />
-            Back to Chat
-          </button>
-        </header>
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
-          <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-            <History size={18} className="text-[#ff6b35]" />
-            Recent Activity
-          </h2>
-
-          <div>
-            <h5 className="text-[13px] font-semibold text-zinc-400 mb-2 flex items-center gap-1.5">
-              <Briefcase size={14} />
-              Saved Jobs ({applications.filter((a) => a.status === "saved").length})
-            </h5>
-            {applications.filter((a) => a.status === "saved").length > 0 ? (
-              <div className="space-y-2">
-                {applications.filter((a) => a.status === "saved").map((app) => (
-                  <div key={app.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded-lg p-3">
-                    <div className="min-w-0 pr-4">
-                      <span className="font-bold text-zinc-200 truncate block text-sm">{app.role}</span>
-                      <span className="text-zinc-400 block text-xs truncate mt-0.5">{app.company}</span>
-                    </div>
-                    <span className="px-2 py-1 rounded border border-zinc-800 text-zinc-400 text-[10px] font-medium shrink-0">{app.status}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[12px] text-zinc-500 italic">No applications tracked yet.</p>
-            )}
-          </div>
-
-          <div>
-            <h5 className="text-[13px] font-semibold text-zinc-400 mb-2 flex items-center gap-1.5">
-              <PenTool size={14} />
-              Generated Cover Letters ({coverLetters.length})
-            </h5>
-            {coverLetters.length > 0 ? (
-              <div className="space-y-2">
-                {coverLetters.map((cl) => (
-                  <div key={cl.id} className="flex items-center justify-between bg-[#111111] border border-[rgba(255,255,255,0.08)] rounded-lg p-3">
-                    <div className="min-w-0 pr-4">
-                      <span className="font-bold text-zinc-200 truncate block text-sm">Letter - {cl.company}</span>
-                      <span className="text-zinc-400 block text-xs truncate mt-0.5">{cl.role}</span>
-                    </div>
-                    <span className="text-zinc-500 text-[11px] shrink-0 font-mono">
-                      {new Date(cl.createdAt || "").toLocaleDateString([], { month: "short", day: "numeric" })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-zinc-500 italic">No cover letters generated yet.</p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <main className="flex h-screen min-h-0 flex-col font-sans bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* Header */}
@@ -1070,54 +1033,41 @@ export const ChatWindow = () => {
           </div>
         </div>
 
-        {/* Right Side: Status & Action Buttons */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
-            <span className={`h-1.5 w-1.5 rounded-full ${agentState?.isActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`} />
-            <span>Status: {agentState?.isActive ? "Active" : "Ready"}</span>
-          </div>
-          <div className="flex items-center gap-1.5 ml-1">
-            <button
-              onClick={clearHistory}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-400/10 transition cursor-pointer"
-              title="Clear Chat"
-            >
-              <Trash2 size={14} />
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
-              title="Toggle Theme"
-            >
-              {settings?.theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
-            </button>
-            <button
-              onClick={() => setUiFlag("showProfile", true)}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
-              title="Settings & Profile"
-            >
-              <User size={14} />
-            </button>
-            <button
-              onClick={() => setUiFlag("showMemory", true)}
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
-              title="Recent Activity"
-            >
-              <History size={14} />
-            </button>
-            {settings?.sidebarPinned && (
-              <>
-                <div className="w-[1px] h-3.5 bg-zinc-800 mx-0.5"></div>
-                <button
-                  onClick={() => window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*")}
-                  className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition cursor-pointer"
-                  title="Close Sidebar"
-                >
-                  <X size={16} />
-                </button>
-              </>
-            )}
-          </div>
+        {/* Right Side: Action Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={clearHistory}
+            className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-rose-400 hover:bg-rose-400/10 transition cursor-pointer"
+            title="Clear Chat"
+          >
+            <Trash2 size={14} />
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
+            title="Toggle Theme"
+          >
+            {settings?.theme === "light" ? <Moon size={14} /> : <Sun size={14} />}
+          </button>
+          <button
+            onClick={() => setUiFlag("showProfile", true)}
+            className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
+            title="Settings & Profile"
+          >
+            <User size={14} />
+          </button>
+          {settings?.sidebarPinned && (
+            <>
+              <div className="w-[1px] h-3.5 bg-zinc-800 mx-0.5"></div>
+              <button
+                onClick={() => window.parent.postMessage({ source: "ai-job-agent-sidebar", type: "CLOSE_SIDEBAR" }, "*")}
+                className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition cursor-pointer"
+                title="Close Sidebar"
+              >
+                <X size={16} />
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -1199,36 +1149,14 @@ export const ChatWindow = () => {
             INITIALIZING CORE ENGINE...
           </div>
         ) : messages.length === 0 && !(agentState?.isActive) ? (
-          <div className="flex h-full flex-col px-1 justify-center space-y-6 select-none font-sans mt-[-40px]">
-            <div className="flex flex-col text-left py-4 px-3">
-              <h2 className="text-[24px] font-bold text-zinc-100 tracking-tight leading-tight">
-                What would you like Hunter to do?
-              </h2>
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center select-none animate-fade-in">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ff6b35]/10 text-[#ff6b35] mb-4 shadow-sm border border-[#ff6b35]/20">
+              <Search size={22} className="stroke-[2.5]" />
             </div>
-
-            {/* Quick Chips Container */}
-            <div className="w-full px-3">
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Analyze this job",
-                  "Research this company",
-                  "Match my resume",
-                  "Generate cover letter",
-                  "Help me apply",
-                  "Summarize this page"
-                ].map((promptText, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    disabled={isSending}
-                    onClick={() => void submitPrompt(promptText)}
-                    className="rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-1.5 text-[12px] text-[var(--text-muted)] transition-all hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    {promptText}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <h2 className="text-sm font-bold text-zinc-100 tracking-wide">Hunter is ready</h2>
+            <p className="text-xs text-zinc-450 dark:text-zinc-500 max-w-[200px] mt-1 leading-relaxed">
+              Ask Hunter to analyze a job, match your resume, or fill application forms.
+            </p>
           </div>
         ) : (
           /* Conversation Stream */
@@ -1296,31 +1224,6 @@ export const ChatWindow = () => {
 
       {/* Footer */}
       <div className="bg-[var(--bg-primary)] flex flex-col shrink-0 px-3.5 pb-3">
-        {/* Quick Chips (Visible during chat) */}
-        {messages.length > 0 && !(agentState?.isActive) && (
-          <div className="flex overflow-x-auto gap-1.5 pb-2 mb-1 custom-scrollbar">
-            <div className="flex gap-1.5 min-w-max">
-              {[
-                "Analyze this job",
-                "Research this company",
-                "Match my resume",
-                "Generate cover letter",
-                "Help me apply",
-                "Summarize this page"
-              ].map((promptText, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  disabled={isSending}
-                  onClick={() => void submitPrompt(promptText)}
-                  className="whitespace-nowrap shrink-0 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3.5 py-1.5 text-[12px] font-medium text-[var(--text-secondary)] transition-all hover:bg-[var(--bg-primary)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {promptText}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         {/* Input form */}
         <form
           className="border border-[var(--border-color)] bg-[var(--bg-secondary)] rounded-[16px] flex items-center p-2 transition-all duration-200 focus-within:border-[#ff6b35]/50 shadow-sm"
@@ -1358,6 +1261,63 @@ export const ChatWindow = () => {
             </button>
           </div>
         </form>
+
+        {/* Small Suggested actions/chips (Visible below input when Hunter is idle) */}
+        {!(agentState?.isActive) && (
+          <div className="suggestion-chip-wrapper relative flex items-center mt-2.5">
+            {showLeftArrow && (
+              <button
+                type="button"
+                onClick={() => scrollChips("left")}
+                className="suggestion-scroll-btn"
+                style={{ left: "4px" }}
+                title="Scroll Left"
+              >
+                <ChevronLeft size={12} />
+              </button>
+            )}
+
+            <div
+              ref={scrollRef}
+              onScroll={checkScroll}
+              className="flex overflow-x-auto gap-1.5 py-1.5 hide-scrollbar w-full"
+            >
+              <div className="flex gap-1.5 min-w-max px-8 cursor-pointer">
+                {[
+                  { label: "Analyze job", icon: <Sparkles size={11} className="text-[#ff6b35] stroke-[2]" /> },
+                  { label: "Match resume", icon: <Award size={11} className="stroke-[2]" /> },
+                  { label: "Cover letter", icon: <PenTool size={11} className="stroke-[2]" /> },
+                  { label: "Autofill form", icon: <Zap size={11} className="stroke-[2] fill-current text-amber-500" /> },
+                  { label: "Summarize page", icon: <FileText size={11} className="stroke-[2]" /> },
+                  { label: "Company research", icon: <Building2 size={11} className="stroke-[2]" /> }
+                ].map((chip, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    disabled={isSending}
+                    onClick={() => void submitPrompt(chip.label)}
+                    className="suggestion-chip px-2.5 py-1"
+                  >
+                    {chip.icon}
+                    <span className="ml-1">{chip.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {showRightArrow && (
+              <button
+                type="button"
+                onClick={() => scrollChips("right")}
+                className="suggestion-scroll-btn"
+                style={{ right: "4px" }}
+                title="Scroll Right"
+              >
+                <ChevronRight size={12} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
