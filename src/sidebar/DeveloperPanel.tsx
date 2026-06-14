@@ -22,7 +22,12 @@ export const DeveloperPanel = ({
   memory,
   healthChecks
 }: DeveloperPanelProps) => {
-  const [activeTab, setActiveTab] = useState<"diagnostics" | "vision">("diagnostics");
+  const [activeTab, setActiveTab] = useState<"diagnostics" | "vision" | "ai">("diagnostics");
+
+  // AI dynamic storage values
+  const [aiStats, setAiStats] = useState<any[]>([]);
+  const [fallbackEvents, setFallbackEvents] = useState<any[]>([]);
+  const [activeConfig, setActiveConfig] = useState<any>(null);
 
   // Vision Runtime dynamic storage values
   const [visionData, setVisionData] = useState<{
@@ -48,8 +53,12 @@ export const DeveloperPanel = ({
         "lastVisionElements",
         "lastVisionTarget",
         "lastVisionConfidence",
-        "visualMemory"
+        "visualMemory",
+        "aiHealthStats",
+        "aiFallbackEvents"
       ]);
+      const settingsData = await chrome.storage.sync.get("settings");
+      
       setVisionData({
         screenshot: data.lastScreenshot || "",
         elements: data.lastVisionElements || [],
@@ -57,6 +66,21 @@ export const DeveloperPanel = ({
         confidence: data.lastVisionConfidence || 0,
         visualMemory: data.visualMemory?.interactions || []
       });
+
+      if (data.aiHealthStats) {
+        try {
+          const stats = JSON.parse(data.aiHealthStats);
+          setAiStats(Object.values(stats));
+        } catch {}
+      }
+      if (data.aiFallbackEvents) {
+        try {
+          setFallbackEvents(JSON.parse(data.aiFallbackEvents));
+        } catch {}
+      }
+      if (settingsData.settings) {
+        setActiveConfig(settingsData.settings);
+      }
     };
 
     void fetchVisionState();
@@ -97,10 +121,21 @@ export const DeveloperPanel = ({
           >
             Vision Runtime
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("ai")}
+            className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all border ${
+              activeTab === "ai"
+                ? "bg-[#ff6b35]/10 border-[#ff6b35]/50 text-[#ff6b35]"
+                : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            }`}
+          >
+            AI Engine
+          </button>
         </div>
       </div>
 
-      {activeTab === "diagnostics" ? (
+            {activeTab === "diagnostics" && (
         <div className="grid grid-cols-1 gap-2.5">
           {/* Agent status */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
@@ -243,7 +278,9 @@ export const DeveloperPanel = ({
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === "vision" && (
         <div className="space-y-3">
           {/* Screenshot Bounding box preview */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
@@ -319,7 +356,7 @@ export const DeveloperPanel = ({
 
           {/* Visual Memory history */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
-            <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border(--border-color) pb-1 mb-1.5">
+            <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
               Visual Actions Interaction History
             </div>
             <div className="max-h-24 overflow-y-auto space-y-1.5 text-[8.5px] pr-1 custom-scrollbar">
@@ -339,6 +376,76 @@ export const DeveloperPanel = ({
               ))}
               {visionData.visualMemory.length === 0 && (
                 <span className="text-zinc-500 italic">No visual actions recorded yet.</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "ai" && (
+        <div className="grid grid-cols-1 gap-2.5 text-[10px]">
+          {/* Active Configuration */}
+          <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+            <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+              Active Routing Setup
+            </div>
+            <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-secondary)]">
+              <span>Provider: <strong className="text-[var(--text-primary)] uppercase">{activeConfig?.provider || "gemini"}</strong></span>
+              <span>Model: <strong className="text-[var(--text-primary)] truncate block max-w-[100px]">{activeConfig?.model || "default"}</strong></span>
+              <span>Fallback: <strong className="text-[var(--text-primary)] uppercase">{activeConfig?.fallbackProvider || "none"}</strong></span>
+              <span>Streaming: <strong className="text-[var(--text-primary)]">{activeConfig?.streaming ? "Enabled" : "Disabled"}</strong></span>
+              <span>Vision: <strong className="text-[var(--text-primary)] uppercase">{activeConfig?.visionProvider || "chat"}</strong></span>
+              <span>Embedding: <strong className="text-[var(--text-primary)] uppercase">{activeConfig?.embeddingProvider || "chat"}</strong></span>
+            </div>
+          </div>
+
+          {/* Performance & Metrics table */}
+          <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+            <div className="font-bold text-[#ff6b35] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+              Provider Metrics Monitoring
+            </div>
+            <div className="max-h-24 overflow-y-auto space-y-1.5 text-[9px] text-[var(--text-secondary)] pr-1 custom-scrollbar">
+              {aiStats.length > 0 ? (
+                aiStats.map((stat, idx) => (
+                  <div key={idx} className="border-b border-[var(--border-color)]/60 pb-1.5 last:border-0 last:pb-0 mb-1.5 last:mb-0">
+                    <div className="flex justify-between items-center font-bold">
+                      <span className="uppercase text-[var(--text-primary)]">{stat.provider}</span>
+                      <span className={stat.isAvailable ? "text-emerald-500" : "text-rose-500"}>
+                        {stat.isAvailable ? "ONLINE" : "OFFLINE"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-2 text-[8px] text-[var(--text-muted)] mt-0.5">
+                      <span>Latency: {stat.averageLatencyMs}ms</span>
+                      <span>Success/Fail: {stat.successCount}/{stat.failureCount}</span>
+                      <span>Tokens: {stat.totalTokens}</span>
+                      <span>Est. Cost: ${stat.totalCostEstimate.toFixed(5)}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <span className="text-[var(--text-muted)] italic">No provider calls logged yet.</span>
+              )}
+            </div>
+          </div>
+
+          {/* Fallback Routing events */}
+          <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
+            <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+              Fallback Routing Events
+            </div>
+            <div className="max-h-24 overflow-y-auto space-y-1.5 text-[9px] text-[var(--text-secondary)] pr-1 custom-scrollbar">
+              {fallbackEvents.length > 0 ? (
+                fallbackEvents.map((evt, idx) => (
+                  <div key={idx} className="border-b border-[var(--border-color)]/60 pb-1 last:border-0 last:pb-0 mb-1 last:mb-0">
+                    <div className="flex justify-between items-center font-bold text-[8px]">
+                      <span className="text-rose-500 uppercase">{evt.fromProvider} ➔ {evt.toProvider}</span>
+                      <span className="text-[var(--text-muted)] text-[7px]">{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <p className="italic text-[8px] text-[var(--text-muted)] mt-0.5 leading-snug">Reason: {evt.reason}</p>
+                  </div>
+                ))
+              ) : (
+                <span className="text-[var(--text-muted)] italic">No fallback events occurred.</span>
               )}
             </div>
           </div>

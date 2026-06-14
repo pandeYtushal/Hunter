@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/95</span>
+                <span class='fraction'>0/116</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/95</span>
+                <span class='fraction'>0/116</span>
             </div>
         
             
@@ -158,7 +158,49 @@
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
 <a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -256,6 +298,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import type { UserProfile } from "./storage";</span></span></span>
 <span class="cstat-no" title="statement not covered" >export type ThemeMode = "light" | "dark" | "system";</span>
 <span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export interface VisualBounds {</span>
+<span class="cstat-no" title="statement not covered" >  ymin: number;</span>
+<span class="cstat-no" title="statement not covered" >  xmin: number;</span>
+<span class="cstat-no" title="statement not covered" >  ymax: number;</span>
+<span class="cstat-no" title="statement not covered" >  xmax: number;</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export interface PageSnapshot {</span>
 <span class="cstat-no" title="statement not covered" >  title: string;</span>
 <span class="cstat-no" title="statement not covered" >  url: string;</span>
@@ -309,7 +358,14 @@
 <span class="cstat-no" title="statement not covered" >  | { type: "NAVIGATE_PAGE"; url: string }</span>
 <span class="cstat-no" title="statement not covered" >  | { type: "UPLOAD_RESUME" }</span>
 <span class="cstat-no" title="statement not covered" >  | { type: "GET_ACTIVE_TAB" }</span>
-<span class="cstat-no" title="statement not covered" >  | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage };</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "HIGHLIGHT_DOM_ELEMENT"; selector: string; text?: string }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "SCROLL_TO_ELEMENT"; selector: string }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "HOVER_ELEMENT"; selector: string }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "FOCUS_INPUT"; selector: string }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "LOCATE_ELEMENT_BY_BOUNDS"; bounds: VisualBounds }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "SHOW_VISUAL_OVERLAY"; elements: any[] }</span>
+<span class="cstat-no" title="statement not covered" >  | { type: "HIDE_VISUAL_OVERLAY" };</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export interface RuntimeResponseMap {</span>
 <span class="cstat-no" title="statement not covered" >  PING: { ok: true };</span>
@@ -341,6 +397,13 @@
 <span class="cstat-no" title="statement not covered" >  UPLOAD_RESUME: { ok: true } | { ok: false; error: string };</span>
 <span class="cstat-no" title="statement not covered" >  GET_ACTIVE_TAB: { tab?: { id?: number; url?: string; title?: string } };</span>
 <span class="cstat-no" title="statement not covered" >  SEND_TO_ACTIVE_TAB: any;</span>
+<span class="cstat-no" title="statement not covered" >  HIGHLIGHT_DOM_ELEMENT: { ok: true } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  SCROLL_TO_ELEMENT: { ok: true } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  HOVER_ELEMENT: { ok: true } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  FOCUS_INPUT: { ok: true } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  LOCATE_ELEMENT_BY_BOUNDS: { ok: true; selector: string } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  SHOW_VISUAL_OVERLAY: { ok: true } | { ok: false; error: string };</span>
+<span class="cstat-no" title="statement not covered" >  HIDE_VISUAL_OVERLAY: { ok: true } | { ok: false; error: string };</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export type RuntimeMessageType = RuntimeMessage["type"];</span>
@@ -355,7 +418,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

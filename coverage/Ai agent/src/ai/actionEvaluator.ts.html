@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/108</span>
+                <span class='fraction'>0/92</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/108</span>
+                <span class='fraction'>0/92</span>
             </div>
         
             
@@ -155,39 +155,7 @@
 <a name='L90'></a><a href='#L90'>90</a>
 <a name='L91'></a><a href='#L91'>91</a>
 <a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a>
-<a name='L102'></a><a href='#L102'>102</a>
-<a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a>
-<a name='L106'></a><a href='#L106'>106</a>
-<a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a>
-<a name='L109'></a><a href='#L109'>109</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L93'></a><a href='#L93'>93</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -283,6 +251,7 @@
 <span class="cstat-no" title="statement not covered" >import { robustJsonParse } from "../shared/json";</span>
 <span class="cstat-no" title="statement not covered" >import type { PageSnapshot } from "../shared/types/messages";</span>
 <span class="cstat-no" title="statement not covered" >import type { ActionType } from "../types";</span>
+<span class="cstat-no" title="statement not covered" >import { PromptManager } from "./core/PromptManager";</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export interface EvaluationResult {</span>
 <span class="cstat-no" title="statement not covered" >  success: boolean;</span>
@@ -353,24 +322,7 @@
 <span class="cstat-no" title="statement not covered" >      } catch {}</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >    // AI evaluation for high-stakes actions only (fill_form, click_element, fill_input)</span>
-<span class="cstat-no" title="statement not covered" >    const prompt = `You are an AI Action Evaluator for Hunter, an autonomous browser agent.</span>
-<span class="cstat-no" title="statement not covered" >Action performed: "${action}"</span>
-<span class="cstat-no" title="statement not covered" >Resulting Output: "${result.slice(0, 1500)}"</span>
-<span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >Webpage Title: "${pageContext?.title || "Unknown"}"</span>
-<span class="cstat-no" title="statement not covered" >Webpage URL: "${pageContext?.url || "Unknown"}"</span>
-<span class="cstat-no" title="statement not covered" >Webpage Excerpt:</span>
-<span class="cstat-no" title="statement not covered" >${pageContext?.content?.slice(0, 3000) || "No snapshot available"}</span>
-<span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >Evaluate whether the action accomplished its goal. For form-filling actions, check if essential inputs were populated. For navigation or element interaction, verify the interaction succeeded.</span>
-<span class="cstat-no" title="statement not covered" >Return a clean, valid JSON block. Do not include comments or markdown fences:</span>
-<span class="cstat-no" title="statement not covered" >{</span>
-<span class="cstat-no" title="statement not covered" >  "success": true,</span>
-<span class="cstat-no" title="statement not covered" >  "confidence": 0.9,</span>
-<span class="cstat-no" title="statement not covered" >  "issues": [],</span>
-<span class="cstat-no" title="statement not covered" >  "recommendations": []</span>
-<span class="cstat-no" title="statement not covered" >}`;</span>
+<span class="cstat-no" title="statement not covered" >    const prompt = PromptManager.getActionEvaluatorPrompt(action, result, pageContext);</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      const reply = await generateAiReply({ prompt, history: [] });</span>
@@ -394,7 +346,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

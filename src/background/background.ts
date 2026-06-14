@@ -1,4 +1,6 @@
 import { generateAiReply } from "../ai/aiService";
+import { AIManager } from "../ai/core/AIManager";
+import { PromptManager } from "../ai/core/PromptManager";
 import { extractJobDetails } from "../ai/jobAgent";
 import { parseResumeText } from "../ai/resumeAgent";
 import { analyzeJobFit } from "../ai/matchAgent";
@@ -256,6 +258,34 @@ addMessageListener(async (message, sender) => {
 
     default:
       return { ok: true };
+  }
+});
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === "stream-chat") {
+    port.onMessage.addListener(async (msg) => {
+      const { prompt, pageContext, history, profile } = msg;
+      try {
+        const systemInstruction = PromptManager.getSystemInstruction(pageContext, profile);
+        const settings = await getStorageValue("settings");
+        
+        const response = await AIManager.getInstance().streamChat(
+          {
+            prompt,
+            systemInstruction,
+            history,
+            temperature: settings?.temperature,
+            maxTokens: settings?.maxTokens
+          },
+          (chunk) => {
+            port.postMessage({ type: "chunk", text: chunk });
+          }
+        );
+        port.postMessage({ type: "done", response });
+      } catch (err: any) {
+        port.postMessage({ type: "error", error: err.message });
+      }
+    });
   }
 });
 

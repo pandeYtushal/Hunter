@@ -9,20 +9,15 @@ HUNTERR is an open-source, private-by-design Chrome Manifest V3 extension that a
 HUNTERR is built from the ground up to guarantee complete data sovereignty. Since job applications contain highly personal information (resumes, contact details) and require private API keys, the extension implements a strict zero-trust sandbox:
 
 1. **Local-Only Storage**: All user settings, profile details, resume content, and chat history are saved securely inside your browser's private container using `chrome.storage.sync` and `chrome.storage.local`. No external server ever stores or tracks your profile.
-2. **Direct Client-to-LLM Connections**: API keys are never sent to a middleman proxy or database. All requests to AI models (Google Gemini, OpenAI, Claude, and Groq) are made directly from the extension's background worker to the official API endpoints:
-   - `generativelanguage.googleapis.com` (Google)
-   - `api.openai.com` (OpenAI)
-   - `api.anthropic.com` (Anthropic)
-   - `api.groq.com` (Groq)
-3. **Double Isolation Sandbox**: The chat panel UI runs inside a sandboxed `iframe` served from `chrome-extension://` sources, embedded inside a custom-element Web Component (`ai-job-agent`) with an **isolated Shadow DOM**. Due to browser **Same-Origin Policy (SOP)**, scripts running on the host job-board webpage (e.g. LinkedIn or greenhouse.io) cannot read the iframe's DOM, inspect inputs, or steal your resume details or API keys.
-4. **Client-Side PDF Parsing**: Resume uploads are parsed locally inside the extension sandbox using `PDF.js`. Your CV is never sent to a document parsing server.
-5. **Least-Privilege Model**: Only requests permissions absolutely necessary for automation (`activeTab`, `storage`, `tabs`, `scripting`).
+2. **Direct Client-to-LLM Connections**: API keys are never sent to a middleman proxy or database. All requests to AI models (Google Gemini, OpenAI, Claude, Groq, OpenRouter, DeepSeek, and Ollama) are made directly from the extension's background worker to the official API endpoints or local services.
+3. **API Key Obfuscation**: To protect sensitive credentials saved in sync storage, all API keys are obfuscated and stored encrypted using a key-based XOR and Base64 cipher, and decrypted only in-memory when constructing the provider clients.
+4. **Double Isolation Sandbox**: The chat panel UI runs inside a sandboxed `iframe` served from `chrome-extension://` sources, embedded inside a custom-element Web Component (`ai-job-agent`) with an **isolated Shadow DOM**. Due to browser **Same-Origin Policy (SOP)**, scripts running on the host job-board webpage (e.g. LinkedIn or greenhouse.io) cannot read the iframe's DOM, inspect inputs, or steal your resume details or API keys.
+5. **Client-Side PDF Parsing**: Resume uploads are parsed locally inside the extension sandbox using `PDF.js`. Your CV is never sent to a document parsing server.
+6. **Least-Privilege Model**: Only requests permissions absolutely necessary for automation (`activeTab`, `storage`, `tabs`, `scripting`).
 
 ---
 
 ## Architecture and Working Principle
-
-The extension operates via three main components working together:
 
 ```mermaid
 graph TD
@@ -43,13 +38,29 @@ graph TD
 - Serves as the central state hub and communication bridge.
 - Listens to background events and coordinates message passing between the React sidebar UI and the content scripts.
 - Orchestrates multi-agent execution flows via the AI planning services.
+- Manages progressive token streaming from the AI providers to the sidebar UI.
 
 ### 3. Sidebar Chat Interface (`src/sidebar/ChatWindow.tsx`)
 - Renders inside the sandboxed iframe.
 - Connects directly to local storage to load configuration settings, chat logs, and resume details.
 - Handles light/dark theme variables and user chat prompt submissions.
 
-### 4. AI Agent Core (`src/ai/` and `src/agents/`)
+### 4. AI Provider Abstraction Layer (`src/ai/`)
+To prevent direct lock-in with any specific provider, Hunter routes all AI queries (chat, streaming, vision, and embeddings) through a provider-agnostic core orchestrator:
+- **AI Manager (`src/ai/core/AIManager.ts`)**: Decouples the extension from direct provider APIs, executing requests with dynamic 5-level routing fallbacks (Primary Retry -> Configured Fallback -> Alternative Dynamic Fallback).
+- **Capability Registry (`src/ai/core/CapabilityRegistry.ts`)**: Maintains capabilities mapping (e.g. streaming, vision, embeddings, function calling) for each provider, ensuring requests are only sent to supported endpoints.
+- **Provider Health Tracker (`src/ai/core/ProviderHealth.ts`)**: Logs provider performance stats (average latency rolling average, total token counts, rate limits, and estimated API usage costs) and triggers automatic offline state routing when threshold failures occur.
+- **Prompt Manager (`src/ai/core/PromptManager.ts`)**: Centralizes all structured prompting templates (planner, reasoning engine, cover letter agent, resume parser, visual coordinate locator).
+- **Provider Plugins (`src/ai/providers/`)**: Pluggable client drivers for:
+  - Google Gemini (`GeminiProvider.ts`)
+  - OpenAI (`OpenAIProvider.ts`)
+  - Anthropic Claude (`ClaudeProvider.ts`)
+  - Groq (`GroqProvider.ts`)
+  - OpenRouter (`OpenRouterProvider.ts`)
+  - DeepSeek (`DeepSeekProvider.ts`)
+  - Ollama (`OllamaProvider.ts`) - local LLM service tracking cost as $0.00.
+
+### 5. AI Agent Core (`src/agents/` / reasoning)
 - **Planner (`planner.ts`)**: Decodes user requests (e.g. "autofill form", "generate cover letter") into structured agent execution steps.
 - **Executor (`executor.ts`)**: Drives the manager to guide specific agents through sequential steps.
 - **Specialized Agents**:
@@ -67,8 +78,8 @@ graph TD
 HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page automation even when webpage DOM elements are custom-rendered (e.g. Canvas inputs, custom style checkboxes) or obfuscated.
 
 - **Low DOM Confidence Fallback**: When DOM parsing yields low confidence (content matches < 300 characters), the **ReasoningEngine** automatically switches selectors to vision equivalent tools (`vision_click`, `vision_fill`, `vision_analyze`).
-- **Multimodal Visual Capturing**: Compresses screenshots to 80% JPEG quality and applies simple TTL caches to minimize Gemini API calls.
-- **Intersection-over-Union (IoU) Locator**: Matches normalized coordinate maps `[0-1000]` returned by Gemini Vision to active DOM elements using viewport pixel ratios and center proximity scores.
+- **Multimodal Visual Capturing**: Compresses screenshots to 80% JPEG quality and applies simple TTL caches to minimize Gemini/OpenAI Vision API calls.
+- **Intersection-over-Union (IoU) Locator**: Matches normalized coordinate maps `[0-1000]` returned by AI Vision to active DOM elements using viewport pixel ratios and center proximity scores.
 - **Visual Actions Overlay**: Highlights the target element with a glowing dashed orange box, displays its name and confidence score, and prompts for confirmation before execution.
 - **Developer mode logs**: Captures active screenshots, elements bounding boxes, chosen targets, and visual memory interactions inside the console.
 
@@ -79,7 +90,7 @@ HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page
 - **Framework**: React 18, TypeScript, Tailwind CSS v3
 - **Build Tool**: Vite (configured for bundle splitting extension assets)
 - **APIs**: Chrome Extension Manifest V3 (Background Service Workers, Content Script Injection, Chrome Storage API)
-- **AI Integrations**: Direct client-side fetch calls using user-supplied API keys (no middleware servers needed)
+- **AI Integrations**: Direct client-side calls routed through `AIManager` using user-supplied API keys (XOR obfuscated) or local service endpoints (such as Ollama).
 
 ---
 

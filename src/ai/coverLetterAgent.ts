@@ -2,6 +2,7 @@ import { generateAiReply } from "./aiService";
 import type { PageSnapshot } from "../shared/types/messages";
 import type { UserProfile } from "../shared/types/storage";
 import { robustJsonParse } from "../shared/json";
+import { PromptManager } from "./core/PromptManager";
 
 export interface GeneratedCoverLetter {
   company: string;
@@ -13,27 +14,7 @@ export const generateCoverLetter = async (
   pageContext: PageSnapshot,
   profile: UserProfile
 ): Promise<GeneratedCoverLetter> => {
-  const prompt = `You are an expert career coaching agent. Write a professional, concise, and highly tailored cover letter for the candidate applying to the job page context.
-Use the candidate's name, email, phone, skills, and work experience from their profile, and align them with the job requirements. Keep it professional and follow standard cover letter structures (salutations, opening pitch, alignment body, closing call to action, and formal signature).
-
-User Profile:
-- Name: ${profile.name || "Candidate"}
-- Email: ${profile.email || ""}
-- Phone: ${profile.phone || ""}
-- Skills: ${profile.skills.join(", ") || ""}
-- Experience: ${profile.experience || ""}
-
-Job Context:
-- Title/Role: ${pageContext.title}
-- Company/Host: ${pageContext.host || "the Company"}
-- Page Content: ${pageContext.content || ""}
-
-Return a clean, valid JSON object with the following keys. Do not include any markdown formatting, surrounding text, or explanation, just the raw JSON block:
-{
-  "company": "Company Name",
-  "role": "Job Role / Title",
-  "coverLetter": "Complete letter body text including contact header, subject, date, salutations, body paragraphs, and sign-off."
-}`;
+  const prompt = PromptManager.getCoverLetterPrompt(profile, pageContext);
 
   const responseText = await generateAiReply({
     prompt,

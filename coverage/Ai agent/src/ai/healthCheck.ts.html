@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/62</span>
+                <span class='fraction'>0/74</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/62</span>
+                <span class='fraction'>0/74</span>
             </div>
         
             
@@ -125,7 +125,31 @@
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a>
 <a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -190,7 +214,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { storage } from "../shared/storage";</span></span></span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export interface HealthCheckResult {</span>
-<span class="cstat-no" title="statement not covered" >  name: "Gemini connectivity" | "Storage access" | "Content script availability" | "Background worker availability";</span>
+<span class="cstat-no" title="statement not covered" >  name: "AI connectivity" | "Storage access" | "Content script availability" | "Background worker availability";</span>
 <span class="cstat-no" title="statement not covered" >  ok: boolean;</span>
 <span class="cstat-no" title="statement not covered" >  message: string;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
@@ -241,10 +265,22 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const settings = await storage.get("settings");</span>
+<span class="cstat-no" title="statement not covered" >  const hasKey = Boolean(</span>
+<span class="cstat-no" title="statement not covered" >    settings.apiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    settings.openaiApiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    settings.anthropicApiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    settings.groqApiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    settings.openrouterApiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    settings.deepseekApiKey?.trim() ||</span>
+<span class="cstat-no" title="statement not covered" >    (settings.provider === "ollama" &amp;&amp; settings.ollamaUrl?.trim())</span>
+<span class="cstat-no" title="statement not covered" >  );</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  results.push({</span>
-<span class="cstat-no" title="statement not covered" >    name: "Gemini connectivity",</span>
-<span class="cstat-no" title="statement not covered" >    ok: Boolean(settings.apiKey?.trim() || settings.openaiApiKey?.trim() || settings.anthropicApiKey?.trim() || settings.groqApiKey?.trim()),</span>
-<span class="cstat-no" title="statement not covered" >    message: "At least one AI provider key is configured."</span>
+<span class="cstat-no" title="statement not covered" >    name: "AI connectivity",</span>
+<span class="cstat-no" title="statement not covered" >    ok: hasKey,</span>
+<span class="cstat-no" title="statement not covered" >    message: hasKey</span>
+<span class="cstat-no" title="statement not covered" >      ? "At least one AI provider key or service URL is configured."</span>
+<span class="cstat-no" title="statement not covered" >      : "No AI provider keys or service URLs configured."</span>
 <span class="cstat-no" title="statement not covered" >  });</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return results;</span>
@@ -256,7 +292,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

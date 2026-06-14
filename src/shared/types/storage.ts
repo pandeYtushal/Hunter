@@ -22,7 +22,17 @@ export interface AgentSettings {
   openaiApiKey?: string;
   anthropicApiKey?: string;
   groqApiKey?: string;
-  provider?: "gemini" | "openai" | "anthropic" | "groq";
+  openrouterApiKey?: string;
+  deepseekApiKey?: string;
+  ollamaUrl?: string;
+  provider?: "gemini" | "openai" | "anthropic" | "groq" | "openrouter" | "deepseek" | "ollama";
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  fallbackProvider?: "gemini" | "openai" | "anthropic" | "groq" | "openrouter" | "deepseek" | "ollama" | "none";
+  streaming?: boolean;
+  visionProvider?: "gemini" | "openai" | "anthropic" | "openrouter" | "ollama" | "none";
+  embeddingProvider?: "gemini" | "openai" | "openrouter" | "ollama" | "none";
 }
 
 export interface UserProfile {
@@ -70,7 +80,17 @@ export const defaultStorage: StorageSchema = {
     openaiApiKey: "",
     anthropicApiKey: "",
     groqApiKey: "",
-    provider: "gemini"
+    openrouterApiKey: "",
+    deepseekApiKey: "",
+    ollamaUrl: "http://localhost:11434",
+    provider: "gemini",
+    model: "",
+    temperature: 0.6,
+    maxTokens: 1024,
+    fallbackProvider: "none",
+    streaming: false,
+    visionProvider: "none",
+    embeddingProvider: "none"
   },
   sidebarOpen: false,
   profile: {

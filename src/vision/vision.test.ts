@@ -61,7 +61,7 @@ describe("Vision Service", () => {
 
   it("fails when API Key is missing", async () => {
     vi.mocked(storage.get).mockResolvedValue(null);
-    await expect(VisionService.analyzePage(1, "find submit")).rejects.toThrow("Missing Gemini API Key");
+    await expect(VisionService.analyzePage(1, "find submit")).rejects.toThrow("Gemini API key is not configured");
   });
 
   it("sends fetch calls and saves screenshot metadata on success", async () => {

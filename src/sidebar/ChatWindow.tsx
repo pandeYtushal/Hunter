@@ -928,6 +928,71 @@ export const ChatWindow = () => {
 
     try {
       const pageContext = await requestPageSnapshot();
+      const settings = await storage.get("settings").catch(() => null);
+
+      if (settings?.streaming) {
+        const assistantMsgId = crypto.randomUUID();
+        const assistantMessage: ChatMessage = {
+          id: assistantMsgId,
+          role: "assistant",
+          content: "",
+          createdAt: new Date().toISOString()
+        };
+
+        setMessages((current) => [...current, assistantMessage]);
+
+        const profile = await storage.get("profile").catch(() => undefined);
+        const port = chrome.runtime.connect({ name: "stream-chat" });
+
+        port.postMessage({
+          prompt,
+          pageContext,
+          history: rollbackMessages.map(m => ({ role: m.role, content: m.content })),
+          profile
+        });
+
+        let accumulatedText = "";
+
+        port.onMessage.addListener(async (msg) => {
+          if (msg.type === "chunk") {
+            accumulatedText += msg.text;
+            setMessages((current) =>
+              current.map((m) =>
+                m.id === assistantMsgId
+                  ? { ...m, content: accumulatedText }
+                  : m
+              )
+            );
+          } else if (msg.type === "done") {
+            port.disconnect();
+            const finalAssistantMsg = {
+              id: assistantMsgId,
+              role: "assistant" as const,
+              content: accumulatedText,
+              createdAt: new Date().toISOString()
+            };
+            const nextHistory = [...rollbackMessages, localUserMessage, finalAssistantMsg].slice(-40);
+            await storage.set("chatHistory", nextHistory);
+            setMessages(nextHistory);
+            setIsSending(false);
+            isSendingRef.current = false;
+          } else if (msg.type === "error") {
+            port.disconnect();
+            setMessages(rollbackMessages);
+            setError(msg.error || "Streaming failed.");
+            setIsSending(false);
+            isSendingRef.current = false;
+          }
+        });
+
+        port.onDisconnect.addListener(() => {
+          setIsSending(false);
+          isSendingRef.current = false;
+        });
+
+        return;
+      }
+
       const response = (await chrome.runtime.sendMessage({
         type: "SEND_CHAT_MESSAGE",
         prompt,
@@ -954,8 +1019,11 @@ export const ChatWindow = () => {
       setMessages(rollbackMessages);
       setError("API could not respond. Check your API key, connection, and extension permissions.");
     } finally {
-      setIsSending(false);
-      isSendingRef.current = false;
+      const settings = await storage.get("settings").catch(() => null);
+      if (!settings?.streaming) {
+        setIsSending(false);
+        isSendingRef.current = false;
+      }
     }
   }, []); // FIX 2: stable — no deps that cause needless rebuilds
 

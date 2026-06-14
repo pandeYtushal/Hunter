@@ -4,6 +4,7 @@ import { useTheme } from "./hooks/useTheme";
 import { sendMessageToActiveTab } from "../shared/chromeRuntime";
 import type { PageSnapshot, SidebarStatus } from "../shared/types/messages";
 import { Settings, Key, X, Bot, AlertCircle, Zap, Sun, Moon } from "lucide-react";
+import { Encryption } from "../shared/encryption";
 
 const emptySnapshot: PageSnapshot = {
   title: "No page connected",
@@ -29,8 +30,21 @@ export const App = () => {
         ? settings.anthropicApiKey?.trim()
         : settings?.provider === "groq"
           ? settings.groqApiKey?.trim()
-          : settings?.apiKey?.trim()
+          : settings?.provider === "openrouter"
+            ? settings.openrouterApiKey?.trim()
+            : settings?.provider === "deepseek"
+              ? settings.deepseekApiKey?.trim()
+              : settings?.provider === "ollama"
+                ? true
+                : settings?.apiKey?.trim()
   );
+
+  const decryptedApiKey = Encryption.decrypt(settings?.apiKey || "");
+  const decryptedOpenaiApiKey = Encryption.decrypt(settings?.openaiApiKey || "");
+  const decryptedAnthropicApiKey = Encryption.decrypt(settings?.anthropicApiKey || "");
+  const decryptedGroqApiKey = Encryption.decrypt(settings?.groqApiKey || "");
+  const decryptedOpenrouterApiKey = Encryption.decrypt(settings?.openrouterApiKey || "");
+  const decryptedDeepseekApiKey = Encryption.decrypt(settings?.deepseekApiKey || "");
 
   // Fetch active tab snapshot & read current sidebar status
   useEffect(() => {
@@ -147,7 +161,7 @@ export const App = () => {
               </button>
             </div>
 
-            <div className="space-y-2 text-[10.5px]">
+            <div className="space-y-2 text-[10.5px] max-h-[175px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="space-y-0.5">
                 <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Model Provider</label>
                 <select
@@ -159,6 +173,9 @@ export const App = () => {
                   <option value="openai">OpenAI (ChatGPT)</option>
                   <option value="anthropic">Anthropic Claude</option>
                   <option value="groq">Groq (Llama 3)</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="ollama">Ollama (Local)</option>
                 </select>
               </div>
 
@@ -176,8 +193,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={settings.apiKey || ""}
-                    onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
+                    value={decryptedApiKey}
+                    onChange={(e) => setSettings({ ...settings, apiKey: Encryption.encrypt(e.target.value) })}
                     placeholder="AI Studio API Key"
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -198,8 +215,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={settings.openaiApiKey || ""}
-                    onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
+                    value={decryptedOpenaiApiKey}
+                    onChange={(e) => setSettings({ ...settings, openaiApiKey: Encryption.encrypt(e.target.value) })}
                     placeholder="sk-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -220,8 +237,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={settings.anthropicApiKey || ""}
-                    onChange={(e) => setSettings({ ...settings, anthropicApiKey: e.target.value })}
+                    value={decryptedAnthropicApiKey}
+                    onChange={(e) => setSettings({ ...settings, anthropicApiKey: Encryption.encrypt(e.target.value) })}
                     placeholder="sk-ant-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -242,17 +259,171 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={settings.groqApiKey || ""}
-                    onChange={(e) => setSettings({ ...settings, groqApiKey: e.target.value })}
+                    value={decryptedGroqApiKey}
+                    onChange={(e) => setSettings({ ...settings, groqApiKey: Encryption.encrypt(e.target.value) })}
                     placeholder="gsk_..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
                 </div>
               )}
 
+              {settings.provider === "openrouter" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">OpenRouter Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={decryptedOpenrouterApiKey}
+                    onChange={(e) => setSettings({ ...settings, openrouterApiKey: Encryption.encrypt(e.target.value) })}
+                    placeholder="sk-or-..."
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              {settings.provider === "deepseek" && (
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">DeepSeek Key</label>
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="text-[8px] font-mono text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer"
+                    >
+                      {showKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={decryptedDeepseekApiKey}
+                    onChange={(e) => setSettings({ ...settings, deepseekApiKey: Encryption.encrypt(e.target.value) })}
+                    placeholder="sk-..."
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              {settings.provider === "ollama" && (
+                <div className="space-y-0.5">
+                  <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Ollama API URL</label>
+                  <input
+                    type="text"
+                    value={settings.ollamaUrl || ""}
+                    onChange={(e) => setSettings({ ...settings, ollamaUrl: e.target.value })}
+                    placeholder="http://localhost:11434"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Custom Model Name</label>
+                <input
+                  type="text"
+                  value={settings.model || ""}
+                  onChange={(e) => setSettings({ ...settings, model: e.target.value })}
+                  placeholder="Default Model"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <div className="w-1/2 space-y-0.5">
+                  <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Temp</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={settings.temperature !== undefined ? settings.temperature : 0.6}
+                    onChange={(e) => setSettings({ ...settings, temperature: parseFloat(e.target.value) })}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition"
+                  />
+                </div>
+                <div className="w-1/2 space-y-0.5">
+                  <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Max Tokens</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="8192"
+                    value={settings.maxTokens !== undefined ? settings.maxTokens : 1024}
+                    onChange={(e) => setSettings({ ...settings, maxTokens: parseInt(e.target.value, 10) })}
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Fallback Provider</label>
+                <select
+                  value={settings.fallbackProvider || "none"}
+                  onChange={(e) => setSettings({ ...settings, fallbackProvider: e.target.value as any })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+                >
+                  <option value="none">None</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Claude</option>
+                  <option value="groq">Groq</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="ollama">Ollama</option>
+                </select>
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Vision Provider</label>
+                <select
+                  value={settings.visionProvider || "none"}
+                  onChange={(e) => setSettings({ ...settings, visionProvider: e.target.value as any })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+                >
+                  <option value="none">Use Chat Provider</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Claude</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="ollama">Ollama</option>
+                </select>
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Embedding Provider</label>
+                <select
+                  value={settings.embeddingProvider || "none"}
+                  onChange={(e) => setSettings({ ...settings, embeddingProvider: e.target.value as any })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+                >
+                  <option value="none">Use Chat Provider</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="ollama">Ollama</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between py-1 text-[9.5px]">
+                <span className="font-mono text-[var(--text-muted)] uppercase tracking-wider">Enable Chat Streaming</span>
+                <input
+                  type="checkbox"
+                  checked={settings.streaming || false}
+                  onChange={(e) => setSettings({ ...settings, streaming: e.target.checked })}
+                  className="accent-[#ff6b35] cursor-pointer"
+                />
+              </div>
+
               <div className="flex items-center justify-between border-t border-[var(--border-color)] pt-2 text-[9.5px]">
                 <span className="font-mono text-[var(--text-muted)] uppercase tracking-wider">Sidebar Layout</span>
                 <button
+                  type="button"
                   onClick={() => setSettings({ ...settings, sidebarPinned: !settings.sidebarPinned })}
                   className={`font-mono px-2 py-0.5 rounded border transition-all uppercase cursor-pointer ${settings.sidebarPinned
                     ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"

@@ -2,6 +2,7 @@ import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
 import type { PageSnapshot } from "../shared/types/messages";
 import type { ActionType } from "../types";
+import { PromptManager } from "./core/PromptManager";
 
 export interface EvaluationResult {
   success: boolean;
@@ -72,24 +73,7 @@ export const ActionEvaluator = {
       } catch {}
     }
 
-    // AI evaluation for high-stakes actions only (fill_form, click_element, fill_input)
-    const prompt = `You are an AI Action Evaluator for Hunter, an autonomous browser agent.
-Action performed: "${action}"
-Resulting Output: "${result.slice(0, 1500)}"
-
-Webpage Title: "${pageContext?.title || "Unknown"}"
-Webpage URL: "${pageContext?.url || "Unknown"}"
-Webpage Excerpt:
-${pageContext?.content?.slice(0, 3000) || "No snapshot available"}
-
-Evaluate whether the action accomplished its goal. For form-filling actions, check if essential inputs were populated. For navigation or element interaction, verify the interaction succeeded.
-Return a clean, valid JSON block. Do not include comments or markdown fences:
-{
-  "success": true,
-  "confidence": 0.9,
-  "issues": [],
-  "recommendations": []
-}`;
+    const prompt = PromptManager.getActionEvaluatorPrompt(action, result, pageContext);
 
     try {
       const reply = await generateAiReply({ prompt, history: [] });

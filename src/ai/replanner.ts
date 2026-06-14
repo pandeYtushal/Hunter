@@ -1,6 +1,7 @@
 import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
 import type { ActionType, ExecutionPlan } from "../types";
+import { PromptManager } from "./core/PromptManager";
 
 export interface ReplanResult {
   newActions: ActionType[];
@@ -16,36 +17,14 @@ export const Replanner = {
     completedActions: ActionType[],
     memoryContext?: string
   ): Promise<ReplanResult> {
-    const prompt = `You are a cognitive planning agent for an Autonomous Browser Job Search Assistant.
-The user's goal is: "${goal}"
-Current Plan: ${JSON.stringify(currentPlan.actions)}
-Completed Steps: ${JSON.stringify(completedActions)}
-Failed Action: "${failedAction}"
-Failure Reason: "${failureReason}"
-${memoryContext ? `Execution History Memory context:\n${memoryContext}` : ""}
-
-Analyze this failure and generate a revised action list. Do not get stuck in a failure loop. If an action is blocked, you can use general webpage interaction fallback actions (like click_element, navigate_page, extract_text, fill_input) or skip unnecessary steps.
-
-Available Actions:
-- "extract_job": Read page HTML to extract structured job info.
-- "match_resume": Synthesize resume skills alignment and match score.
-- "generate_cover_letter": Generate tailored cover letter text.
-- "fill_form": Run heuristic and FormAgent matches to populate input fields.
-- "research_company": Pull company summary, culture, and interview prep tips.
-- "save_job": Persist extracted job details into application tracking storage.
-- "parse_resume": Extract candidate profile from resume text.
-- "click_element": Click a specific link, button, or tab.
-- "fill_input": Set the value of an input field.
-- "extract_text": Extract clean raw page text.
-- "navigate_page": Go to a target URL or section.
-- "upload_resume": Highlight file inputs for resume manual uploads.
-- "chat_fallback": General fallback chat answer.
-
-Return a clean, valid JSON block specifying the new remaining action list to execute. Do not include comments or markdown fences:
-{
-  "newActions": ["action_1", "action_2", ...],
-  "explanation": "Brief reasoning explaining how this plan recovers from the failure"
-}`;
+    const prompt = PromptManager.getReplannerPrompt(
+      goal,
+      currentPlan.actions,
+      completedActions,
+      failedAction,
+      failureReason,
+      memoryContext
+    );
 
     try {
       const responseText = await generateAiReply({

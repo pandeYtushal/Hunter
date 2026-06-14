@@ -1,0 +1,281 @@
+import type { AIProvider } from "./AIProvider";
+import type { AIRequest } from "../types/AIRequest";
+import type { AIResponse } from "../types/AIResponse";
+import type { VisionRequest } from "../types/VisionRequest";
+import type { VisionResponse } from "../types/VisionResponse";
+import type { EmbeddingRequest } from "../types/EmbeddingRequest";
+import type { ProviderCapabilities } from "../types/ProviderCapabilities";
+import { CapabilityRegistry } from "../core/CapabilityRegistry";
+import { AI_CONFIG } from "../core/AIConfig";
+import { ProviderHealth } from "../core/ProviderHealth";
+import { robustJsonParse } from "../../shared/json";
+import { VisionParser } from "../../vision/VisionParser";
+
+export class OpenRouterProvider implements AIProvider {
+  private apiKey: string;
+  private model: string;
+
+  constructor(apiKey: string, model?: string) {
+    this.apiKey = apiKey;
+    this.model = model || AI_CONFIG.models.openrouter;
+  }
+
+  async initialize(): Promise<void> {
+    if (!this.apiKey) {
+      throw new Error("OpenRouter API key is not configured.");
+    }
+  }
+
+  private mapMessages(request: AIRequest) {
+    const messages: any[] = [];
+    if (request.systemInstruction) {
+      messages.push({ role: "system", content: request.systemInstruction });
+    }
+    if (request.history) {
+      messages.push(
+        ...request.history.slice(-15).map((msg) => ({
+          role: msg.role === "assistant" ? "assistant" : "user",
+          content: msg.content
+        }))
+      );
+    }
+    messages.push({ role: "user", content: request.prompt });
+    return messages;
+  }
+
+  async chat(request: AIRequest): Promise<AIResponse> {
+    const startTime = Date.now();
+    const endpoint = "https://openrouter.ai/api/v1/chat/completions";
+    const messages = this.mapMessages(request);
+
+    const body: any = {
+      model: this.model,
+      messages,
+      temperature: request.temperature ?? 0.6,
+      max_tokens: request.maxTokens ?? 1024
+    };
+
+    if (request.jsonMode) {
+      body.response_format = { type: "json_object" };
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+          "HTTP-Referer": "https://github.com/pandeYtushal/Hunter",
+          "X-Title": "Hunter Agent"
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error?.message || `OpenRouter HTTP error ${response.status}`);
+      }
+
+      const text = data.choices?.[0]?.message?.content || "";
+      const latency = Date.now() - startTime;
+      
+      const promptTokens = data.usage?.prompt_tokens || Math.round((request.prompt.length + (request.systemInstruction?.length || 0)) / 4);
+      const completionTokens = data.usage?.completion_tokens || Math.round(text.length / 4);
+      const totalTokens = promptTokens + completionTokens;
+      const cost = data.usage?.total_cost || AI_CONFIG.estimateCost(this.model, promptTokens, completionTokens);
+
+      ProviderHealth.recordSuccess("openrouter", latency, totalTokens, cost);
+
+      return {
+        text,
+        tokensUsed: { promptTokens, completionTokens, totalTokens },
+        costEstimate: cost,
+        latencyMs: latency,
+        model: this.model,
+        provider: "openrouter"
+      };
+    } catch (error) {
+      ProviderHealth.recordFailure("openrouter");
+      throw error;
+    }
+  }
+
+  async vision(request: VisionRequest): Promise<VisionResponse> {
+    const startTime = Date.now();
+    const endpoint = "https://openrouter.ai/api/v1/chat/completions";
+    const mimeType = request.mimeType || "image/jpeg";
+    const imagePayload = `data:${mimeType};base64,${request.imageBufferOrBase64}`;
+
+    // Ensure we use a model that supports vision on OpenRouter
+    const visionModel = this.model.includes("flash") || this.model.includes("gpt-4") || this.model.includes("claude")
+      ? this.model
+      : "google/gemini-2.5-flash"; // Fallback to gemini-flash for vision if unsure
+
+    const body = {
+      model: visionModel,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: request.prompt },
+            { type: "image_url", image_url: { url: imagePayload } }
+          ]
+        }
+      ],
+      temperature: 0.1,
+      response_format: { type: "json_object" }
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+          "HTTP-Referer": "https://github.com/pandeYtushal/Hunter",
+          "X-Title": "Hunter Agent"
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error?.message || `OpenRouter Vision HTTP error ${response.status}`);
+      }
+
+      const text = data.choices?.[0]?.message?.content || "";
+      const latency = Date.now() - startTime;
+      
+      const promptTokens = data.usage?.prompt_tokens || 800;
+      const completionTokens = data.usage?.completion_tokens || Math.round(text.length / 4);
+      const totalTokens = promptTokens + completionTokens;
+      const cost = data.usage?.total_cost || AI_CONFIG.estimateCost(visionModel, promptTokens, completionTokens);
+
+      ProviderHealth.recordSuccess("openrouter", latency, totalTokens, cost);
+
+      const parsedResult = VisionParser.parse(text);
+
+      return {
+        text,
+        reasoning: parsedResult.reasoning,
+        elements: parsedResult.elements,
+        confidence: parsedResult.confidence,
+        latencyMs: latency,
+        costEstimate: cost,
+        model: visionModel,
+        provider: "openrouter"
+      };
+    } catch (error) {
+      ProviderHealth.recordFailure("openrouter");
+      throw error;
+    }
+  }
+
+  async embeddings(request: EmbeddingRequest): Promise<number[]> {
+    console.warn("OpenRouter provider embeddings not implemented.");
+    return [];
+  }
+
+  async streamChat(request: AIRequest, onChunk: (chunk: string) => void): Promise<AIResponse> {
+    const startTime = Date.now();
+    const endpoint = "https://openrouter.ai/api/v1/chat/completions";
+    const messages = this.mapMessages(request);
+
+    const body: any = {
+      model: this.model,
+      messages,
+      temperature: request.temperature ?? 0.6,
+      max_tokens: request.maxTokens ?? 1024,
+      stream: true
+    };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+          "HTTP-Referer": "https://github.com/pandeYtushal/Hunter",
+          "X-Title": "Hunter Agent"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `OpenRouter Streaming HTTP error ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let fullText = "";
+      let buffer = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const cleanLine = line.trim();
+            if (cleanLine.startsWith("data:")) {
+              const payload = cleanLine.substring(5).trim();
+              if (payload === "[DONE]") continue;
+              try {
+                const dataJson = JSON.parse(payload);
+                const chunkText = dataJson.choices?.[0]?.delta?.content || "";
+                if (chunkText) {
+                  fullText += chunkText;
+                  onChunk(chunkText);
+                }
+              } catch (e) {
+                // Ignore chunk parse errors
+              }
+            }
+          }
+        }
+      }
+
+      const latency = Date.now() - startTime;
+      const promptTokens = Math.round((request.prompt.length + (request.systemInstruction?.length || 0)) / 4);
+      const completionTokens = Math.round(fullText.length / 4);
+      const totalTokens = promptTokens + completionTokens;
+      const cost = AI_CONFIG.estimateCost(this.model, promptTokens, completionTokens);
+
+      ProviderHealth.recordSuccess("openrouter", latency, totalTokens, cost);
+
+      return {
+        text: fullText,
+        tokensUsed: { promptTokens, completionTokens, totalTokens },
+        costEstimate: cost,
+        latencyMs: latency,
+        model: this.model,
+        provider: "openrouter"
+      };
+    } catch (error) {
+      ProviderHealth.recordFailure("openrouter");
+      throw error;
+    }
+  }
+
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.chat({ prompt: "ping", maxTokens: 1 });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  supportsCapability(capability: keyof ProviderCapabilities): boolean {
+    return CapabilityRegistry.supports("openrouter", capability);
+  }
+
+  async shutdown(): Promise<void> {
+    // No-op
+  }
+}

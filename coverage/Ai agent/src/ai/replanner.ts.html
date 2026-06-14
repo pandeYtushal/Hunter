@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>39/39</span>
+                <span class='fraction'>40/40</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.72% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>8/11</span>
+                <span class='fraction'>8/10</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>39/39</span>
+                <span class='fraction'>40/40</span>
             </div>
         
             
@@ -114,28 +114,8 @@
 <a name='L49'></a><a href='#L49'>49</a>
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a>
-<a name='L70'></a><a href='#L70'>70</a>
-<a name='L71'></a><a href='#L71'>71</a>
-<a name='L72'></a><a href='#L72'>72</a>
-<a name='L73'></a><a href='#L73'>73</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L52'></a><a href='#L52'>52</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -160,29 +140,7 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -210,6 +168,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
 import type { ActionType, ExecutionPlan } from "../types";
+import { PromptManager } from "./core/PromptManager";
 &nbsp;
 export interface ReplanResult {
   newActions: ActionType[];
@@ -225,36 +184,14 @@ export const Replanner = {
     completedActions: ActionType[],
     memoryContext?: string
   ): Promise&lt;ReplanResult&gt; {
-    const prompt = `You are a cognitive planning agent for an Autonomous Browser Job Search Assistant.
-The user's goal is: "${goal}"
-Current Plan: ${JSON.stringify(currentPlan.actions)}
-Completed Steps: ${JSON.stringify(completedActions)}
-Failed Action: "${failedAction}"
-Failure Reason: "${failureReason}"
-${<span class="branch-0 cbranch-no" title="branch not covered" >memoryContext ? `Execution History Memory context:\n${memoryContext}` : "</span>"}
-&nbsp;
-Analyze this failure and generate a revised action list. Do not get stuck in a failure loop. If an action is blocked, you can use general webpage interaction fallback actions (like click_element, navigate_page, extract_text, fill_input) or skip unnecessary steps.
-&nbsp;
-Available Actions:
-- "extract_job": Read page HTML to extract structured job info.
-- "match_resume": Synthesize resume skills alignment and match score.
-- "generate_cover_letter": Generate tailored cover letter text.
-- "fill_form": Run heuristic and FormAgent matches to populate input fields.
-- "research_company": Pull company summary, culture, and interview prep tips.
-- "save_job": Persist extracted job details into application tracking storage.
-- "parse_resume": Extract candidate profile from resume text.
-- "click_element": Click a specific link, button, or tab.
-- "fill_input": Set the value of an input field.
-- "extract_text": Extract clean raw page text.
-- "navigate_page": Go to a target URL or section.
-- "upload_resume": Highlight file inputs for resume manual uploads.
-- "chat_fallback": General fallback chat answer.
-&nbsp;
-Return a clean, valid JSON block specifying the new remaining action list to execute. Do not include comments or markdown fences:
-{
-  "newActions": ["action_1", "action_2", ...],
-  "explanation": "Brief reasoning explaining how this plan recovers from the failure"
-}`;
+    const prompt = PromptManager.getReplannerPrompt(
+      goal,
+      currentPlan.actions,
+      completedActions,
+      failedAction,
+      failureReason,
+      memoryContext
+    );
 &nbsp;
     try {
       const responseText = await generateAiReply({
@@ -286,7 +223,7 @@ Return a clean, valid JSON block specifying the new remaining action list to exe
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

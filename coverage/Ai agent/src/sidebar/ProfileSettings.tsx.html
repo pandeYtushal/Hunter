@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/561</span>
+                <span class='fraction'>0/559</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/561</span>
+                <span class='fraction'>0/559</span>
             </div>
         
             
@@ -622,11 +622,7 @@
 <a name='L557'></a><a href='#L557'>557</a>
 <a name='L558'></a><a href='#L558'>558</a>
 <a name='L559'></a><a href='#L559'>559</a>
-<a name='L560'></a><a href='#L560'>560</a>
-<a name='L561'></a><a href='#L561'>561</a>
-<a name='L562'></a><a href='#L562'>562</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L560'></a><a href='#L560'>560</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1206,13 +1202,13 @@
 <span class="cstat-no" title="statement not covered" >    linkedIn: "",</span>
 <span class="cstat-no" title="statement not covered" >    portfolio: ""</span>
 <span class="cstat-no" title="statement not covered" >  });</span>
-<span class="cstat-no" title="statement not covered" >  </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const [isParsing, setIsParsing] = useState(false);</span>
 <span class="cstat-no" title="statement not covered" >  const [isSaving, setIsSaving] = useState(false);</span>
 <span class="cstat-no" title="statement not covered" >  const [saveSuccess, setSaveSuccess] = useState(false);</span>
 <span class="cstat-no" title="statement not covered" >  const [error, setError] = useState("");</span>
 <span class="cstat-no" title="statement not covered" >  const [successMsg, setSuccessMsg] = useState("");</span>
-<span class="cstat-no" title="statement not covered" >  </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const [skillInput, setSkillInput] = useState("");</span>
 <span class="cstat-no" title="statement not covered" >  const fileInputRef = useRef&lt;HTMLInputElement&gt;(null);</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -1310,7 +1306,7 @@
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      const arrayBuffer = await file.arrayBuffer();</span>
 <span class="cstat-no" title="statement not covered" >      const text = await extractTextFromPdf(arrayBuffer);</span>
-<span class="cstat-no" title="statement not covered" >      </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      if (!text.trim()) {</span>
 <span class="cstat-no" title="statement not covered" >        throw new Error("No readable text could be extracted from this PDF.");</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
@@ -1335,7 +1331,7 @@
 <span class="cstat-no" title="statement not covered" >        });</span>
 <span class="cstat-no" title="statement not covered" >        setSuccessMsg("Resume parsed successfully!");</span>
 <span class="cstat-no" title="statement not covered" >      } else {</span>
-<span class="cstat-no" title="statement not covered" >        throw new Error(response?.error || "Gemini was unable to extract structured details from the resume.");</span>
+<span class="cstat-no" title="statement not covered" >        throw new Error(response?.error || "Hunter was unable to extract structured details from the resume.");</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      setError(err instanceof Error ? err.message : "Failed to extract and parse resume.");</span>
@@ -1426,11 +1422,10 @@
 <span class="cstat-no" title="statement not covered" >            onDragOver={handleDragOver}</span>
 <span class="cstat-no" title="statement not covered" >            onDrop={handleDrop}</span>
 <span class="cstat-no" title="statement not covered" >            onClick={() =&gt; fileInputRef.current?.click()}</span>
-<span class="cstat-no" title="statement not covered" >            className={`group flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${</span>
-<span class="cstat-no" title="statement not covered" >              isParsing</span>
-<span class="cstat-no" title="statement not covered" >                ? "border-zinc-300 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-950/20 pointer-events-none"</span>
-<span class="cstat-no" title="statement not covered" >                : "border-zinc-200 bg-white/30 dark:border-zinc-800/40 hover:border-[#f97316]/50 hover:bg-white/80 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/50 shadow-sm"</span>
-<span class="cstat-no" title="statement not covered" >            }`}</span>
+<span class="cstat-no" title="statement not covered" >            className={`group flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${isParsing</span>
+<span class="cstat-no" title="statement not covered" >              ? "border-zinc-300 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-950/20 pointer-events-none"</span>
+<span class="cstat-no" title="statement not covered" >              : "border-zinc-200 bg-white/30 dark:border-zinc-800/40 hover:border-[#f97316]/50 hover:bg-white/80 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/50 shadow-sm"</span>
+<span class="cstat-no" title="statement not covered" >              }`}</span>
 <span class="cstat-no" title="statement not covered" >          &gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;input</span>
 <span class="cstat-no" title="statement not covered" >              type="file"</span>
@@ -1443,7 +1438,7 @@
 <span class="cstat-no" title="statement not covered" >              &lt;div className="space-y-2.5"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;Loader2 className="mx-auto animate-spin text-[#f97316]" size={22} /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;p className="text-xs font-bold text-[#f97316]"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  Parsing resume with Gemini...</span>
+<span class="cstat-no" title="statement not covered" >                  Parsing resume.....</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >            ) : profile.resumeFileName ? (</span>
@@ -1726,11 +1721,10 @@
 <span class="cstat-no" title="statement not covered" >        &lt;button</span>
 <span class="cstat-no" title="statement not covered" >          onClick={handleSaveProfile}</span>
 <span class="cstat-no" title="statement not covered" >          disabled={isSaving || isParsing}</span>
-<span class="cstat-no" title="statement not covered" >          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${</span>
-<span class="cstat-no" title="statement not covered" >            saveSuccess</span>
-<span class="cstat-no" title="statement not covered" >              ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10"</span>
-<span class="cstat-no" title="statement not covered" >              : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:opacity-60"</span>
-<span class="cstat-no" title="statement not covered" >          }`}</span>
+<span class="cstat-no" title="statement not covered" >          className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${saveSuccess</span>
+<span class="cstat-no" title="statement not covered" >            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10"</span>
+<span class="cstat-no" title="statement not covered" >            : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:opacity-60"</span>
+<span class="cstat-no" title="statement not covered" >            }`}</span>
 <span class="cstat-no" title="statement not covered" >        &gt;</span>
 <span class="cstat-no" title="statement not covered" >          {isSaving &amp;&amp; &lt;Loader2 size={14} className="animate-spin text-[#f97316]" /&gt;}</span>
 <span class="cstat-no" title="statement not covered" >          {saveSuccess ? (</span>
@@ -1753,7 +1747,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

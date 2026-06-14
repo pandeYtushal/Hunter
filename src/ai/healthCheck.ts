@@ -1,7 +1,7 @@
 import { storage } from "../shared/storage";
 
 export interface HealthCheckResult {
-  name: "Gemini connectivity" | "Storage access" | "Content script availability" | "Background worker availability";
+  name: "AI connectivity" | "Storage access" | "Content script availability" | "Background worker availability";
   ok: boolean;
   message: string;
 }
@@ -52,10 +52,22 @@ export const runStartupDiagnostics = async (): Promise<HealthCheckResult[]> => {
   }
 
   const settings = await storage.get("settings");
+  const hasKey = Boolean(
+    settings.apiKey?.trim() ||
+    settings.openaiApiKey?.trim() ||
+    settings.anthropicApiKey?.trim() ||
+    settings.groqApiKey?.trim() ||
+    settings.openrouterApiKey?.trim() ||
+    settings.deepseekApiKey?.trim() ||
+    (settings.provider === "ollama" && settings.ollamaUrl?.trim())
+  );
+
   results.push({
-    name: "Gemini connectivity",
-    ok: Boolean(settings.apiKey?.trim() || settings.openaiApiKey?.trim() || settings.anthropicApiKey?.trim() || settings.groqApiKey?.trim()),
-    message: "At least one AI provider key is configured."
+    name: "AI connectivity",
+    ok: hasKey,
+    message: hasKey
+      ? "At least one AI provider key or service URL is configured."
+      : "No AI provider keys or service URLs configured."
   });
 
   return results;

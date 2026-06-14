@@ -1,6 +1,7 @@
 import { generateAiReply } from "./aiService";
 import type { PageSnapshot } from "../shared/types/messages";
 import { robustJsonParse } from "../shared/json";
+import { PromptManager } from "./core/PromptManager";
 
 export interface ExtractedJob {
   title: string;
@@ -12,16 +13,7 @@ export interface ExtractedJob {
 }
 
 export const extractJobDetails = async (pageContext: PageSnapshot): Promise<ExtractedJob> => {
-  const prompt = `You are a structured data extraction agent. Extract the job details from the current page content and metadata.
-Return a clean, valid JSON object with the following keys. Do not include any markdown formatting, surrounding text, or explanation, just the raw JSON block:
-{
-  "title": "Job Title (or 'Unknown')",
-  "company": "Company Name (or 'Unknown')",
-  "location": "Location (or 'Unknown')",
-  "salary": "Salary or Compensation info (or 'Unknown')",
-  "experience": "Required experience level or years (or 'Unknown')",
-  "skills": ["Skill 1", "Skill 2", ...] (an array of required skills or technologies)
-}`;
+  const prompt = PromptManager.getJobExtractPrompt();
 
   // Call AI Service using the existing generateAiReply function
   const responseText = await generateAiReply({

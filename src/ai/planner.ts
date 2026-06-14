@@ -2,6 +2,7 @@ import { generateAiReply } from "./aiService";
 import { IntentClassifier } from "./intentClassifier";
 import type { ExecutionPlan, AgentType, ActionType, IntentClassification, IntentType, PlanGoal } from "../shared/types/agent";
 import { robustJsonParse } from "../shared/json";
+import { PromptManager } from "./core/PromptManager";
 
 const deterministicPlan = (classification: IntentClassification): ExecutionPlan => {
   const map: Record<IntentType, ExecutionPlan> = {
@@ -105,59 +106,7 @@ export const planUserGoal = async (userPrompt: string): Promise<ExecutionPlan> =
     return fallbackPlan;
   }
 
-  const prompt = `You are a cognitive planning agent for an Autonomous Browser Job Search Assistant.
-The user's intent has already been classified deterministically as "${classification.intent}".
-Your task is to refine the execution plan without changing the user-facing feature or inventing unsupported actions.
-
-Supported Goals:
-- "apply_job": Run the full application cycle (extract job details, match resume, generate cover letter, scan/fill form).
-- "summarize_page": Extract raw text and summarize the active page context.
-- "research_company": Synthesize professional information about the employer.
-- "save_job": Extract job details and add them to application tracking storage.
-- "generate_cover_letter": Generate a tailored cover letter draft.
-- "autofill_form": Detect and prepare autofill mappings on page inputs.
-- "analyze_job_match": Compare user profile skills against job requirements.
-
-Available Agents:
-- "JobAgent"
-- "ResumeAgent"
-- "FormAgent"
-- "ResearchAgent"
-- "NavigationAgent"
-- "Unknown"
-
-Available Actions:
-- "extract_job": Read page HTML to extract structured job info.
-- "match_resume": Synthesize resume skills alignment and match score.
-- "generate_cover_letter": Generate tailored cover letter text.
-- "fill_form": Run heuristic and FormAgent matches to populate input fields.
-- "research_company": Pull company summary, culture, and interview prep tips.
-- "save_job": Persist extracted job details into application tracking storage.
-- "parse_resume": Extract candidate profile from resume text.
-- "click_element": Click a specific link, button, or tab.
-- "fill_input": Set the value of an input field.
-- "extract_text": Extract clean raw page text.
-- "navigate_page": Go to a target URL or section.
-- "upload_resume": Highlight file inputs for resume manual uploads.
-- "chat_fallback": General fallback chat answer.
-
-Instructions:
-- Start from this deterministic plan: ${JSON.stringify(fallbackPlan)}.
-- Keep actions in a safe execution order and only remove an action when it is clearly unnecessary.
-- If the user wants to save or track a job, include actions ["extract_job", "save_job"].
-- If the user wants to match resume or check alignment, include actions ["extract_job", "match_resume"].
-- If the user wants a cover letter, include actions ["extract_job", "generate_cover_letter"].
-- If the user wants to fill a form ("fill application form", "autofill form", "scan form"), return goal "autofill_form", agents ["FormAgent"], and actions ["fill_form"].
-- If the user wants to summarize the page ("summarize page", "what is this page about"), return goal "summarize_page", agents ["JobAgent"], and actions ["extract_text", "chat_fallback"].
-
-User Command: "${userPrompt}"
-
-Return a clean, valid JSON object with the following keys. Do not include markdown code fences or comments, just the raw JSON:
-{
-  "goal": "apply_job",
-  "agents": ["JobAgent", "ResumeAgent", ...],
-  "actions": ["extract_job", "match_resume", ...]
-}`;
+  const prompt = PromptManager.getPlannerPrompt(userPrompt, fallbackPlan);
 
   const responseText = await generateAiReply({
     prompt,

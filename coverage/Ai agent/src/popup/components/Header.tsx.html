@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/29</span>
+                <span class='fraction'>0/28</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/29</span>
+                <span class='fraction'>0/28</span>
             </div>
         
             
@@ -91,8 +91,7 @@
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a>
-<a name='L30'></a><a href='#L30'>30</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -120,32 +119,30 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >interface HeaderProps {</span></span></span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { Sun, Moon } from "lucide-react";</span></span></span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >interface HeaderProps {</span>
 <span class="cstat-no" title="statement not covered" >  theme: "dark" | "light" | "system";</span>
 <span class="cstat-no" title="statement not covered" >  onThemeChange: (theme: "dark" | "light" | "system") =&gt; void;</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >export const Header = ({ theme, onThemeChange }: HeaderProps) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;header className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;header className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;div className="flex items-center gap-2"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className="flex h-6 w-6 items-center justify-center rounded bg-slate-900 font-sans text-xs font-bold text-white dark:bg-white dark:text-zinc-950"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          H</span>
-<span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;h1 className="font-sans text-xs font-bold tracking-tight text-slate-900 dark:text-white"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;h1 className="font-sans text-xs font-bold tracking-tight text-[var(--text-primary)]"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          HUNTERR</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/h1&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;span className="font-mono text-[8px] tracking-wide text-slate-400 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-500"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;span className="font-mono text-[8px] tracking-wide text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-1 py-0.5 rounded border border-[var(--border-color)]"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          v0.1.0</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >      </span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      &lt;button</span>
 <span class="cstat-no" title="statement not covered" >        onClick={() =&gt; onThemeChange(theme === "dark" ? "light" : "dark")}</span>
-<span class="cstat-no" title="statement not covered" >        className="font-mono text-[9px] uppercase tracking-wider text-slate-400 hover:text-slate-900 transition dark:text-zinc-500 dark:hover:text-white"</span>
-<span class="cstat-no" title="statement not covered" >      &gt;</span>
-<span class="cstat-no" title="statement not covered" >        {theme === "dark" ? "light" : "dark"}</span>
+<span class="cstat-no" title="statement not covered" >        className="flex items-center justify-center p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"</span>
+<span class="cstat-no" title="statement not covered" >        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}&gt;</span>
+<span class="cstat-no" title="statement not covered" >        {theme === "dark" ? &lt;Sun size={14} /&gt; : &lt;Moon size={14} /&gt;}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/button&gt;</span>
 <span class="cstat-no" title="statement not covered" >    &lt;/header&gt;</span>
 <span class="cstat-no" title="statement not covered" >  );</span>
@@ -157,7 +154,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-09T08:55:23.519Z
+                at 2026-06-14T13:10:24.562Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

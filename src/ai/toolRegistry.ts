@@ -13,6 +13,7 @@ import type { ExecutionContext } from "../types/Execution";
 import { requestCache } from "./cache";
 import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
+import { PromptManager } from "./core/PromptManager";
 import { longTermMemory } from "./longTermMemory";
 import { VisionAgent } from "../vision/VisionAgent";
 import { VisionService } from "../vision/VisionService";
@@ -55,19 +56,7 @@ const fallbackJob = (pageContext?: PageSnapshot) => ({
 });
 
 const resolveClickTarget = async (goal: string, pageContext?: PageSnapshot): Promise<{ selector: string; text?: string }> => {
-  const prompt = `You are a browser automation agent. The user's goal is to: "${goal}".
-Here is the webpage context:
-Title: ${pageContext?.title}
-Url: ${pageContext?.url}
-Content excerpt:
-${pageContext?.content?.slice(0, 4000) || "No content"}
-
-Identify the single most likely CSS selector and optional inner text of the HTML button or link to click.
-Return a clean, valid JSON block. Do not include markdown code blocks, comments, or explanations:
-{
-  "selector": "CSS selector (e.g., 'button.apply-btn', 'a.next-page', 'input[type=submit]')",
-  "text": "The inner text of the element if relevant (or null)"
-}`;
+  const prompt = PromptManager.getResolveClickTargetPrompt(goal, pageContext);
 
   const reply = await generateAiReply({ prompt, history: [], pageContext });
   const parsed = robustJsonParse<{ selector?: string; text?: string | null }>(reply);
@@ -78,19 +67,7 @@ Return a clean, valid JSON block. Do not include markdown code blocks, comments,
 };
 
 const resolveFillTarget = async (goal: string, pageContext?: PageSnapshot): Promise<{ selector: string; value: string }> => {
-  const prompt = `You are a browser automation agent. The user's goal is to: "${goal}".
-Here is the webpage context:
-Title: ${pageContext?.title}
-Url: ${pageContext?.url}
-Content excerpt:
-${pageContext?.content?.slice(0, 4000) || "No content"}
-
-Identify the single most likely CSS selector of the input field to populate and the value to put in it.
-Return a clean, valid JSON block. Do not include markdown code blocks, comments, or explanations:
-{
-  "selector": "CSS selector of input/textarea (e.g., 'input[name=first-name]', 'textarea#cover-letter')",
-  "value": "The string value to fill in the input"
-}`;
+  const prompt = PromptManager.getResolveFillTargetPrompt(goal, pageContext);
 
   const reply = await generateAiReply({ prompt, history: [], pageContext });
   const parsed = robustJsonParse<{ selector?: string; value?: string }>(reply);
@@ -101,13 +78,7 @@ Return a clean, valid JSON block. Do not include markdown code blocks, comments,
 };
 
 const resolveVisualClickTarget = async (goal: string, elements: VisualElement[]): Promise<VisualElement> => {
-  const prompt = `Based on the goal: "${goal}", select the single best visual element from this list to click:
-${JSON.stringify(elements.map(el => ({ id: el.id, text: el.text, type: el.type, bounds: el.bounds })))}
-
-Return your answer strictly as a JSON object:
-{
-  "id": "selected-element-id"
-}`;
+  const prompt = PromptManager.getResolveVisualClickTargetPrompt(goal, elements);
 
   const reply = await generateAiReply({ prompt, history: [] });
   const parsed = robustJsonParse<{ id?: string }>(reply);
@@ -123,19 +94,7 @@ Return your answer strictly as a JSON object:
 };
 
 const resolveVisualFillTarget = async (goal: string, elements: VisualElement[], profile: UserProfile): Promise<{ element: VisualElement; value: string }> => {
-  const prompt = `Based on the goal: "${goal}" and candidate profile:
-Name: ${profile.name}
-Email: ${profile.email}
-Experience: ${profile.experience}
-
-Select the single best visual element input from this list to fill and determine the value to fill:
-${JSON.stringify(elements.filter(el => el.type === "input").map(el => ({ id: el.id, text: el.text })))}
-
-Return your answer strictly as a JSON object:
-{
-  "id": "selected-element-id",
-  "value": "value to fill"
-}`;
+  const prompt = PromptManager.getResolveVisualFillTargetPrompt(goal, elements, profile);
 
   const reply = await generateAiReply({ prompt, history: [] });
   const parsed = robustJsonParse<{ id?: string; value?: string }>(reply);

@@ -2,6 +2,7 @@ import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
 import type { ActionType } from "../types";
 import type { PageSnapshot } from "../shared/types/messages";
+import { PromptManager } from "./core/PromptManager";
 
 export interface ReasoningDecision {
   reasoning: string;
@@ -28,24 +29,7 @@ export const ReasoningEngine = {
       lowDomWarningNotice = `\n[WARNING: LOW DOM CONFIDENCE (${domConfidence})] The standard DOM parser could not locate sufficient structured text or fields on this page (likely canvas-based, rich visual, or heavily obfuscated). You MUST select visual tools such as "vision_click", "vision_fill", or "vision_analyze" to capture screenshots and interact by visual coordinates instead of DOM elements.`;
     }
 
-    const prompt = `You are the core Cognitive Reasoning Brain for HUNTERR, an autonomous job search browser assistant.
-Your task is to analyze the current goal, active webpage, user profile, and execution history, and determine the next best action.
-${lowDomWarningNotice}
-
-${contextString}
-
-Instructions:
-1. Examine the goal and what has been done so far.
-2. Determine if the goal is fully accomplished, requires a tool, or is blocked.
-3. Select the most appropriate tool from "Available Tools" to move closer to the goal.
-4. Output your decision as a clean, valid JSON block. Do not include markdown code fences, comments, or explanations, just the raw JSON:
-
-{
-  "reasoning": "Explain step-by-step why you selected this action and how it relates to the goal.",
-  "selectedTool": "Name of the tool (must match one of the available tool names exactly, e.g., 'extract_job', 'match_resume', 'fill_form', 'vision_click', 'vision_fill', 'chat_fallback')",
-  "confidence": 0.85 (your confidence score in this selection, between 0.0 and 1.0),
-  "status": "continue" (use "continue" to run the tool, "retry" to run the last action again, "replan" to change strategy, or "complete" if the goal is achieved or fully blocked)
-}`;
+    const prompt = PromptManager.getReasoningPrompt(contextString, lowDomWarningNotice);
 
     const responseText = await generateAiReply({
       prompt,
