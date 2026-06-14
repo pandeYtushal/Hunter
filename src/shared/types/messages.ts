@@ -1,6 +1,13 @@
 import type { UserProfile } from "./storage";
 export type ThemeMode = "light" | "dark" | "system";
 
+export interface VisualBounds {
+  ymin: number;
+  xmin: number;
+  ymax: number;
+  xmax: number;
+}
+
 export interface PageSnapshot {
   title: string;
   url: string;
@@ -54,7 +61,14 @@ export type RuntimeMessage =
   | { type: "NAVIGATE_PAGE"; url: string }
   | { type: "UPLOAD_RESUME" }
   | { type: "GET_ACTIVE_TAB" }
-  | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage };
+  | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage }
+  | { type: "HIGHLIGHT_DOM_ELEMENT"; selector: string; text?: string }
+  | { type: "SCROLL_TO_ELEMENT"; selector: string }
+  | { type: "HOVER_ELEMENT"; selector: string }
+  | { type: "FOCUS_INPUT"; selector: string }
+  | { type: "LOCATE_ELEMENT_BY_BOUNDS"; bounds: VisualBounds }
+  | { type: "SHOW_VISUAL_OVERLAY"; elements: any[] }
+  | { type: "HIDE_VISUAL_OVERLAY" };
 
 export interface RuntimeResponseMap {
   PING: { ok: true };
@@ -86,6 +100,13 @@ export interface RuntimeResponseMap {
   UPLOAD_RESUME: { ok: true } | { ok: false; error: string };
   GET_ACTIVE_TAB: { tab?: { id?: number; url?: string; title?: string } };
   SEND_TO_ACTIVE_TAB: any;
+  HIGHLIGHT_DOM_ELEMENT: { ok: true } | { ok: false; error: string };
+  SCROLL_TO_ELEMENT: { ok: true } | { ok: false; error: string };
+  HOVER_ELEMENT: { ok: true } | { ok: false; error: string };
+  FOCUS_INPUT: { ok: true } | { ok: false; error: string };
+  LOCATE_ELEMENT_BY_BOUNDS: { ok: true; selector: string } | { ok: false; error: string };
+  SHOW_VISUAL_OVERLAY: { ok: true } | { ok: false; error: string };
+  HIDE_VISUAL_OVERLAY: { ok: true } | { ok: false; error: string };
 }
 
 export type RuntimeMessageType = RuntimeMessage["type"];

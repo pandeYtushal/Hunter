@@ -14,6 +14,11 @@ import { requestCache } from "./cache";
 import { generateAiReply } from "./aiService";
 import { robustJsonParse } from "../shared/json";
 import { longTermMemory } from "./longTermMemory";
+import { VisionAgent } from "../vision/VisionAgent";
+import { VisionService } from "../vision/VisionService";
+import { VisualActionEngine } from "../vision/VisualActionEngine";
+import type { VisualElement } from "../vision/VisionTypes";
+
 
 export interface ToolRuntime {
   tab?: chrome.tabs.Tab;
@@ -93,6 +98,56 @@ Return a clean, valid JSON block. Do not include markdown code blocks, comments,
     selector: parsed.selector || "input",
     value: parsed.value || ""
   };
+};
+
+const resolveVisualClickTarget = async (goal: string, elements: VisualElement[]): Promise<VisualElement> => {
+  const prompt = `Based on the goal: "${goal}", select the single best visual element from this list to click:
+${JSON.stringify(elements.map(el => ({ id: el.id, text: el.text, type: el.type, bounds: el.bounds })))}
+
+Return your answer strictly as a JSON object:
+{
+  "id": "selected-element-id"
+}`;
+
+  const reply = await generateAiReply({ prompt, history: [] });
+  const parsed = robustJsonParse<{ id?: string }>(reply);
+  const matched = elements.find(el => el.id === parsed.id);
+  if (!matched) {
+    const fallback = elements.find(el => el.type === "button" || el.type === "cta" || el.type === "navigation");
+    if (!fallback) {
+      throw new Error(`Failed to match visual element for goal: ${goal}`);
+    }
+    return fallback;
+  }
+  return matched;
+};
+
+const resolveVisualFillTarget = async (goal: string, elements: VisualElement[], profile: UserProfile): Promise<{ element: VisualElement; value: string }> => {
+  const prompt = `Based on the goal: "${goal}" and candidate profile:
+Name: ${profile.name}
+Email: ${profile.email}
+Experience: ${profile.experience}
+
+Select the single best visual element input from this list to fill and determine the value to fill:
+${JSON.stringify(elements.filter(el => el.type === "input").map(el => ({ id: el.id, text: el.text })))}
+
+Return your answer strictly as a JSON object:
+{
+  "id": "selected-element-id",
+  "value": "value to fill"
+}`;
+
+  const reply = await generateAiReply({ prompt, history: [] });
+  const parsed = robustJsonParse<{ id?: string; value?: string }>(reply);
+  const matched = elements.find(el => el.id === parsed.id);
+  if (!matched) {
+    const fallback = elements.find(el => el.type === "input");
+    if (!fallback) {
+      throw new Error(`Failed to match visual element input for goal: ${goal}`);
+    }
+    return { element: fallback, value: profile.name || "" };
+  }
+  return { element: matched, value: parsed.value || "" };
 };
 
 const requirePageContext = (pageContext?: PageSnapshot): PageSnapshot => {
@@ -307,6 +362,52 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       handler: async ({ tab }) => {
         await NavigationAgent.highlightUpload(requireTabId(tab));
         return { result: "Highlighted resume file upload inputs." };
+      }
+    },
+    {
+      action: "vision_click",
+      agent: "VisionAgent",
+      description: "Clicking element using visual coordinates",
+      requiresProfile: false,
+      handler: async ({ tab, pageContext }, context) => {
+        const tabId = requireTabId(tab);
+        const url = pageContext?.url || "";
+        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+        
+        const targetElement = await resolveVisualClickTarget(context.plan.goal, analysis.elements);
+        await chrome.storage.local.set({ lastVisionTarget: targetElement.text }).catch(() => null);
+        
+        await VisualActionEngine.clickByVision(tabId, targetElement, url);
+        return { result: `Visually clicked element "${targetElement.text}" with confidence ${targetElement.confidence}` };
+      }
+    },
+    {
+      action: "vision_fill",
+      agent: "VisionAgent",
+      description: "Filling input using visual coordinates",
+      requiresProfile: true,
+      handler: async ({ tab, pageContext, profile }, context) => {
+        const tabId = requireTabId(tab);
+        const url = pageContext?.url || "";
+        const userProfile = requireProfile(profile);
+        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+
+        const { element, value } = await resolveVisualFillTarget(context.plan.goal, analysis.elements, userProfile);
+        await chrome.storage.local.set({ lastVisionTarget: element.text }).catch(() => null);
+
+        await VisionAgent.locateAndFill(tabId, element.text, value, context.plan.goal, url);
+        return { result: `Visually filled input "${element.text}" with value.` };
+      }
+    },
+    {
+      action: "vision_analyze",
+      agent: "VisionAgent",
+      description: "Analyzing page visually",
+      requiresProfile: false,
+      handler: async ({ tab }, context) => {
+        const tabId = requireTabId(tab);
+        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+        return { result: `Visually analyzed page: detected ${analysis.elements.length} elements. Reasoning: ${analysis.reasoning}` };
       }
     },
     {

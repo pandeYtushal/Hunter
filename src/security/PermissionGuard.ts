@@ -2,7 +2,7 @@ import type { ActionType } from "../types/Action";
 import type { PageSnapshot } from "../shared/types/messages";
 
 const restrictedSchemes = ["chrome:", "chrome-extension:", "edge:", "about:", "file:"];
-const sensitiveActions = new Set<ActionType>(["upload_resume", "fill_form", "navigate_page"]);
+const sensitiveActions = new Set<ActionType>(["upload_resume", "fill_form", "navigate_page", "vision_click", "vision_fill", "vision_analyze"]);
 
 export interface PermissionCheck {
   allowed: boolean;
@@ -49,6 +49,12 @@ export const PermissionGuard = {
         return "External navigation requires confirmation before moving away from the current page.";
       case "fill_form":
         return "Form fill proposals require confirmation before values are written.";
+      case "vision_click":
+        return "Vision Click: Hunter detected this button via image analysis and will click it upon confirmation.";
+      case "vision_fill":
+        return "Vision Fill: Hunter will input details into this field located via visual layout matching.";
+      case "vision_analyze":
+        return "Vision Scan: Hunter will capture a screenshot and analyze page visual components.";
       default:
         return "This action is ready to run.";
     }

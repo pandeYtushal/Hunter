@@ -58,6 +58,19 @@ graph TD
   - **MatchAgent**: Computes match scores and maps skills (matched and missing).
   - **FormAgent**: Maps parsed profile details against scanned form inputs.
   - **ResearchAgent**: Queries company data to enrich the application context.
+  - **VisionAgent**: Orchestrates visual screenshot analysis, locates visual fields, and executes coordinate-based clicking and typing.
+
+---
+
+## Vision Runtime & Visual Perception
+
+HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page automation even when webpage DOM elements are custom-rendered (e.g. Canvas inputs, custom style checkboxes) or obfuscated.
+
+- **Low DOM Confidence Fallback**: When DOM parsing yields low confidence (content matches < 300 characters), the **ReasoningEngine** automatically switches selectors to vision equivalent tools (`vision_click`, `vision_fill`, `vision_analyze`).
+- **Multimodal Visual Capturing**: Compresses screenshots to 80% JPEG quality and applies simple TTL caches to minimize Gemini API calls.
+- **Intersection-over-Union (IoU) Locator**: Matches normalized coordinate maps `[0-1000]` returned by Gemini Vision to active DOM elements using viewport pixel ratios and center proximity scores.
+- **Visual Actions Overlay**: Highlights the target element with a glowing dashed orange box, displays its name and confidence score, and prompts for confirmation before execution.
+- **Developer mode logs**: Captures active screenshots, elements bounding boxes, chosen targets, and visual memory interactions inside the console.
 
 ---
 

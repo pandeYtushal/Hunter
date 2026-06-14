@@ -55,6 +55,7 @@ export interface StorageSchema {
   executionLogs: ExecutionLogEntry[];
   agentMetrics: Record<string, AgentMetricRecord>;
   healthChecks: HealthCheckResult[];
+  visualMemory?: any;
 }
 
 export const defaultStorage: StorageSchema = {
@@ -93,5 +94,6 @@ export const defaultStorage: StorageSchema = {
   },
   executionLogs: [],
   agentMetrics: {},
-  healthChecks: []
+  healthChecks: [],
+  visualMemory: { interactions: [], layouts: [] }
 };

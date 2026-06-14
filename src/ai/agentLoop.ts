@@ -95,7 +95,7 @@ export const AgentLoop = {
       });
 
       // 4. Run Reasoning
-      const decision = await ReasoningEngine.reason(contextString);
+      const decision = await ReasoningEngine.reason(contextString, runtime.pageContext);
 
       // Apply confidence scoring adjustments
       const confidence = ConfidenceScoring.calculate(
@@ -113,6 +113,24 @@ export const AgentLoop = {
         context.errors.push(errorText);
         isComplete = true;
         break;
+      }
+
+      // Intercept low DOM confidence and override standard tools with vision counterparts
+      const evaluateDomConfidence = (pageCtx?: any): number => {
+        if (!pageCtx || !pageCtx.content || pageCtx.content.trim().length < 300) {
+          return 0.42;
+        }
+        return 0.85;
+      };
+      const domConfidence = evaluateDomConfidence(runtime.pageContext);
+      if (domConfidence < 0.50) {
+        if (selectedTool === "click_element") {
+          selectedTool = "vision_click";
+        } else if (selectedTool === "fill_input") {
+          selectedTool = "vision_fill";
+        } else if (selectedTool === "fill_form") {
+          selectedTool = "vision_fill";
+        }
       }
 
       // Update state with reasoning info

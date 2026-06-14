@@ -1,4 +1,4 @@
-export type AgentType = "JobAgent" | "ResumeAgent" | "FormAgent" | "ResearchAgent" | "NavigationAgent" | "Unknown";
+export type AgentType = "JobAgent" | "ResumeAgent" | "FormAgent" | "ResearchAgent" | "NavigationAgent" | "VisionAgent" | "Unknown";
 
 export interface AgentUsage {
   agent: AgentType;

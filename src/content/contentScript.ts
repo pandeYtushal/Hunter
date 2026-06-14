@@ -541,6 +541,189 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         if (!ok) throw new Error("No file input fields found on this webpage.");
         return { ok: true };
       }
+      case "HIGHLIGHT_DOM_ELEMENT": {
+        const target = document.querySelector(message.selector);
+        if (!target) throw new Error(`Could not find element matching "${message.selector}" to highlight.`);
+        
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        const htmlEl = target as HTMLElement;
+        const origOutline = htmlEl.style.outline;
+        const origTransition = htmlEl.style.transition;
+        
+        htmlEl.style.transition = "outline 0.3s ease";
+        htmlEl.style.outline = "3px solid #ff6b35";
+        
+        setTimeout(() => {
+          htmlEl.style.outline = origOutline;
+          htmlEl.style.transition = origTransition;
+        }, 2500);
+        return { ok: true };
+      }
+      case "SCROLL_TO_ELEMENT": {
+        const target = document.querySelector(message.selector);
+        if (!target) throw new Error(`Could not find element matching "${message.selector}" to scroll to.`);
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        return { ok: true };
+      }
+      case "HOVER_ELEMENT": {
+        const target = document.querySelector(message.selector);
+        if (!target) throw new Error(`Could not find element matching "${message.selector}" to hover.`);
+        const event = new MouseEvent("mouseover", { bubbles: true, cancelable: true, view: window });
+        target.dispatchEvent(event);
+        return { ok: true };
+      }
+      case "FOCUS_INPUT": {
+        const target = document.querySelector(message.selector);
+        if (!target) throw new Error(`Could not find input element matching "${message.selector}" to focus.`);
+        const htmlEl = target as HTMLElement;
+        htmlEl.focus();
+        htmlEl.click();
+        return { ok: true };
+      }
+      case "LOCATE_ELEMENT_BY_BOUNDS": {
+        const { bounds } = message;
+        if (!bounds) throw new Error("Missing bounds object parameters.");
+
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        
+        const targetLeft = (bounds.xmin / 1000) * vw;
+        const targetTop = (bounds.ymin / 1000) * vh;
+        const targetWidth = ((bounds.xmax - bounds.xmin) / 1000) * vw;
+        const targetHeight = ((bounds.ymax - bounds.ymin) / 1000) * vh;
+        
+        const centerX = targetLeft + targetWidth / 2;
+        const centerY = targetTop + targetHeight / 2;
+
+        let pointedEl = document.elementFromPoint(centerX, centerY) as HTMLElement | null;
+        while (pointedEl && pointedEl !== document.body && pointedEl !== document.documentElement) {
+          if (["BUTTON", "A", "INPUT", "SELECT", "TEXTAREA"].includes(pointedEl.tagName) || pointedEl.getAttribute("role") === "button" || pointedEl.onclick) {
+            break;
+          }
+          pointedEl = pointedEl.parentElement;
+        }
+
+        const getSelectorForElement = (el: HTMLElement): string => {
+          if (el.id) return `#${el.id}`;
+          if (el.className) {
+            const firstClass = el.className.split(" ").filter(Boolean)[0];
+            if (firstClass) return `${el.tagName.toLowerCase()}.${firstClass}`;
+          }
+          return el.tagName.toLowerCase();
+        };
+
+        if (pointedEl) {
+          return { ok: true, selector: getSelectorForElement(pointedEl) };
+        }
+
+        const candidates = Array.from(
+          document.querySelectorAll("button, a, input, select, textarea, [role=button], [onclick], label")
+        );
+        let bestSelector = "";
+        let bestScore = -1;
+
+        for (const cand of candidates) {
+          const el = cand as HTMLElement;
+          const rect = el.getBoundingClientRect();
+          if (rect.width === 0 || rect.height === 0) continue;
+
+          const candLeft = (rect.left / vw) * 1000;
+          const candTop = (rect.top / vh) * 1000;
+          const candRight = (rect.right / vw) * 1000;
+          const candBottom = (rect.bottom / vh) * 1000;
+
+          const interLeft = Math.max(bounds.xmin, candLeft);
+          const interTop = Math.max(bounds.ymin, candTop);
+          const interRight = Math.min(bounds.xmax, candRight);
+          const interBottom = Math.min(bounds.ymax, candBottom);
+
+          const interWidth = Math.max(0, interRight - interLeft);
+          const interHeight = Math.max(0, interBottom - interTop);
+          const interArea = interWidth * interHeight;
+
+          const unionArea =
+            (bounds.xmax - bounds.xmin) * (bounds.ymax - bounds.ymin) +
+            (candRight - candLeft) * (candBottom - candTop) -
+            interArea;
+
+          const iou = unionArea > 0 ? interArea / unionArea : 0;
+
+          const candCenterX = candLeft + (candRight - candLeft) / 2;
+          const candCenterY = candTop + (candBottom - candTop) / 2;
+          const targetCenterX = bounds.xmin + (bounds.xmax - bounds.xmin) / 2;
+          const targetCenterY = bounds.ymin + (bounds.ymax - bounds.ymin) / 2;
+          const distance = Math.hypot(candCenterX - targetCenterX, candCenterY - targetCenterY);
+
+          const score = iou * 1000 - distance;
+          if (score > bestScore) {
+            bestScore = score;
+            bestSelector = getSelectorForElement(el);
+          }
+        }
+
+        if (bestSelector) {
+          return { ok: true, selector: bestSelector };
+        }
+        
+        throw new Error("Could not resolve any visual bounding box DOM selector targets.");
+      }
+      case "SHOW_VISUAL_OVERLAY": {
+        const { elements } = message;
+        if (!elements) throw new Error("Missing overlay elements list.");
+
+        const old = document.getElementById("hunter-vision-overlay");
+        if (old) old.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "hunter-vision-overlay";
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100vw";
+        overlay.style.height = "100vh";
+        overlay.style.zIndex = "999999";
+        overlay.style.pointerEvents = "none";
+
+        elements.forEach((el: any) => {
+          const leftPercent = el.bounds.xmin / 10;
+          const topPercent = el.bounds.ymin / 10;
+          const widthPercent = (el.bounds.xmax - el.bounds.xmin) / 10;
+          const heightPercent = (el.bounds.ymax - el.bounds.ymin) / 10;
+
+          const box = document.createElement("div");
+          box.style.position = "absolute";
+          box.style.left = `${leftPercent}vw`;
+          box.style.top = `${topPercent}vh`;
+          box.style.width = `${widthPercent}vw`;
+          box.style.height = `${heightPercent}vh`;
+          box.style.border = "2px dashed #ff6b35";
+          box.style.backgroundColor = "rgba(255, 107, 53, 0.1)";
+
+          const label = document.createElement("div");
+          label.textContent = `🟧 ${el.text || el.type} (${Math.round(el.confidence * 100)}%)`;
+          label.style.position = "absolute";
+          label.style.top = "-16px";
+          label.style.left = "0";
+          label.style.backgroundColor = "#ff6b35";
+          label.style.color = "white";
+          label.style.fontSize = "8px";
+          label.style.fontWeight = "bold";
+          label.style.padding = "1px 3px";
+          label.style.borderRadius = "2px";
+          label.style.whiteSpace = "nowrap";
+
+          box.appendChild(label);
+          overlay.appendChild(box);
+        });
+
+        document.body.appendChild(overlay);
+        return { ok: true };
+      }
+      case "HIDE_VISUAL_OVERLAY": {
+        const overlay = document.getElementById("hunter-vision-overlay");
+        if (overlay) overlay.remove();
+        return { ok: true };
+      }
       case "TOGGLE_SIDEBAR":
         return controller.toggle();
       case "OPEN_SIDEBAR":

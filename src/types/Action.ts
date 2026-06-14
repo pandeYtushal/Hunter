@@ -11,7 +11,10 @@ export type ActionType =
   | "extract_text"
   | "navigate_page"
   | "upload_resume"
-  | "chat_fallback";
+  | "chat_fallback"
+  | "vision_click"
+  | "vision_fill"
+  | "vision_analyze";
 
 export type IntentType =
   | "APPLY_JOB"
