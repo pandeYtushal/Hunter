@@ -105,7 +105,7 @@ export const App = () => {
   const isConnected = !!(snapshot?.url && !snapshot.url.startsWith("chrome://") && !snapshot.url.startsWith("about:"));
 
   return (
-    <main className="flex h-[360px] w-[350px] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[#ff6b35]/30 select-none overflow-hidden">
+    <main className="flex h-[520px] w-[380px] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[#ff6b35]/30 select-none overflow-hidden">
       {/* Header */}
       <header className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export const App = () => {
               </button>
             </div>
 
-            <div className="space-y-2 text-[10.5px] max-h-[175px] overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 text-[10.5px] max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
               <div className="space-y-0.5">
                 <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Model Provider</label>
                 <select
