@@ -50,6 +50,7 @@ const getConfig = ({ mode }: { mode: string }) => {
         outDir: "dist",
         emptyOutDir: false,
         sourcemap: true,
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
           input: {
             content: resolve(__dirname, "src/content/contentScript.ts")
@@ -70,6 +71,7 @@ const getConfig = ({ mode }: { mode: string }) => {
       outDir: "dist",
       emptyOutDir: true,
       sourcemap: true,
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         input: {
           popup: resolve(__dirname, "popup.html"),
