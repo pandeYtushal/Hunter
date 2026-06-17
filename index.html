@@ -1820,6 +1820,7 @@
         text-align: center;
       }
     }
+
     /* Tooltip styles */
     [data-tooltip] {
       position: relative;
@@ -1885,12 +1886,14 @@
     .demo-chips-container::-webkit-scrollbar {
       display: none !important;
     }
+
     .demo-chips-container {
       -ms-overflow-style: none !important;
       scrollbar-width: none !important;
-      -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
-      mask-image: linear-gradient(to right, rgba(0,0,0,1) 85%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 100%);
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0) 100%);
     }
+
     .demo-scroll-btn {
       position: absolute !important;
       top: 50% !important;
@@ -1909,19 +1912,25 @@
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
       cursor: pointer !important;
     }
+
     .demo-scroll-btn:hover {
       transform: translateY(-50%) scale(1.1) !important;
       border-color: var(--amber) !important;
       color: var(--amber) !important;
       background: var(--ink-3) !important;
     }
+
     .demo-scroll-btn:active {
       transform: translateY(-50%) scale(0.92) !important;
     }
-    .demo-chip-btn, .sidebar-foot .run-btn {
+
+    .demo-chip-btn,
+    .sidebar-foot .run-btn {
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
-    .demo-chip-btn:hover, .sidebar-foot .run-btn:hover {
+
+    .demo-chip-btn:hover,
+    .sidebar-foot .run-btn:hover {
       transform: translateY(-1.5px) scale(1.03) !important;
       color: var(--amber) !important;
       border-color: var(--amber) !important;
@@ -1970,8 +1979,16 @@
       </p>
 
       <div class="hero-actions">
-        <a href="#" class="btn btn-amber" onclick="alert('Update with Chrome Web Store URL after publishing.')" data-tooltip="Coming Soon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="10.88" x2="15.46" y1="21.94" y2="14"/></svg>
+        <a href="#" class="btn btn-amber" onclick="alert('Update with Chrome Web Store URL after publishing.')"
+          data-tooltip="Coming Soon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="4" />
+            <line x1="21.17" x2="12" y1="8" y2="8" />
+            <line x1="3.95" x2="8.54" y1="6.06" y2="14" />
+            <line x1="10.88" x2="15.46" y1="21.94" y2="14" />
+          </svg>
           Add to Chrome — Free
         </a>
         <a href="#setup" class="btn btn-outline">
@@ -2048,12 +2065,17 @@
             <!-- Content Area (Welcome view or Chat view) -->
             <div class="demo-sidebar-content custom-scrollbar" id="sidebar-content">
               <!-- Welcome View -->
-              <div class="welcome-view" id="welcome-view" style="display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; gap: 8px; padding: 24px 12px; margin-top: 10px;">
-                <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(249, 115, 22, 0.08); color: var(--amber); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px;">
+              <div class="welcome-view" id="welcome-view"
+                style="display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; gap: 8px; padding: 24px 12px; margin-top: 10px;">
+                <div
+                  style="width: 38px; height: 38px; border-radius: 12px; background: rgba(249, 115, 22, 0.08); color: var(--amber); display: flex; align-items: center; justify-content: center; margin: 0 auto 4px;">
                   <i data-lucide="search" style="width: 18px; height: 18px; stroke-width: 2.5;"></i>
                 </div>
-                <h3 class="welcome-title" style="font-size: 13px; font-weight: 800; color: var(--text);">Hunter is ready</h3>
-                <p class="welcome-desc" style="font-size: 10px; color: var(--text-2); max-width: 200px; margin: 0 auto; line-height: 1.45;">Ask Hunter to analyze this job, match your resume, or fill application forms.</p>
+                <h3 class="welcome-title" style="font-size: 13px; font-weight: 800; color: var(--text);">Hunter is ready
+                </h3>
+                <p class="welcome-desc"
+                  style="font-size: 10px; color: var(--text-2); max-width: 200px; margin: 0 auto; line-height: 1.45;">
+                  Ask Hunter to analyze this job, match your resume, or fill application forms.</p>
               </div>
 
               <!-- Chat View -->
@@ -2075,12 +2097,16 @@
                     <div class="agent-running-card" id="agent-running-card" style="border-left-color: var(--green);">
                       <div class="agent-running-header">
                         <span class="pulse-dot" style="background: var(--green);"></span>
-                        <h4 class="agent-running-title" style="font-size: 11px;">Current Goal: Autofill application form</h4>
+                        <h4 class="agent-running-title" style="font-size: 11px;">Current Goal: Autofill application form
+                        </h4>
                       </div>
-                      <p class="agent-current-step" id="agent-current-step" style="font-size: 10px; color: var(--text-2); margin-top: 4px;">Scanning page DOM for form inputs...</p>
+                      <p class="agent-current-step" id="agent-current-step"
+                        style="font-size: 10px; color: var(--text-2); margin-top: 4px;">Scanning page DOM for form
+                        inputs...</p>
 
                       <div class="progress-bar-container" style="margin-top: 6px;">
-                        <div class="progress-bar-fill" id="agent-progress-fill" style="width: 10%; background: var(--green);"></div>
+                        <div class="progress-bar-fill" id="agent-progress-fill"
+                          style="width: 10%; background: var(--green);"></div>
                       </div>
                       <div class="progress-label-row">
                         <span>Progress</span>
@@ -2128,37 +2154,49 @@
               </div>
 
               <!-- Suggested action chips beneath input -->
-              <div class="demo-chips-wrapper" style="position: relative; display: flex; align-items: center; width: 100%; margin-top: 8px;">
-                <button class="demo-scroll-btn left" onclick="scrollDemoChips('left')" style="left: 4px; display: none;"><i data-lucide="chevron-left" style="width:11px;height:11px;"></i></button>
+              <div class="demo-chips-wrapper"
+                style="position: relative; display: flex; align-items: center; width: 100%; margin-top: 8px;">
+                <button class="demo-scroll-btn left" onclick="scrollDemoChips('left')"
+                  style="left: 4px; display: none;"><i data-lucide="chevron-left"
+                    style="width:11px;height:11px;"></i></button>
 
-                <div class="demo-chips-container" id="demo-chips-container" onscroll="checkDemoScroll()" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 32px; width: 100%;">
-                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                <div class="demo-chips-container" id="demo-chips-container" onscroll="checkDemoScroll()"
+                  style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 32px; width: 100%;">
+                  <button class="demo-chip-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="sparkles" style="width:10px;height:10px;"></i>
                     Analyze job
                   </button>
-                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                  <button class="demo-chip-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="award" style="width:10px;height:10px;"></i>
                     Match resume
                   </button>
-                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                  <button class="demo-chip-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="pen-tool" style="width:10px;height:10px;"></i>
                     Cover letter
                   </button>
-                  <button class="run-btn" id="run-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                  <button class="run-btn" id="run-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="zap" style="width:10px;height:10px;fill:currentColor;"></i>
                     Autofill form
                   </button>
-                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                  <button class="demo-chip-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="file-text" style="width:10px;height:10px;"></i>
                     Summarize page
                   </button>
-                  <button class="demo-chip-btn" onclick="runDemo()" style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
+                  <button class="demo-chip-btn" onclick="runDemo()"
+                    style="white-space: nowrap; font-size: 10px; font-family: var(--syne); font-weight: 700; color: var(--text-2); background: var(--ink-2); border: 1px solid var(--border-dim); border-radius: 99px; padding: 4px 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="building-2" style="width:10px;height:10px;"></i>
                     Company research
                   </button>
                 </div>
 
-                <button class="demo-scroll-btn right" onclick="scrollDemoChips('right')" style="right: 4px; display: flex;"><i data-lucide="chevron-right" style="width:11px;height:11px;"></i></button>
+                <button class="demo-scroll-btn right" onclick="scrollDemoChips('right')"
+                  style="right: 4px; display: flex;"><i data-lucide="chevron-right"
+                    style="width:11px;height:11px;"></i></button>
               </div>
 
               <!-- Hidden match score to prevent demo script crash -->
@@ -2177,7 +2215,15 @@
       <div class="stack-items">
         <div class="stack-item"><i data-lucide="cpu" style="width:14px;height:14px;color:var(--amber)"></i> Gemini,
           OpenAI, Claude, Groq</div>
-        <div class="stack-item"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="10.88" x2="15.46" y1="21.94" y2="14"/></svg> Chrome Extension MV3</div>
+        <div class="stack-item"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="margin-right:4px;">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="4" />
+            <line x1="21.17" x2="12" y1="8" y2="8" />
+            <line x1="3.95" x2="8.54" y1="6.06" y2="14" />
+            <line x1="10.88" x2="15.46" y1="21.94" y2="14" />
+          </svg> Chrome Extension MV3</div>
         <div class="stack-item"><i data-lucide="code-2" style="width:14px;height:14px;"></i> React &amp; TypeScript
         </div>
         <div class="stack-item"><i data-lucide="file-text" style="width:14px;height:14px;"></i> PDF.js</div>
@@ -2238,7 +2284,14 @@
         <div class="setup-card">
           <div class="setup-card-head">
             <div class="setup-card-head-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" x2="12" y1="8" y2="8"/><line x1="3.95" x2="8.54" y1="6.06" y2="14"/><line x1="10.88" x2="15.46" y1="21.94" y2="14"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <circle cx="12" cy="12" r="4" />
+                <line x1="21.17" x2="12" y1="8" y2="8" />
+                <line x1="3.95" x2="8.54" y1="6.06" y2="14" />
+                <line x1="10.88" x2="15.46" y1="21.94" y2="14" />
+              </svg>
             </div>
             <span class="setup-card-head-title">Chrome Web Store</span>
             <span class="setup-card-head-pill">Recommended</span>
@@ -2285,7 +2338,8 @@
               <div class="step-num">1</div>
               <div class="step-content">
                 <div class="step-title">Download the Build</div>
-                <p class="step-desc">Grab the latest <a href="https://github.com/pandeYtushal/Hunter" target="_blank" rel="noopener">ZIP
+                <p class="step-desc">Grab the latest <a href="https://github.com/pandeYtushal/Hunter" target="_blank"
+                    rel="noopener">ZIP
                     from GitHub</a> and extract it to your machine.</p>
               </div>
             </div>
@@ -2338,11 +2392,11 @@
         </span>
       </div>
       <div class="footer-right">
-        <a href="https://github.com/pandeYtushal/Hunter" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+        <a href="https://github.com/pandeYtushal/Hunter" target="_blank" rel="noopener"
+          style="display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px;">
           <i data-lucide="github" style="width:12px;height:12px;"></i> GitHub
         </a><br>
         Open Source · MIT License<br>
-        Not affiliated with Google LLC or the Chrome Web Store.
       </div>
     </footer>
   </div><!-- /.wrap -->
