@@ -12,9 +12,34 @@ export async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<stri
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .join(" ");
+    const positionedItems = textContent.items
+      .filter((item): item is any => "str" in item && Boolean(item.str?.trim()))
+      .map((item: any) => ({
+        text: item.str.trim(),
+        x: Array.isArray(item.transform) ? item.transform[4] : 0,
+        y: Array.isArray(item.transform) ? Math.round(item.transform[5]) : 0
+      }))
+      .sort((a, b) => b.y - a.y || a.x - b.x);
+
+    const lines: Array<{ y: number; parts: Array<{ x: number; text: string }> }> = [];
+    for (const item of positionedItems) {
+      const line = lines.find((entry) => Math.abs(entry.y - item.y) <= 3);
+      if (line) {
+        line.parts.push({ x: item.x, text: item.text });
+      } else {
+        lines.push({ y: item.y, parts: [{ x: item.x, text: item.text }] });
+      }
+    }
+
+    const pageText = lines
+      .map((line) =>
+        line.parts
+          .sort((a, b) => a.x - b.x)
+          .map((part) => part.text)
+          .join(" ")
+      )
+      .join("\n");
+
     fullText += pageText + "\n";
 
     try {

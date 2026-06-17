@@ -221,6 +221,14 @@ Return a clean, valid JSON object with the following keys. Do not include any ma
   "experience": "A clear description/summary of work history (or 'Unknown')"
 }
 
+Parsing rules:
+- The candidate name is usually near the top. Do not use a job title, section heading, email, phone number, or URL as the name.
+- Put only linkedin.com profile URLs in "linkedIn".
+- Put only a personal website or portfolio domain in "portfolio".
+- Do not put GitHub, Twitter/X, Instagram, Facebook, LeetCode, HackerRank, Kaggle, Medium, or Dev.to URLs in "portfolio".
+- Extract skills from explicit Skills/Technical Skills/Technologies sections first, then infer additional technologies from projects and work experience.
+- Keep skill names concise and deduplicated.
+
 Resume Text:
 ${resumeText}`;
   }

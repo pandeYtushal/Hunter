@@ -1,5 +1,5 @@
-import React from "react";
-import { Search, Building2, Target, FileText, FileSearch, Zap } from "lucide-react";
+import React, { useRef } from "react";
+import { ChevronLeft, ChevronRight, Search, Building2, Target, FileText, FileSearch, Zap } from "lucide-react";
 
 interface PromptSuggestionsProps {
   onSelect: (prompt: string) => void;
@@ -15,21 +15,58 @@ const suggestions = [
 ];
 
 export const PromptSuggestions: React.FC<PromptSuggestionsProps> = ({ onSelect }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollRecommendations = (direction: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    el.scrollBy({
+      left: direction === "left" ? -220 : 220,
+      behavior: "smooth"
+    });
+  };
+
   return (
-    <div className="flex gap-2 overflow-x-auto py-2.5 px-4 hide-scrollbar select-none premium-scrollbar">
-      {suggestions.map((s, idx) => {
-        const Icon = s.icon;
-        return (
-          <button
-            key={idx}
-            onClick={() => onSelect(s.prompt)}
-            className="suggestion-chip flex h-7 items-center gap-1.5 rounded-full border border-zinc-800 bg-[#161618]/60 px-3 text-[10.5px] font-medium text-zinc-400 hover:text-zinc-200 transition shrink-0 cursor-pointer"
-          >
-            <Icon size={11} className="text-[#ff6b35] shrink-0" />
-            <span>{s.label}</span>
-          </button>
-        );
-      })}
+    <div className="suggestion-chip-wrapper select-none">
+      <button
+        type="button"
+        onClick={() => scrollRecommendations("left")}
+        className="suggestion-scroll-btn left-2"
+        title="Previous recommendations"
+        aria-label="Previous recommendations"
+      >
+        <ChevronLeft size={13} />
+      </button>
+
+      <div
+        ref={scrollRef}
+        className="flex gap-2 overflow-x-auto py-2.5 px-9 hide-scrollbar select-none premium-scrollbar scroll-smooth"
+      >
+        {suggestions.map((s, idx) => {
+          const Icon = s.icon;
+          return (
+            <button
+              key={idx}
+              onClick={() => onSelect(s.prompt)}
+              className="suggestion-chip flex h-7 items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 text-[10.5px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition shrink-0 cursor-pointer"
+            >
+              <Icon size={11} className="text-[#ff6b35] shrink-0" />
+              <span>{s.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => scrollRecommendations("right")}
+        className="suggestion-scroll-btn right-2"
+        title="Next recommendations"
+        aria-label="Next recommendations"
+      >
+        <ChevronRight size={13} />
+      </button>
     </div>
   );
 };

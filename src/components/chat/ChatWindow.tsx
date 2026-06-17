@@ -140,7 +140,7 @@ export const ChatWindow: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full w-full bg-[#09090b] text-zinc-150 font-sans overflow-hidden mesh-gradient relative">
+    <div className="flex h-full w-full bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden mesh-gradient relative">
       {/* Collapsible Left Sidebar */}
       <ConversationSidebar
         conversations={conversations}
@@ -168,14 +168,14 @@ export const ChatWindow: React.FC = () => {
         {/* Drag and Drop wrapper */}
         <DragDropZone onDropFile={attachFile}>
           {/* Messages Thread Log */}
-          <div className="flex-1 overflow-y-auto px-1 py-2 space-y-1.5 custom-scrollbar bg-[#09090b]/40">
+          <div className="flex-1 overflow-y-auto px-1 py-2 space-y-1.5 custom-scrollbar bg-transparent">
             {!activeConversation || activeConversation.messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 select-none animate-fade-in">
                 <div className="h-12 w-12 rounded-2xl bg-[#ff6b35]/10 border border-[#ff6b35]/20 flex items-center justify-center text-[#ff6b35] mb-4 shadow-sm">
                   <Terminal size={20} className="animate-pulse" />
                 </div>
-                <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Multimodal Browser Copilot</h2>
-                <p className="text-[11px] text-zinc-500 max-w-[240px] leading-relaxed mt-1.5 font-medium">
+                <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Multimodal Browser Copilot</h2>
+                <p className="text-[11px] text-[var(--text-secondary)] max-w-[240px] leading-relaxed mt-1.5 font-medium">
                   Hunter automatically observes page layout, reads metadata, tracks active goals, and answers queries.
                 </p>
               </div>
@@ -207,7 +207,7 @@ export const ChatWindow: React.FC = () => {
 
         {/* Error Notification Bar */}
         {error && (
-          <div className="mx-4 my-2 px-3 py-2 rounded-lg border border-rose-900/35 bg-rose-955/10 flex items-center gap-2 text-xs font-medium text-rose-455 select-none animate-scale-up">
+          <div className="mx-4 my-2 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-2 text-xs font-medium text-rose-500 select-none animate-scale-up">
             <AlertTriangle size={14} className="shrink-0" />
             <span className="flex-1 truncate">{error}</span>
             <button
@@ -230,19 +230,19 @@ export const ChatWindow: React.FC = () => {
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-[#ff6b35] animate-ping" />
-                <h3 className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+            <h3 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   Autonomous Copilot Mode: {copilot.machineState}
                 </h3>
               </div>
-              <span className="text-[9.5px] text-zinc-550 font-mono">
+              <span className="text-[9.5px] text-[var(--text-muted)] font-mono">
                 Est. completion: {copilot.estimatedCompletionTimeSeconds}s
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-[11.5px] font-bold text-zinc-200 block">"{copilot.currentGoal}"</span>
+              <span className="text-[11.5px] font-bold text-[var(--text-primary)] block">"{copilot.currentGoal}"</span>
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-zinc-850 rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#ff6b35] to-[#ff8255] transition-all duration-300"
                     style={{ width: `${copilot.progress}%` }}
@@ -274,7 +274,7 @@ export const ChatWindow: React.FC = () => {
                       {step.name}
                     </span>
                   </div>
-                  <span className="text-[9px] text-zinc-550 italic truncate max-w-[150px]">{step.description}</span>
+                  <span className="text-[9px] text-[var(--text-muted)] italic truncate max-w-[150px]">{step.description}</span>
                 </div>
               ))}
             </div>
@@ -286,7 +286,7 @@ export const ChatWindow: React.FC = () => {
                   <AlertTriangle size={12} />
                   Safety Approval Required
                 </p>
-                <p className="text-[9.5px] text-zinc-450 leading-relaxed">
+                <p className="text-[9.5px] text-[var(--text-secondary)] leading-relaxed">
                   Hunter has paused before performing a critical operation (Submit, Purchase, Delete, Upload). Do you confirm?
                 </p>
                 <div className="flex gap-2">
@@ -298,7 +298,7 @@ export const ChatWindow: React.FC = () => {
                   </button>
                   <button
                     onClick={() => CopilotEngine.getInstance().skip()}
-                    className="flex-1 h-7 rounded border border-[var(--border-color)] text-zinc-400 hover:text-white text-[10.5px] font-mono uppercase transition cursor-pointer"
+                    className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10.5px] font-mono uppercase transition cursor-pointer"
                   >
                     Skip Step
                   </button>
@@ -311,7 +311,7 @@ export const ChatWindow: React.FC = () => {
               {copilot.machineState === "executing" ? (
                 <button
                   onClick={() => CopilotEngine.getInstance().pause()}
-                  className="flex-1 h-8 rounded border border-zinc-800 bg-[#1a1a1a] hover:bg-zinc-800 text-[10px] font-semibold text-zinc-300 transition cursor-pointer"
+                  className="flex-1 h-8 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-[10px] font-semibold text-[var(--text-secondary)] transition cursor-pointer"
                 >
                   Pause Loop
                 </button>
@@ -362,8 +362,8 @@ export const ChatWindow: React.FC = () => {
 
         {/* Developer Mode Drawer panel */}
         {devModeOpen && (
-          <div className="border-t border-[rgba(255,255,255,0.08)] bg-[#09090b] p-4 text-[10.5px] font-mono leading-relaxed select-text max-h-[200px] overflow-y-auto custom-scrollbar animate-fade-in shadow-inner">
-            <div className="flex justify-between items-center border-b border-[rgba(255,255,255,0.06)] pb-2 mb-3">
+          <div className="border-t border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 text-[10.5px] font-mono leading-relaxed select-text max-h-[200px] overflow-y-auto custom-scrollbar animate-fade-in shadow-inner">
+            <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 mb-3">
               <h3 className="font-bold text-[#ff6b35] uppercase tracking-wider flex items-center gap-1.5">
                 <Terminal size={12} />
                 Developer Console Metrics

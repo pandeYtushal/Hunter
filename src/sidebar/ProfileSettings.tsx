@@ -146,7 +146,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           linkedIn: parsed.linkedIn || profile.linkedIn || "",
           portfolio: parsed.portfolio || profile.portfolio || ""
         });
-        setSuccessMsg("Resume parsed successfully!");
+        setSuccessMsg("Resume loaded successfully. Review the details, then save your profile.");
       } else {
         throw new Error(response?.error || "Hunter was unable to extract structured details from the resume.");
       }

@@ -35,10 +35,10 @@ export const DragDropZone: React.FC<DragDropZoneProps> = ({ onDropFile, children
       className="relative flex-1 flex flex-col min-h-0"
     >
       {isDragging && (
-        <div className="absolute inset-0 bg-[#0c0c0e]/85 backdrop-blur-sm border-2 border-dashed border-[#ff6b35] m-3 rounded-2xl flex flex-col items-center justify-center gap-3 z-50 animate-scale-up select-none pointer-events-none">
+        <div className="absolute inset-0 bg-[var(--surface-overlay)] backdrop-blur-sm border-2 border-dashed border-[#ff6b35] m-3 rounded-2xl flex flex-col items-center justify-center gap-3 z-50 animate-scale-up select-none pointer-events-none">
           <Upload className="h-10 w-10 text-[#ff6b35] animate-bounce" />
-          <h3 className="text-sm font-bold text-zinc-150 uppercase tracking-wider">Drop Image to Attach</h3>
-          <p className="text-xs text-zinc-500 font-medium">Supports PNG, JPEG, WEBP files up to 5MB</p>
+          <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Drop Image to Attach</h3>
+          <p className="text-xs text-[var(--text-muted)] font-medium">Supports PNG, JPEG, WEBP files up to 5MB</p>
         </div>
       )}
       {children}

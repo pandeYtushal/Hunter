@@ -28,22 +28,24 @@ export class AIManager {
   private async isProviderConfigured(provider: string, settings: any): Promise<boolean> {
     if (!settings) return false;
     const pName = provider.toLowerCase();
+    const hasKey = (value?: string) => Boolean(Encryption.decrypt(value || "").trim());
+
     switch (pName) {
       case "openai":
-        return Boolean(settings.openaiApiKey?.trim());
+        return hasKey(settings.openaiApiKey);
       case "anthropic":
-        return Boolean(settings.anthropicApiKey?.trim());
+        return hasKey(settings.anthropicApiKey);
       case "groq":
-        return Boolean(settings.groqApiKey?.trim());
+        return hasKey(settings.groqApiKey);
       case "openrouter":
-        return Boolean(settings.openrouterApiKey?.trim());
+        return hasKey(settings.openrouterApiKey);
       case "deepseek":
-        return Boolean(settings.deepseekApiKey?.trim());
+        return hasKey(settings.deepseekApiKey);
       case "ollama":
         return true; // Ollama is local, doesn't mandate keys
       case "gemini":
       default:
-        return Boolean(settings.apiKey?.trim());
+        return hasKey(settings.apiKey);
     }
   }
 

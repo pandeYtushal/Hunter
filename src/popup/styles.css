@@ -4,26 +4,28 @@
 
 :root {
   color-scheme: light;
-  --bg-primary: #fafafa;
+  --bg-primary: #fffaf2;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f4f4f5;
-  --text-primary: #09090b;
-  --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --bg-tertiary: #f5efe4;
+  --surface-overlay: rgba(255, 255, 255, 0.78);
+  --text-primary: #181613;
+  --text-secondary: #5f5648;
+  --text-muted: #9c8f7c;
   --accent: #ff6b35;
   --accent-rgb: 255, 107, 53;
   --accent-faint: rgba(255, 107, 53, 0.05);
   --accent-dim: rgba(255, 107, 53, 0.12);
-  --border-color: rgba(9, 9, 11, 0.08);
-  --border-hover: rgba(9, 9, 11, 0.15);
+  --border-color: rgba(63, 49, 32, 0.12);
+  --border-hover: rgba(63, 49, 32, 0.22);
 }
 
 :root.dark,
 .dark {
   color-scheme: dark;
-  --bg-primary: #090909;
-  --bg-secondary: #111111;
-  --bg-tertiary: #181818;
+  --bg-primary: #090a0f;
+  --bg-secondary: #12131a;
+  --bg-tertiary: #1b1a21;
+  --surface-overlay: rgba(18, 19, 26, 0.82);
   --text-primary: #f4f4f5;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;

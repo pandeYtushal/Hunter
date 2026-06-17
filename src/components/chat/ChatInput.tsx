@@ -65,7 +65,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           type="button"
           onClick={onCaptureScreenshot}
           disabled={isGenerating || disabled}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition cursor-pointer"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
           title="Capture Browser Tab Screenshot"
         >
           <Camera size={14} />
@@ -84,7 +84,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           placeholder="Ask Hunter or paste screenshot... (Shift+Enter for new line)"
           rows={1}
           disabled={disabled}
-          className="flex-1 resize-none bg-transparent py-1.5 px-1 text-xs text-[var(--text-primary)] focus:outline-none placeholder-zinc-500 leading-relaxed max-h-[140px] custom-scrollbar"
+          className="flex-1 resize-none bg-transparent py-1.5 px-1 text-xs text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-muted)] leading-relaxed max-h-[140px] custom-scrollbar"
         />
 
         {/* Send / Stop Generation Buttons */}
@@ -102,7 +102,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             onClick={onSend}
             disabled={(!value.trim() && !isGenerating) || disabled}
-            className="btn-send-gradient flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 disabled:opacity-35 transition cursor-pointer"
+            className="btn-send-gradient flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] disabled:opacity-35 transition cursor-pointer"
             title="Send query"
           >
             <Send size={12} />
