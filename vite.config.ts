@@ -74,6 +74,7 @@ const getConfig = ({ mode }: { mode: string }) => {
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         input: {
+          index: resolve(__dirname, "index.html"),
           popup: resolve(__dirname, "popup.html"),
           sidebar: resolve(__dirname, "sidebar.html"),
           background: resolve(__dirname, "src/background/background.ts")
