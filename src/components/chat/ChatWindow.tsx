@@ -10,6 +10,9 @@ import { ChatInput } from "./ChatInput";
 import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
+import { ProfileSettings } from "../../sidebar/ProfileSettings";
+import { storage } from "../../shared/storage";
+import { applyDocumentTheme } from "../../shared/theme";
 
 export const ChatWindow: React.FC = () => {
   const {
@@ -37,6 +40,7 @@ export const ChatWindow: React.FC = () => {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [devModeOpen, setDevModeOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [copilot, setCopilot] = useState<CopilotState>({
     machineState: "idle",
     currentGoal: "",
@@ -49,8 +53,15 @@ export const ChatWindow: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Subscribe to Copilot Engine State
+  // Subscribe to Copilot Engine State & Apply Theme
   useEffect(() => {
+    storage.get("settings").then((settings) => {
+      const theme = settings?.theme || "dark";
+      applyDocumentTheme(theme);
+    }).catch(() => {
+      applyDocumentTheme("dark");
+    });
+
     return CopilotEngine.getInstance().subscribe((state) => {
       setCopilot(state);
     });
@@ -124,6 +135,10 @@ export const ChatWindow: React.FC = () => {
     copilot.machineState === "paused" ||
     copilot.machineState === "planning";
 
+  if (showProfile) {
+    return <ProfileSettings onBack={() => setShowProfile(false)} />;
+  }
+
   return (
     <div className="flex h-full w-full bg-[#09090b] text-zinc-150 font-sans overflow-hidden mesh-gradient relative">
       {/* Collapsible Left Sidebar */}
@@ -147,6 +162,7 @@ export const ChatWindow: React.FC = () => {
           onToggleDevMode={() => setDevModeOpen(!devModeOpen)}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onClearChat={clearCurrentConversation}
+          onToggleProfile={() => setShowProfile(true)}
         />
 
         {/* Drag and Drop wrapper */}

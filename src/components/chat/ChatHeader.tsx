@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, Sparkles, Activity, ShieldAlert, Cpu, Database } from "lucide-react";
+import { Bot, Sparkles, Activity, ShieldAlert, Cpu, Database, User, Menu } from "lucide-react";
 
 interface ChatHeaderProps {
   currentUrl?: string;
@@ -10,6 +10,7 @@ interface ChatHeaderProps {
   onToggleDevMode: () => void;
   onToggleSidebar: () => void;
   onClearChat: () => void;
+  onToggleProfile: () => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -20,7 +21,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   devMode,
   onToggleDevMode,
   onToggleSidebar,
-  onClearChat
+  onClearChat,
+  onToggleProfile
 }) => {
   const shortUrl = currentUrl
     ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0]
@@ -34,7 +36,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#1a1a1a] text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition cursor-pointer"
           title="Toggle Conversations List"
         >
-          <Bot size={15} className="text-[#ff6b35] animate-pulse" />
+          <Menu size={15} className="text-[#ff6b35]" />
         </button>
         <div className="min-w-0">
           <h1 className="text-xs font-bold text-zinc-200 flex items-center gap-1 leading-none">
@@ -55,6 +57,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         )}
 
         <button
+          onClick={onToggleProfile}
+          className="flex h-8 items-center gap-1 px-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#1a1a1a] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 text-[10px] font-bold transition cursor-pointer"
+          title="Open Profile & Resume Settings"
+        >
+          <User size={12} />
+          <span>Profile</span>
+        </button>
+
+        <button
           onClick={onToggleDevMode}
           className={`flex h-8 items-center gap-1 px-2.5 rounded-lg border text-[10px] font-bold transition cursor-pointer ${
             devMode
@@ -69,7 +80,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         <button
           onClick={onClearChat}
-          className="h-8 px-2.5 rounded-lg border border-rose-900/30 bg-[#1a1a1a] hover:bg-rose-950/25 hover:border-rose-800 text-zinc-400 hover:text-rose-400 text-[10px] font-medium transition cursor-pointer"
+          className="h-8 px-2.5 rounded-lg border border-rose-900/30 bg-[#1a1a1a] hover:bg-rose-955/25 hover:border-rose-800 text-zinc-400 hover:text-rose-400 text-[10px] font-medium transition cursor-pointer"
           title="Clear active conversation logs"
         >
           Reset
