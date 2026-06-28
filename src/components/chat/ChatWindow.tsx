@@ -57,6 +57,16 @@ function formatCopilotResult(result: string): string {
   return result;
 }
 
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: mimeType });
+}
+
 export const ChatWindow: React.FC = () => {
   const {
     conversations,
@@ -577,7 +587,12 @@ export const ChatWindow: React.FC = () => {
           onCaptureScreenshot={captureScreen}
           onAttachFile={attachFile}
           onAttachImageObject={(att) => {
-            attachFile(new File([new Blob()], att.name, { type: att.mimeType }));
+            try {
+              const blob = base64ToBlob(att.base64Data, att.mimeType);
+              attachFile(new File([blob], att.name, { type: att.mimeType }));
+            } catch (err) {
+              console.error("Failed to reconstruct image from pasted attachment:", err);
+            }
           }}
         />
 

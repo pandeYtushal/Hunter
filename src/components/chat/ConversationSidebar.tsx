@@ -34,10 +34,10 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             onClose();
           }
         }}
-        className="absolute inset-0 bg-black/20 backdrop-blur-[1px] cursor-default"
+        className="absolute inset-0 bg-black/40 cursor-default animate-fade-in"
       />
 
-      <aside className="relative z-10 flex h-full w-[min(82vw,18rem)] flex-col border-r border-[var(--border-color)] bg-[var(--surface-overlay)] shadow-2xl backdrop-blur-xl animate-fade-in">
+      <aside className="relative z-10 flex h-full w-[min(82vw,18rem)] flex-col border-r border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-2xl animate-msg-left">
         <div className="p-3.5 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-primary)]/70">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Conversations</h2>
           <button

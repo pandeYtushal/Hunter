@@ -130,8 +130,16 @@ export function useChatController() {
     setDevMetrics((prev) => ({ ...prev, streamingStatus: "completed" }));
   };
 
-  const sendMessage = async (textToSend?: string) => {
-    const query = (textToSend !== undefined ? textToSend : input).trim();
+  const sendMessage = async (textToSend?: unknown) => {
+    let resolvedText: string | undefined;
+    if (typeof textToSend === "string") {
+      resolvedText = textToSend;
+    } else if (textToSend !== undefined && textToSend !== null) {
+      console.warn("sendMessage received non-string argument, falling back to input state:", textToSend);
+      resolvedText = undefined;
+    }
+
+    const query = (resolvedText !== undefined ? resolvedText : input).trim();
     if (!query && attachments.length === 0) return;
     if (!activeId || !activeConversation) return;
 
@@ -439,12 +447,25 @@ export function useChatController() {
     await sendMessage(newText);
   };
 
-  const addMessageToHistory = async (role: MessageRole, content: string) => {
+  const addMessageToHistory = async (role: MessageRole, content: unknown) => {
     if (!activeId || !activeConversation) return;
+
+    let resolvedContent = "";
+    if (typeof content === "string") {
+      resolvedContent = content;
+    } else if (content !== undefined && content !== null) {
+      console.error("addMessageToHistory received non-string content:", content);
+      try {
+        resolvedContent = typeof content === "object" ? JSON.stringify(content) : String(content);
+      } catch (e) {
+        resolvedContent = "[Unrenderable Content]";
+      }
+    }
+
     const newMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role,
-      content,
+      content: resolvedContent,
       createdAt: new Date().toISOString()
     };
     const updatedMessages = [...activeConversation.messages, newMsg];

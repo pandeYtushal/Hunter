@@ -70,7 +70,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* Screenshot capture action */}
           <button
             type="button"
-            onClick={onCaptureScreenshot}
+            onClick={() => onCaptureScreenshot()}
             disabled={isGenerating || disabled}
             className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-150 cursor-pointer"
             title="Capture Browser Tab Screenshot"
@@ -106,7 +106,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         {isGenerating ? (
           <button
             type="button"
-            onClick={onStop}
+            onClick={() => onStop()}
             className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer"
             title="Stop generation"
           >
@@ -115,7 +115,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         ) : (
           <button
             type="button"
-            onClick={onSend}
+            onClick={() => onSend()}
             disabled={(!value.trim() && !isGenerating) || disabled}
             className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-30 transition cursor-pointer"
             title="Send query"
@@ -127,4 +127,3 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     </div>
   );
 };
-

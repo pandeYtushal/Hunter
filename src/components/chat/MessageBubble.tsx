@@ -19,6 +19,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onEditAndRetry,
   isGenerating
 }) => {
+  // Runtime Guard: Ensure message.content is always a string to prevent React Error #31
+  if (message && typeof message.content !== "string") {
+    console.error("Invalid React child detected: message.content is not a string", message.content, typeof message.content);
+    try {
+      message.content = typeof message.content === "object" ? JSON.stringify(message.content) : String(message.content);
+    } catch (e) {
+      message.content = "[Unrenderable Content]";
+    }
+  }
+
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
@@ -169,8 +179,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {message.content}
                 </div>
               ) : (
-                <div className="markdown-container">
-                  <Markdown content={message.content} isStreaming={isLastAssistant} />
+                 <div className="markdown-container">
+                  <Markdown content={String(message.content ?? "")} isStreaming={isLastAssistant} />
                 </div>
               )}
             </div>
