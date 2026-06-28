@@ -30,7 +30,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachment
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <button
               onClick={() => onRemove(att.id)}
-              className="p-1 rounded-full bg-zinc-800 text-white hover:bg-rose-600 transition cursor-pointer"
+              className="p-1 rounded-full bg-[var(--text-secondary)] text-[var(--bg-primary)] hover:bg-rose-600 transition cursor-pointer"
               title="Remove Attachment"
             >
               <X size={10} />

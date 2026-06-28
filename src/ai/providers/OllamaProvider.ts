@@ -51,7 +51,7 @@ export class OllamaProvider implements AIProvider {
       messages,
       options: {
         temperature: request.temperature ?? 0.6,
-        num_predict: request.maxTokens ?? 1024
+        num_predict: request.maxTokens ?? 4096
       },
       stream: false
     };
@@ -187,7 +187,7 @@ export class OllamaProvider implements AIProvider {
       messages,
       options: {
         temperature: request.temperature ?? 0.6,
-        num_predict: request.maxTokens ?? 1024
+        num_predict: request.maxTokens ?? 4096
       },
       stream: true
     };

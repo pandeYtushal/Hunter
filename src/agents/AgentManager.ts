@@ -3,9 +3,11 @@ import { AgentLoop } from "../ai/agentLoop";
 import { ExecutionStateMachine } from "../ai/stateMachine";
 import { EventBus } from "../core/EventBus";
 import type { AgentState, ExecutionPlan } from "../shared/types/agent";
+import { AIManager } from "../ai/core/AIManager";
 
 export const AgentManager = {
   async runGoal(goal: string, plan: ExecutionPlan): Promise<AgentState> {
+    AIManager.getInstance().resetSessionTokens();
     const machine = new ExecutionStateMachine();
     await memory.addCommand(goal);
     machine.transition("PLANNING");
@@ -76,22 +78,3 @@ export const AgentManager = {
     }
   }
 };
-
-function getActionDescription(action: string): string {
-  switch (action) {
-    case "extract_job": return "Extracting job description details";
-    case "match_resume": return "Comparing resume qualifications against requirements";
-    case "generate_cover_letter": return "Generating tailored cover letter draft";
-    case "fill_form": return "Scanning and mapping webpage forms";
-    case "research_company": return "Synthesizing company overview and culture insights";
-    case "save_job": return "Saving job to application tracker";
-    case "parse_resume": return "Extracting candidate profile from resume PDF";
-    case "click_element": return "Performing element click on webpage";
-    case "fill_input": return "Populating input value on form field";
-    case "extract_text": return "Extracting raw text from active webpage";
-    case "navigate_page": return "Navigating page sections or URLs";
-    case "upload_resume": return "Locating and highlighting file inputs for resume manual uploads";
-    case "chat_fallback": return "Generating fallback general conversational response";
-    default: return "Executing general workflow action";
-  }
-}

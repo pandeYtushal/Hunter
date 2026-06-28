@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
-import { Send, Camera, Square } from "lucide-react";
+import { Camera, Square, ArrowUp } from "lucide-react";
 import { ImageUploader } from "./ImageUploader";
+import { VoiceInput } from "../../sidebar/VoiceInput";
 import { ClipboardManager } from "../../chat/ClipboardManager";
 import type { ChatAttachment } from "../../chat/ChatTypes";
 
@@ -29,14 +30,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea height
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
 
     ta.style.height = "auto";
+    const maxHeight = Math.min(180, Math.max(112, window.innerHeight * 0.28));
     const scrollHeight = ta.scrollHeight;
-    ta.style.height = `${Math.min(scrollHeight, 140)}px`;
+    ta.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
   }, [value]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -58,21 +59,35 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="border-t border-[var(--border-color)] bg-[var(--bg-primary)] px-4 py-3 select-none">
-      <div className="relative flex items-end gap-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2 glass-input transition">
-        {/* Screenshot capture action */}
-        <button
-          type="button"
-          onClick={onCaptureScreenshot}
-          disabled={isGenerating || disabled}
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition cursor-pointer"
-          title="Capture Browser Tab Screenshot"
-        >
-          <Camera size={14} />
-        </button>
+    <div className="bg-transparent px-3 py-3 select-none shrink-0">
+      <div className="chat-composer relative flex items-end gap-1.5 rounded-xl p-1.5 transition duration-150">
+        
+        {/* Attachment & Screenshot Controls */}
+        <div className="flex items-center gap-1">
+          {/* File attachment picker */}
+          <ImageUploader onUpload={onAttachFile} disabled={isGenerating || disabled} />
 
-        {/* File attachment picker */}
-        <ImageUploader onUpload={onAttachFile} disabled={isGenerating || disabled} />
+          {/* Screenshot capture action */}
+          <button
+            type="button"
+            onClick={onCaptureScreenshot}
+            disabled={isGenerating || disabled}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-150 cursor-pointer"
+            title="Capture Browser Tab Screenshot"
+          >
+            <Camera size={13} />
+          </button>
+
+          {/* Voice Speech-to-Text Input Button */}
+          <VoiceInput
+            disabled={isGenerating || disabled}
+            onError={(msg) => console.warn(msg)}
+            onTranscriptChange={onChange}
+            onTranscriptSubmit={(text) => {
+              onChange(text);
+            }}
+          />
+        </div>
 
         {/* Message Input Textarea */}
         <textarea
@@ -81,34 +96,35 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Ask Hunter or paste screenshot... (Shift+Enter for new line)"
+          placeholder="Message Hunter"
           rows={1}
           disabled={disabled}
-          className="flex-1 resize-none bg-transparent py-1.5 px-1 text-xs text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-muted)] leading-relaxed max-h-[140px] custom-scrollbar"
+          className="flex-1 resize-none bg-transparent py-1.5 px-2 text-[13px] font-normal text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-muted)] leading-relaxed max-h-[28vh] min-h-8 custom-scrollbar font-sans"
         />
 
-        {/* Send / Stop Generation Buttons */}
+        {/* Send / Stop Action Trigger */}
         {isGenerating ? (
           <button
             type="button"
             onClick={onStop}
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition cursor-pointer shadow"
+            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer"
             title="Stop generation"
           >
-            <Square size={12} fill="currentColor" />
+            <Square size={10} fill="currentColor" />
           </button>
         ) : (
           <button
             type="button"
             onClick={onSend}
             disabled={(!value.trim() && !isGenerating) || disabled}
-            className="btn-send-gradient flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-secondary)] disabled:opacity-35 transition cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-30 transition cursor-pointer"
             title="Send query"
           >
-            <Send size={12} />
+            <ArrowUp size={13} strokeWidth={2.5} />
           </button>
         )}
       </div>
     </div>
   );
 };
+

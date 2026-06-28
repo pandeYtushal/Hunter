@@ -9,7 +9,7 @@ export const JobAgent = {
     const details = await extractJobDetails(pageContext);
     
     // Check match suitability against stored profile skills
-    const result = await chrome.storage.sync.get("profile");
+    const result = await chrome.storage.local.get("profile");
     const profile = (result.profile as UserProfile) || { skills: [], name: "" };
     
     let matchScore = 0;

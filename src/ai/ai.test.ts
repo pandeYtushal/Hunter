@@ -23,24 +23,24 @@ vi.mock("./core/ProviderFactory", () => ({
 }));
 
 describe("Encryption and Key Obfuscation", () => {
-  it("encrypts and decrypts string correctly", () => {
+  it("encrypts and decrypts string correctly", async () => {
     const plain = "test-api-key-12345";
-    const encrypted = Encryption.encrypt(plain);
+    const encrypted = await Encryption.encrypt(plain);
     expect(encrypted).not.toBe(plain);
     expect(encrypted).not.toBe("");
     
-    const decrypted = Encryption.decrypt(encrypted);
+    const decrypted = await Encryption.decrypt(encrypted);
     expect(decrypted).toBe(plain);
   });
 
-  it("handles empty or falsy strings gracefully", () => {
-    expect(Encryption.encrypt("")).toBe("");
-    expect(Encryption.decrypt("")).toBe("");
+  it("handles empty or falsy strings gracefully", async () => {
+    expect(await Encryption.encrypt("")).toBe("");
+    expect(await Encryption.decrypt("")).toBe("");
   });
 
-  it("returns plain text back if decryption fails or string is not base64", () => {
+  it("returns plain text back if decryption fails or string is not base64", async () => {
     const plainText = "just plain non-base64 text!!!";
-    const decrypted = Encryption.decrypt(plainText);
+    const decrypted = await Encryption.decrypt(plainText);
     expect(decrypted).toBe(plainText);
   });
 });
@@ -165,7 +165,7 @@ describe("AIManager Routing and Fallbacks", () => {
   it("routes to primary provider on success", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "openai",
-      openaiApiKey: Encryption.encrypt("key")
+      openaiApiKey: await Encryption.encrypt("key")
     });
 
     const expectedResponse = {
@@ -185,7 +185,7 @@ describe("AIManager Routing and Fallbacks", () => {
   it("retries primary provider on rate limit / initial failure", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "gemini",
-      apiKey: Encryption.encrypt("gemini-key")
+      apiKey: await Encryption.encrypt("gemini-key")
     });
 
     // Fail once, succeed on retry
@@ -202,9 +202,9 @@ describe("AIManager Routing and Fallbacks", () => {
   it("falls back to configured fallback provider if primary retry fails", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "gemini",
-      apiKey: Encryption.encrypt("gemini-key"),
+      apiKey: await Encryption.encrypt("gemini-key"),
       fallbackProvider: "openai",
-      openaiApiKey: Encryption.encrypt("openai-key")
+      openaiApiKey: await Encryption.encrypt("openai-key")
     });
 
     // Gemini provider fails completely (primary and retry)
@@ -232,10 +232,10 @@ describe("AIManager Routing and Fallbacks", () => {
   it("falls back dynamically to any other configured provider if both primary and fallback fail", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "gemini",
-      apiKey: Encryption.encrypt("gemini-key"),
+      apiKey: await Encryption.encrypt("gemini-key"),
       fallbackProvider: "openai",
-      openaiApiKey: Encryption.encrypt("openai-key"),
-      anthropicApiKey: Encryption.encrypt("claude-key")
+      openaiApiKey: await Encryption.encrypt("openai-key"),
+      anthropicApiKey: await Encryption.encrypt("claude-key")
     });
 
     // Make createProvider return different provider mock interfaces
@@ -268,7 +268,7 @@ describe("AIManager Routing and Fallbacks", () => {
   it("throws a cascading failure error when all configured providers fail", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "gemini",
-      apiKey: Encryption.encrypt("gemini-key")
+      apiKey: await Encryption.encrypt("gemini-key")
     });
 
     mockProvider.chat.mockRejectedValue(new Error("API issue"));
@@ -279,9 +279,9 @@ describe("AIManager Routing and Fallbacks", () => {
   it("supports vision calls and correctly routes to visionProvider if configured", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "openai",
-      openaiApiKey: Encryption.encrypt("okey"),
+      openaiApiKey: await Encryption.encrypt("okey"),
       visionProvider: "gemini",
-      apiKey: Encryption.encrypt("gkey")
+      apiKey: await Encryption.encrypt("gkey")
     });
 
     mockProvider.vision.mockResolvedValueOnce({
@@ -302,7 +302,7 @@ describe("AIManager Routing and Fallbacks", () => {
   it("supports embedding calls and correctly routes to embeddingProvider", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "openai",
-      openaiApiKey: Encryption.encrypt("okey"),
+      openaiApiKey: await Encryption.encrypt("okey"),
       embeddingProvider: "ollama",
       ollamaUrl: "http://localhost:11434"
     });
@@ -318,7 +318,7 @@ describe("AIManager Routing and Fallbacks", () => {
   it("supports streamChat routing", async () => {
     vi.mocked(storage.get).mockResolvedValue({
       provider: "gemini",
-      apiKey: Encryption.encrypt("gkey")
+      apiKey: await Encryption.encrypt("gkey")
     });
 
     mockProvider.streamChat.mockImplementation(async (req: any, onChunk: any) => {
@@ -334,5 +334,52 @@ describe("AIManager Routing and Fallbacks", () => {
     expect(onChunkCallback).toHaveBeenCalledWith("hello ");
     expect(onChunkCallback).toHaveBeenCalledWith("world");
     expect(onChunkCallback).toHaveBeenCalledTimes(2);
+  });
+
+  it("enforces session token budget limits and supports resetting", async () => {
+    vi.mocked(storage.get).mockResolvedValue({
+      provider: "gemini",
+      apiKey: await Encryption.encrypt("gkey"),
+      maxSessionTokens: 1000
+    });
+
+    // Reset tokens
+    AIManager.getInstance().resetSessionTokens();
+    expect(AIManager.getInstance().getSessionTokens()).toBe(0);
+
+    // Mock response with tokens used
+    mockProvider.chat.mockResolvedValue({
+      text: "hello world",
+      tokensUsed: { totalTokens: 600 }
+    });
+
+    // First call uses 600 tokens
+    await AIManager.getInstance().chat({ prompt: "hi" });
+    expect(AIManager.getInstance().getSessionTokens()).toBe(600);
+
+    // Mock response with more tokens to push over limit
+    mockProvider.chat.mockResolvedValue({
+      text: "hello again",
+      tokensUsed: { totalTokens: 500 }
+    });
+
+    // Second call uses 500 tokens, total is now 1100 (which exceeds maxSessionTokens: 1000)
+    await AIManager.getInstance().chat({ prompt: "hi" });
+    expect(AIManager.getInstance().getSessionTokens()).toBe(1100);
+
+    // Third call should fail immediately without executing the provider because budget is exceeded
+    await expect(AIManager.getInstance().chat({ prompt: "hi" })).rejects.toThrow("Session token budget exceeded");
+
+    // Reset tokens and verify it succeeds again
+    AIManager.getInstance().resetSessionTokens();
+    expect(AIManager.getInstance().getSessionTokens()).toBe(0);
+
+    mockProvider.chat.mockResolvedValueOnce({
+      text: "recovered",
+      tokensUsed: { totalTokens: 100 }
+    });
+    const result = await AIManager.getInstance().chat({ prompt: "hi" });
+    expect(result.text).toBe("recovered");
+    expect(AIManager.getInstance().getSessionTokens()).toBe(100);
   });
 });

@@ -25,7 +25,7 @@ export const PromptComposer = {
     if (context.longTermMemory) {
       const ltm = context.longTermMemory;
       lines.push("");
-      lines.push("### CANDIDATE MEMORY & PROFILE");
+      lines.push("### CANDIDATE BROWSER MEMORY");
       if (ltm.favoriteCompanies?.length) {
         lines.push(`- Favorite Companies: ${ltm.favoriteCompanies.join(", ")}`);
       }
@@ -34,6 +34,26 @@ export const PromptComposer = {
       }
       if (ltm.savedJobs?.length) {
         lines.push(`- Saved Jobs: ${ltm.savedJobs.join(", ")}`);
+      }
+    }
+
+    if (context.profile) {
+      const p = context.profile;
+      lines.push("");
+      lines.push("### CANDIDATE PROFILE & RESUME DATA");
+      if (p.name) lines.push(`- Name: ${p.name}`);
+      if (p.email) lines.push(`- Email: ${p.email}`);
+      if (p.phone) lines.push(`- Phone: ${p.phone}`);
+      if (p.linkedIn) lines.push(`- LinkedIn: ${p.linkedIn}`);
+      if (p.portfolio) lines.push(`- Portfolio: ${p.portfolio}`);
+      if (p.skills && p.skills.length > 0) {
+        lines.push(`- Skills: ${p.skills.join(", ")}`);
+      }
+      if (p.experience) {
+        lines.push(`- Work Experience & Education Summary:\n${p.experience}`);
+      }
+      if (p.resumeFileName) {
+        lines.push(`- Resume Source File: ${p.resumeFileName}`);
       }
     }
 

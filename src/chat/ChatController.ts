@@ -177,7 +177,8 @@ export function useChatController() {
       screenshotBase64: null,
       longTermMemory: null,
       currentGoal: null,
-      currentAgent: null
+      currentAgent: null,
+      profile: null
     };
 
     // 3. Compose prompt
@@ -438,6 +439,21 @@ export function useChatController() {
     await sendMessage(newText);
   };
 
+  const addMessageToHistory = async (role: MessageRole, content: string) => {
+    if (!activeId || !activeConversation) return;
+    const newMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role,
+      content,
+      createdAt: new Date().toISOString()
+    };
+    const updatedMessages = [...activeConversation.messages, newMsg];
+    await ConversationManager.updateConversationMessages(activeId, updatedMessages);
+    setConversations((prev) =>
+      prev.map((c) => (c.id === activeId ? { ...c, messages: updatedMessages } : c))
+    );
+  };
+
   return {
     conversations,
     activeId,
@@ -446,6 +462,7 @@ export function useChatController() {
     input,
     isGenerating,
     error,
+    setError,
     devMetrics,
     setInput,
     sendMessage,
@@ -458,6 +475,7 @@ export function useChatController() {
     selectConversation,
     createConversation,
     deleteConversation,
-    clearCurrentConversation
+    clearCurrentConversation,
+    addMessageToHistory
   };
 }

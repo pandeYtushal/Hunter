@@ -61,6 +61,7 @@ export interface ChatContextInfo {
   longTermMemory: any | null;
   currentGoal: string | null;
   currentAgent: string | null;
+  profile: UserProfile | null;
 }
 
 export interface DeveloperMetrics {

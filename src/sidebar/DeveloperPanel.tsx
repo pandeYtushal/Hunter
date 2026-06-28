@@ -57,7 +57,7 @@ export const DeveloperPanel = ({
         "aiHealthStats",
         "aiFallbackEvents"
       ]);
-      const settingsData = await chrome.storage.sync.get("settings");
+      const settingsData = await chrome.storage.local.get("settings");
       
       setVisionData({
         screenshot: data.lastScreenshot || "",

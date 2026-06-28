@@ -19,6 +19,9 @@
     }
   ],
   "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  },
   "host_permissions": [
     "http://*/*",
     "https://*/*",

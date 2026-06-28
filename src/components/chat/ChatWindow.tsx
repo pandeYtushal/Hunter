@@ -1,18 +1,61 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown, ChevronUp, RefreshCw, Terminal, X, AlertTriangle, Play, Pause, XOctagon } from "lucide-react";
+import { 
+  Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock, 
+  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle
+} from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
 import { ConversationSidebar } from "./ConversationSidebar";
 import { MessageBubble } from "./MessageBubble";
 import { AttachmentPreview } from "./AttachmentPreview";
-import { PromptSuggestions } from "./PromptSuggestions";
+import { PromptSuggestions, getDynamicSuggestions } from "./PromptSuggestions";
 import { ChatInput } from "./ChatInput";
 import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
 import { ProfileSettings } from "../../sidebar/ProfileSettings";
 import { storage } from "../../shared/storage";
-import { applyDocumentTheme } from "../../shared/theme";
+import { resolveTheme } from "../../shared/theme";
+import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
+import { useTheme } from "../../popup/hooks/useTheme";
+
+const getStepIcon = (name: string, description: string) => {
+  const text = (name + " " + description).toLowerCase();
+  if (text.includes("click")) return MousePointer;
+  if (text.includes("type") || text.includes("fill") || text.includes("input")) return Keyboard;
+  if (text.includes("search") || text.includes("find") || text.includes("extract") || text.includes("scan")) return Search;
+  if (text.includes("navigate") || text.includes("go to") || text.includes("url") || text.includes("open")) return Globe;
+  if (text.includes("wait") || text.includes("sleep") || text.includes("delay")) return Clock;
+  if (text.includes("apply")) return Zap;
+  return Activity;
+};
+
+function formatCopilotResult(result: string): string {
+  if (!result) return "";
+  try {
+    const parsed = JSON.parse(result);
+    if (parsed && typeof parsed === "object") {
+      if (parsed.type === "research_result") {
+        return `### Company Research: ${parsed.company}\n\n**Overview:**\n${parsed.overview}\n\n**Key Products:**\n${parsed.products}\n\n**Interview Tips:**\n${parsed.recommendations || parsed.interviewTips || ""}`;
+      }
+      if (parsed.coverLetter) {
+        return `### Tailored Cover Letter Draft\n\n${parsed.coverLetter}`;
+      }
+      if (parsed.type === "autofill_confirmation") {
+        return `### Autofill Scan Complete\n\nDetected and prepared fields: \n${(parsed.fields || []).map((f: any) => `- **${f.mappedType}** (selector: \`${f.fieldId}\`)`).join("\n")}`;
+      }
+      if (parsed.matchScore !== undefined) {
+        return `### Profile Match Analysis\n\n**Match Score:** ${parsed.matchScore}%\n\n**Matched Skills:**\n${(parsed.matchedSkills || []).map((s: string) => `- ${s}`).join("\n") || "None"}\n\n**Missing Skills:**\n${(parsed.missingSkills || []).map((s: string) => `- ${s}`).join("\n") || "None"}\n\n**Recommendations:**\n${parsed.recommendations || ""}`;
+      }
+      if (parsed.title && parsed.company) {
+        return `### Job Details Extracted\n\n- **Role:** ${parsed.title}\n- **Company:** ${parsed.company}\n- **Location:** ${parsed.location || "Unknown"}\n- **Salary:** ${parsed.salary || "Unknown"}\n- **Skills:** ${(parsed.skills || []).join(", ") || "None"}`;
+      }
+    }
+  } catch {
+    // Not JSON, return as is
+  }
+  return result;
+}
 
 export const ChatWindow: React.FC = () => {
   const {
@@ -23,6 +66,7 @@ export const ChatWindow: React.FC = () => {
     input,
     isGenerating,
     error,
+    setError,
     devMetrics,
     setInput,
     sendMessage,
@@ -35,12 +79,17 @@ export const ChatWindow: React.FC = () => {
     selectConversation,
     createConversation,
     deleteConversation,
-    clearCurrentConversation
+    clearCurrentConversation,
+    addMessageToHistory
   } = useChatController();
 
+  const { value: approvalState } = useChromeStorage("approvalState");
+  const { theme, setTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [devModeOpen, setDevModeOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState<string>("");
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [copilot, setCopilot] = useState<CopilotState>({
     machineState: "idle",
     currentGoal: "",
@@ -51,26 +100,86 @@ export const ChatWindow: React.FC = () => {
     estimatedCompletionTimeSeconds: 0
   });
 
+  const handleToggleExpand = () => {
+    const nextExpanded = !isExpanded;
+    setIsExpanded(nextExpanded);
+    window.parent.postMessage(
+      {
+        source: "ai-job-agent-sidebar",
+        type: "SET_EXPANDED",
+        expanded: nextExpanded
+      },
+      "*"
+    );
+  };
+
+  // Track active tab URL dynamically
+  useEffect(() => {
+    const updateUrl = () => {
+      if (typeof chrome !== "undefined" && chrome.tabs) {
+        try {
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const tab = tabs[0];
+            if (tab?.url) {
+              setCurrentUrl(tab.url);
+            }
+          });
+        } catch (e) {
+          console.warn("Failed to get active tab URL:", e);
+        }
+      }
+    };
+    updateUrl();
+
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      const handleActivated = () => updateUrl();
+      const handleUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+        if (changeInfo.url) {
+          updateUrl();
+        }
+      };
+
+      chrome.tabs.onActivated.addListener(handleActivated);
+      chrome.tabs.onUpdated.addListener(handleUpdated);
+
+      return () => {
+        chrome.tabs.onActivated.removeListener(handleActivated);
+        chrome.tabs.onUpdated.removeListener(handleUpdated);
+      };
+    }
+  }, []);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Subscribe to Copilot Engine State & Apply Theme
+  // Subscribe to Copilot Engine State
   useEffect(() => {
-    storage.get("settings").then((settings) => {
-      const theme = settings?.theme || "dark";
-      applyDocumentTheme(theme);
-    }).catch(() => {
-      applyDocumentTheme("dark");
-    });
-
-    return CopilotEngine.getInstance().subscribe((state) => {
+    const unsubscribe = CopilotEngine.getInstance().subscribe((state) => {
       setCopilot(state);
     });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConversation?.messages, isGenerating, copilot.timeline]);
+
+  const prevMachineStateRef = useRef<string>("idle");
+
+  useEffect(() => {
+    if (copilot.machineState === "completed" && prevMachineStateRef.current !== "completed") {
+      if (copilot.lastResult) {
+        addMessageToHistory("assistant", formatCopilotResult(copilot.lastResult));
+      } else {
+        addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
+      }
+      CopilotEngine.getInstance().cancel();
+    }
+    prevMachineStateRef.current = copilot.machineState;
+  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal]);
 
   const handleCopyMessage = (text: string) => {
     console.log("Message copied");
@@ -93,6 +202,7 @@ export const ChatWindow: React.FC = () => {
 
     if (isGoalMode) {
       setInput("");
+      await addMessageToHistory("user", query);
       await CopilotEngine.getInstance().startGoal(query);
     } else {
       await sendMessage();
@@ -114,6 +224,7 @@ export const ChatWindow: React.FC = () => {
 
     if (isGoalMode) {
       setInput("");
+      await addMessageToHistory("user", prompt);
       await CopilotEngine.getInstance().startGoal(prompt);
     } else {
       await sendMessage(prompt);
@@ -140,7 +251,7 @@ export const ChatWindow: React.FC = () => {
   }
 
   return (
-    <div className="flex h-full w-full bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans overflow-hidden mesh-gradient relative">
+    <div className="chat-shell flex h-full w-full text-[var(--text-primary)] font-sans overflow-hidden relative">
       {/* Collapsible Left Sidebar */}
       <ConversationSidebar
         conversations={conversations}
@@ -155,29 +266,81 @@ export const ChatWindow: React.FC = () => {
       {/* Main Panel Content Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         <ChatHeader
-          currentUrl={activeConversation?.messages && activeConversation.messages[0]?.content ? undefined : undefined}
+          currentUrl={currentUrl || undefined}
           activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : activeConversation && activeConversation.messages.length > 0 ? "Automated browser goal" : null}
           provider={devMetrics.selectedProvider}
-          devMode={devModeOpen}
-          onToggleDevMode={() => setDevModeOpen(!devModeOpen)}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          theme={resolveTheme(theme)}
+          isSidebarOpen={sidebarOpen}
+          isExpanded={isExpanded}
+          onToggleTheme={() => {
+            const nextTheme = resolveTheme(theme) === "dark" ? "light" : "dark";
+            void setTheme(nextTheme);
+          }}
+          onToggleSidebar={() => {
+            console.log("onToggleSidebar clicked. Current sidebarOpen state:", sidebarOpen);
+            setSidebarOpen((open) => !open);
+          }}
           onClearChat={clearCurrentConversation}
           onToggleProfile={() => setShowProfile(true)}
+          onToggleExpand={handleToggleExpand}
         />
 
         {/* Drag and Drop wrapper */}
         <DragDropZone onDropFile={attachFile}>
           {/* Messages Thread Log */}
-          <div className="flex-1 overflow-y-auto px-1 py-2 space-y-1.5 custom-scrollbar bg-transparent">
+          <div className="chat-thread flex-1 overflow-y-auto px-1 py-2 space-y-1 custom-scrollbar bg-transparent">
             {!activeConversation || activeConversation.messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center p-6 select-none animate-fade-in">
-                <div className="h-12 w-12 rounded-2xl bg-[#ff6b35]/10 border border-[#ff6b35]/20 flex items-center justify-center text-[#ff6b35] mb-4 shadow-sm">
-                  <Terminal size={20} className="animate-pulse" />
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-5 max-w-sm mx-auto h-full justify-self-center">
+                
+                {/* Brand Greeting */}
+                <div className="space-y-1.5">
+                  <h2 className="text-[15px] font-bold tracking-normal text-[var(--text-primary)]">
+                    Hunter
+                  </h2>
+                  <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed">
+                    Ask about the current page.
+                  </p>
                 </div>
-                <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Multimodal Browser Copilot</h2>
-                <p className="text-[11px] text-[var(--text-secondary)] max-w-[240px] leading-relaxed mt-1.5 font-medium">
-                  Hunter automatically observes page layout, reads metadata, tracks active goals, and answers queries.
-                </p>
+
+                {/* Page Awareness Card */}
+                <div className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2.5 text-left space-y-2 select-none">
+                  <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-normal">
+                    <span>Current page</span>
+                    <span className="text-[var(--text-muted)] flex items-center gap-1.5 font-normal">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+                      Connected
+                    </span>
+                  </div>
+                  <div className="text-[12px] font-normal text-[var(--text-primary)] truncate">
+                    {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "Page analyzed"}
+                  </div>
+                </div>
+
+                {/* Quick actions wrapper */}
+                <div className="w-full space-y-2 text-left">
+                  <span className="text-[11px] font-bold text-[var(--text-muted)] block mb-1 select-none">
+                    Suggestions
+                  </span>
+                  <div className="flex flex-col gap-1.5 w-full">
+                    {getDynamicSuggestions(currentUrl).map((act, i) => {
+                      const Icon = act.icon;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleSendFromSuggestion(act.prompt)}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150 cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Icon size={12} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                            <span className="truncate">{act.label}</span>
+                          </div>
+                          <span className="text-[10px] text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity font-mono">-&gt;</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
             ) : (
               activeConversation.messages.map((msg, index) => (
@@ -211,7 +374,7 @@ export const ChatWindow: React.FC = () => {
             <AlertTriangle size={14} className="shrink-0" />
             <span className="flex-1 truncate">{error}</span>
             <button
-              onClick={() => {}}
+              onClick={() => setError("")}
               className="p-1 rounded hover:bg-rose-900/20 text-rose-500 hover:text-white transition cursor-pointer"
             >
               <X size={10} />
@@ -219,88 +382,130 @@ export const ChatWindow: React.FC = () => {
           </div>
         )}
 
-        {/* Suggestion Chips */}
-        {(!activeConversation || activeConversation.messages.length === 0) && copilot.machineState === "idle" && (
-          <PromptSuggestions onSelect={handleSendFromSuggestion} />
-        )}
-
         {/* Copilot Engine Timeline Progress Card Dashboard Overlay */}
         {copilot.machineState !== "idle" && (
           <div className="mx-4 my-2.5 p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-lg space-y-4 animate-scale-up select-none">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
               <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#ff6b35] animate-ping" />
-            <h3 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-ping" />
+                <h3 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                   Autonomous Copilot Mode: {copilot.machineState}
                 </h3>
               </div>
-              <span className="text-[9.5px] text-[var(--text-muted)] font-mono">
+              <span className="text-[10.5px] text-[var(--text-muted)] font-mono">
                 Est. completion: {copilot.estimatedCompletionTimeSeconds}s
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-[11.5px] font-bold text-[var(--text-primary)] block">"{copilot.currentGoal}"</span>
+              <span className="text-[13px] font-bold text-[var(--text-primary)] block">"{copilot.currentGoal}"</span>
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-[#ff6b35] to-[#ff8255] transition-all duration-300"
-                    style={{ width: `${copilot.progress}%` }}
+                    className="h-full transition-all duration-300"
+                    style={{
+                      width: `${copilot.progress}%`,
+                      background: "linear-gradient(90deg, var(--accent), var(--accent-strong))"
+                    }}
                   />
                 </div>
-                <span className="text-[11px] font-bold font-mono text-[#ff6b35]">{copilot.progress}%</span>
+                <span className="text-[11px] font-bold font-mono text-[var(--accent)]">{copilot.progress}%</span>
               </div>
             </div>
 
-            {/* Timeline Steps */}
-            <div className="space-y-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar text-[10.5px] font-mono leading-relaxed">
-              {copilot.timeline.map((step) => (
-                <div key={step.id} className="flex items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-bold ${
-                      step.status === "completed"
-                        ? "text-emerald-450"
-                        : step.status === "failed"
-                        ? "text-rose-500 font-bold"
-                        : step.status === "running" || step.status === "waiting_confirmation"
-                        ? "text-[#ff6b35] animate-pulse"
-                        : "text-zinc-650"
+            {/* Timeline Steps - Redesigned premium vertical timeline */}
+            <div className="relative pl-5 border-l border-[var(--border-color)] ml-3 space-y-3.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar text-[11.5px] font-mono leading-relaxed">
+              {copilot.timeline.map((step) => {
+                const StepIcon = getStepIcon(step.name, step.description);
+                const isRunning = step.status === "running" || step.status === "waiting_confirmation";
+                const isCompleted = step.status === "completed";
+                const isFailed = step.status === "failed";
+                
+                return (
+                  <div key={step.id} className="relative flex items-start justify-between gap-3 group">
+                    {/* Bullet marker node with icon */}
+                    <div className={`absolute -left-[27.5px] top-0.5 flex h-[15px] w-[15px] items-center justify-center rounded-full border bg-[var(--bg-secondary)] transition-all duration-300 z-10 ${
+                      isCompleted 
+                        ? "border-emerald-500/50 text-emerald-500 shadow-sm" 
+                        : isFailed 
+                        ? "border-rose-500/50 text-rose-500 animate-pulse" 
+                        : isRunning 
+                        ? "border-[var(--accent)] text-[var(--accent)] shadow-md scale-110" 
+                        : "border-[var(--border-color)] text-[var(--text-muted)]"
                     }`}>
-                      {step.status === "completed" ? "✓" : step.status === "failed" ? "✗" : "○"}
-                    </span>
-                    <span className={
-                      step.status === "completed" ? "text-zinc-600 line-through font-medium" : "text-zinc-350"
-                    }>
-                      {step.name}
-                    </span>
+                      {isCompleted ? (
+                        <CheckCircle2 size={10} className="stroke-[2.5]" />
+                      ) : isFailed ? (
+                        <XCircle size={10} className="stroke-[2.5]" />
+                      ) : (
+                        <StepIcon size={9} className={`${isRunning ? "animate-pulse" : ""}`} />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`font-semibold transition-all duration-200 ${
+                          isCompleted 
+                            ? "text-[var(--text-muted)] line-through opacity-75" 
+                            : isRunning 
+                            ? "text-[var(--text-primary)] font-bold" 
+                            : "text-[var(--text-secondary)]"
+                        }`}>
+                          {step.name}
+                        </span>
+                        {isRunning && (
+                          <span className="inline-flex items-center rounded bg-[var(--accent-faint)] px-1 py-0.25 text-[8.5px] font-bold text-[var(--accent)] uppercase tracking-wider animate-pulse">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-[10px] leading-relaxed mt-0.5 ${
+                        isCompleted ? "text-[var(--text-muted)] opacity-60" : "text-[var(--text-muted)]"
+                      }`}>
+                        {step.description}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[9px] text-[var(--text-muted)] italic truncate max-w-[150px]">{step.description}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Safety Confirmation alert bar */}
-            {copilot.machineState === "waiting_confirmation" && (
-              <div className="p-3 rounded-xl border border-[#ff6b35]/25 bg-[#ff6b35]/5 space-y-2.5">
-                <p className="text-[10.5px] font-bold text-[#ff6b35] flex items-center gap-1">
+            {((copilot.machineState === "waiting_confirmation") || (approvalState && approvalState.status === "pending")) && (
+              <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5">
+                <p className="text-[11px] font-bold text-[var(--accent)] flex items-center gap-1">
                   <AlertTriangle size={12} />
                   Safety Approval Required
                 </p>
-                <p className="text-[9.5px] text-[var(--text-secondary)] leading-relaxed">
-                  Hunter has paused before performing a critical operation (Submit, Purchase, Delete, Upload). Do you confirm?
+                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                  {copilot.machineState === "waiting_confirmation"
+                    ? "Hunter has paused before performing a critical operation (Submit, Purchase, Delete, Upload). Do you confirm?"
+                    : approvalState?.message}
                 </p>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => CopilotEngine.getInstance().approve()}
-                    className="flex-1 h-7 rounded bg-[#ff6b35] hover:bg-[#ff8255] text-black text-[10.5px] font-bold uppercase tracking-wider transition cursor-pointer"
+                    onClick={async () => {
+                      if (copilot.machineState === "waiting_confirmation") {
+                        CopilotEngine.getInstance().approve();
+                      } else if (approvalState) {
+                        await storage.set("approvalState", { ...approvalState, status: "approved" });
+                      }
+                    }}
+                    className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10.5px] font-bold uppercase tracking-wider transition cursor-pointer"
                   >
                     Confirm Action
                   </button>
                   <button
-                    onClick={() => CopilotEngine.getInstance().skip()}
+                    onClick={async () => {
+                      if (copilot.machineState === "waiting_confirmation") {
+                        CopilotEngine.getInstance().skip();
+                      } else if (approvalState) {
+                        await storage.set("approvalState", { ...approvalState, status: "declined" });
+                      }
+                    }}
                     className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10.5px] font-mono uppercase transition cursor-pointer"
                   >
-                    Skip Step
+                    Skip / Decline
                   </button>
                 </div>
               </div>
@@ -311,14 +516,14 @@ export const ChatWindow: React.FC = () => {
               {copilot.machineState === "executing" ? (
                 <button
                   onClick={() => CopilotEngine.getInstance().pause()}
-                  className="flex-1 h-8 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-[10px] font-semibold text-[var(--text-secondary)] transition cursor-pointer"
+                  className="flex-1 h-8 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-[11px] font-semibold text-[var(--text-secondary)] transition cursor-pointer"
                 >
                   Pause Loop
                 </button>
               ) : copilot.machineState === "paused" ? (
                 <button
                   onClick={() => CopilotEngine.getInstance().resume()}
-                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase transition cursor-pointer"
+                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer"
                 >
                   Resume Loop
                 </button>
@@ -327,19 +532,35 @@ export const ChatWindow: React.FC = () => {
               {copilot.machineState === "failed" && (
                 <button
                   onClick={() => CopilotEngine.getInstance().retry()}
-                  className="flex-1 h-8 rounded bg-[#ff6b35] hover:bg-[#ff8255] text-black text-[10px] font-bold uppercase transition cursor-pointer"
+                  className="flex-1 h-8 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[11px] font-bold uppercase transition cursor-pointer"
                 >
                   Retry Failed Step
                 </button>
               )}
 
-              <button
-                onClick={() => CopilotEngine.getInstance().cancel()}
-                className="h-8 px-3 rounded border border-rose-900 bg-transparent hover:bg-rose-950/20 text-rose-400 text-[10px] font-semibold transition cursor-pointer"
-              >
-                Cancel Goal
-              </button>
+              {copilot.machineState === "completed" ? (
+                <button
+                  onClick={() => CopilotEngine.getInstance().cancel()}
+                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer"
+                >
+                  Done
+                </button>
+              ) : (
+                <button
+                  onClick={() => CopilotEngine.getInstance().cancel()}
+                  className="h-8 px-3 rounded border border-rose-500/35 bg-transparent hover:bg-rose-500/10 text-rose-400 text-[11px] font-semibold transition cursor-pointer"
+                >
+                  Cancel Goal
+                </button>
+              )}
             </div>
+          </div>
+        )}
+
+        {/* Suggestion Chips when chatting and not generating */}
+        {activeConversation && activeConversation.messages.length > 0 && !isGenerating && !isCopilotRunning && (
+          <div className="px-4 py-1 shrink-0">
+            <PromptSuggestions currentUrl={currentUrl} onSelect={handleSendFromSuggestion} />
           </div>
         )}
 
@@ -362,59 +583,59 @@ export const ChatWindow: React.FC = () => {
 
         {/* Developer Mode Drawer panel */}
         {devModeOpen && (
-          <div className="border-t border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 text-[10.5px] font-mono leading-relaxed select-text max-h-[200px] overflow-y-auto custom-scrollbar animate-fade-in shadow-inner">
+          <div className="border-t border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 text-[11.5px] font-mono leading-relaxed select-text max-h-[200px] overflow-y-auto custom-scrollbar animate-fade-in shadow-inner">
             <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 mb-3">
-              <h3 className="font-bold text-[#ff6b35] uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="font-bold text-[var(--accent)] uppercase tracking-wider flex items-center gap-1.5">
                 <Terminal size={12} />
                 Developer Console Metrics
               </h3>
               <button
                 onClick={() => setDevModeOpen(false)}
-                className="p-1 rounded text-zinc-500 hover:text-zinc-300 transition cursor-pointer"
+                className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer"
               >
                 <X size={12} />
               </button>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3 text-zinc-400">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3 text-[var(--text-secondary)]">
               <div>
-                <span className="text-zinc-650 font-bold">ACTIVE CHAT PROVIDER:</span>{" "}
-                <span className="text-zinc-200">{devMetrics.selectedProvider.toUpperCase()}</span>
+                <span className="text-[var(--text-muted)] font-bold">ACTIVE CHAT PROVIDER:</span>{" "}
+                <span className="text-[var(--text-primary)]">{devMetrics.selectedProvider.toUpperCase()}</span>
               </div>
               <div>
-                <span className="text-zinc-650 font-bold">VISION PROVIDER:</span>{" "}
-                <span className="text-zinc-200">{devMetrics.visionProvider.toUpperCase()}</span>
+                <span className="text-[var(--text-muted)] font-bold">VISION PROVIDER:</span>{" "}
+                <span className="text-[var(--text-primary)]">{devMetrics.visionProvider.toUpperCase()}</span>
               </div>
               <div>
-                <span className="text-zinc-650 font-bold">STREAM STATUS:</span>{" "}
+                <span className="text-[var(--text-muted)] font-bold">STREAM STATUS:</span>{" "}
                 <span className={`font-bold uppercase ${
                   devMetrics.streamingStatus === "streaming"
-                    ? "text-[#ff6b35]"
+                    ? "text-[var(--accent)]"
                     : devMetrics.streamingStatus === "completed"
-                    ? "text-emerald-400"
-                    : "text-zinc-500"
+                    ? "text-emerald-500"
+                    : "text-[var(--text-muted)]"
                 }`}>
                   {devMetrics.streamingStatus}
                 </span>
               </div>
               <div>
-                <span className="text-zinc-650 font-bold">CONTEXT SIZE (EST):</span>{" "}
-                <span className="text-zinc-200">{devMetrics.contextSize} Tokens</span>
+                <span className="text-[var(--text-muted)] font-bold">CONTEXT SIZE (EST):</span>{" "}
+                <span className="text-[var(--text-primary)]">{devMetrics.contextSize} Tokens</span>
               </div>
               <div>
-                <span className="text-zinc-650 font-bold">TOKENS COMPLETED:</span>{" "}
-                <span className="text-zinc-200">{devMetrics.tokenUsage.completionTokens || "—"}</span>
+                <span className="text-[var(--text-muted)] font-bold">TOKENS COMPLETED:</span>{" "}
+                <span className="text-[var(--text-primary)]">{devMetrics.tokenUsage.completionTokens || "-"}</span>
               </div>
               <div>
-                <span className="text-zinc-650 font-bold">TOTAL TOKENS:</span>{" "}
-                <span className="text-zinc-200">{devMetrics.tokenUsage.totalTokens || "—"}</span>
+                <span className="text-[var(--text-muted)] font-bold">TOTAL TOKENS:</span>{" "}
+                <span className="text-[var(--text-primary)]">{devMetrics.tokenUsage.totalTokens || "-"}</span>
               </div>
             </div>
 
             {devMetrics.prompt && (
-              <div className="mt-3 pt-2.5 border-t border-[rgba(255,255,255,0.06)]">
-                <span className="text-zinc-650 font-bold block mb-1">RAW COMPILED PROMPT SENT:</span>
-                <pre className="rounded bg-[#121214] p-3 text-[10px] text-zinc-300 overflow-x-auto select-all max-h-24 custom-scrollbar whitespace-pre-wrap">
+              <div className="mt-3 pt-2.5 border-t border-[var(--border-color)]">
+                <span className="text-[var(--text-muted)] font-bold block mb-1">RAW COMPILED PROMPT SENT:</span>
+                <pre className="rounded bg-[var(--bg-tertiary)] p-3 text-[10.5px] text-[var(--text-primary)] overflow-x-auto select-all max-h-24 custom-scrollbar whitespace-pre-wrap">
                   {devMetrics.prompt}
                 </pre>
               </div>
@@ -425,4 +646,5 @@ export const ChatWindow: React.FC = () => {
     </div>
   );
 };
+
 export default ChatWindow;

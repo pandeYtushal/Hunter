@@ -17,7 +17,8 @@ export const useChromeStorage = <K extends keyof StorageSchema>(key: K) => {
     });
 
     const listener = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
-      if (areaName === "sync" && changes[key]) {
+      const expectedArea = key === "settings" ? "sync" : "local";
+      if (areaName === expectedArea && changes[key]) {
         setValue(changes[key].newValue as StorageSchema[K]);
       }
     };

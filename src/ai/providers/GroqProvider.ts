@@ -52,7 +52,7 @@ export class GroqProvider implements AIProvider {
       model: this.model,
       messages,
       temperature: request.temperature ?? 0.6,
-      max_tokens: request.maxTokens ?? 1024
+      max_tokens: request.maxTokens ?? 4096
     };
 
     if (request.jsonMode) {
@@ -199,7 +199,7 @@ export class GroqProvider implements AIProvider {
       model: this.model,
       messages,
       temperature: request.temperature ?? 0.6,
-      max_tokens: request.maxTokens ?? 1024,
+      max_tokens: request.maxTokens ?? 4096,
       stream: true
     };
 

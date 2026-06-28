@@ -9,6 +9,7 @@ import { ExecutionTimeline, type TimelineEntry } from "./ExecutionTimeline";
 import { storage } from "../shared/storage";
 import { memory } from "../ai/memory";
 import type { ActionType, ExecutionPlan } from "../shared/types/agent";
+import { AIManager } from "../ai/core/AIManager";
 
 export type CopilotMachineState =
   | "idle"
@@ -28,6 +29,7 @@ export interface CopilotState {
   isBlocked: boolean;
   blockReason?: string;
   estimatedCompletionTimeSeconds: number;
+  lastResult?: string;
 }
 
 export class CopilotEngine {
@@ -40,7 +42,8 @@ export class CopilotEngine {
     progress: 0,
     timeline: [],
     isBlocked: false,
-    estimatedCompletionTimeSeconds: 0
+    estimatedCompletionTimeSeconds: 0,
+    lastResult: undefined
   };
 
   private scheduler: TaskScheduler = new TaskScheduler([]);
@@ -131,6 +134,7 @@ export class CopilotEngine {
 
     this.state.machineState = "planning";
     this.state.currentGoal = goalText;
+    AIManager.getInstance().resetSessionTokens();
     this.broadcast();
 
     try {
@@ -159,6 +163,7 @@ export class CopilotEngine {
 
   private async runLoop(): Promise<void> {
     this.monitor.startTimer();
+    let resultText = "";
 
     while (
       (this.state.machineState === "executing" || this.state.machineState === "paused") &&
@@ -180,7 +185,7 @@ export class CopilotEngine {
 
       const attemptLimit = 3;
       let success = false;
-      let resultText = "";
+      resultText = "";
       let recoveryTask: CopilotTask | undefined;
 
       while (
@@ -264,6 +269,7 @@ export class CopilotEngine {
           // Terminal failure
           this.scheduler.failTask(task.id, resultText);
           this.state.machineState = "failed";
+          this.state.lastResult = resultText;
           this.updateTracker();
           this.broadcast();
           return;
@@ -276,6 +282,7 @@ export class CopilotEngine {
 
     if (this.state.machineState === "executing") {
       this.state.machineState = "completed";
+      this.state.lastResult = resultText;
       this.monitor.stopTimer();
       this.updateTracker();
       this.broadcast();
@@ -302,6 +309,7 @@ export class CopilotEngine {
 
   cancel(): void {
     this.state.machineState = "idle";
+    this.state.lastResult = undefined;
     this.scheduler = new TaskScheduler([]);
     this.updateTracker();
     this.broadcast();

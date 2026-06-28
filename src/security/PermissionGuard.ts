@@ -58,5 +58,43 @@ export const PermissionGuard = {
       default:
         return "This action is ready to run.";
     }
+  },
+
+  async awaitConfirmation(action: ActionType, message: string): Promise<boolean> {
+    if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.local) {
+      return true; // Auto-approve in non-extension environments
+    }
+
+    await chrome.storage.local.set({
+      approvalState: {
+        action,
+        message,
+        status: "pending"
+      }
+    });
+
+    return new Promise<boolean>((resolve) => {
+      const checkInterval = setInterval(async () => {
+        // Check if agent loop is cancelled/stopped
+        const currentState = await chrome.storage.local.get("agentState");
+        if (currentState?.agentState && !currentState.agentState.isActive) {
+          clearInterval(checkInterval);
+          await chrome.storage.local.remove("approvalState");
+          resolve(false);
+          return;
+        }
+
+        const approval = await chrome.storage.local.get("approvalState");
+        if (approval?.approvalState?.status === "approved") {
+          clearInterval(checkInterval);
+          await chrome.storage.local.remove("approvalState");
+          resolve(true);
+        } else if (approval?.approvalState?.status === "declined") {
+          clearInterval(checkInterval);
+          await chrome.storage.local.remove("approvalState");
+          resolve(false);
+        }
+      }, 200);
+    });
   }
 };

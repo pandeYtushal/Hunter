@@ -138,9 +138,20 @@ export async function executePlan(
         }
 
         if (permission.requiresConfirmation) {
+          const confirmMsg = PermissionGuard.createConfirmationMessage(action);
           onProgress({
             machineState: "WAITING_CONFIRMATION",
-            currentStep: PermissionGuard.createConfirmationMessage(action)
+            currentStep: confirmMsg
+          }, runMetrics);
+
+          const approved = await PermissionGuard.awaitConfirmation(action, confirmMsg);
+          if (!approved) {
+            throw new Error("Action declined by user.");
+          }
+
+          onProgress({
+            machineState: "EXECUTING",
+            currentStep: `Running: ${tool.description}...`
           }, runMetrics);
         }
 

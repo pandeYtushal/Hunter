@@ -18,12 +18,6 @@ export interface AgentSettings {
   sidebarPinned: boolean;
   userName: string;
   developerMode: boolean;
-  apiKey?: string; // Gemini
-  openaiApiKey?: string;
-  anthropicApiKey?: string;
-  groqApiKey?: string;
-  openrouterApiKey?: string;
-  deepseekApiKey?: string;
   ollamaUrl?: string;
   provider?: "gemini" | "openai" | "anthropic" | "groq" | "openrouter" | "deepseek" | "ollama";
   model?: string;
@@ -33,6 +27,22 @@ export interface AgentSettings {
   streaming?: boolean;
   visionProvider?: "gemini" | "openai" | "anthropic" | "openrouter" | "ollama" | "none";
   embeddingProvider?: "gemini" | "openai" | "openrouter" | "ollama" | "none";
+  maxSessionTokens?: number;
+}
+
+export interface ApprovalState {
+  action: string;
+  message: string;
+  status: "pending" | "approved" | "declined";
+}
+
+export interface ApiKeys {
+  apiKey?: string; // Gemini
+  openaiApiKey?: string;
+  anthropicApiKey?: string;
+  groqApiKey?: string;
+  openrouterApiKey?: string;
+  deepseekApiKey?: string;
 }
 
 export interface UserProfile {
@@ -66,6 +76,8 @@ export interface StorageSchema {
   agentMetrics: Record<string, AgentMetricRecord>;
   healthChecks: HealthCheckResult[];
   visualMemory?: any;
+  apiKeys: ApiKeys;
+  approvalState?: ApprovalState;
 }
 
 export const defaultStorage: StorageSchema = {
@@ -76,12 +88,6 @@ export const defaultStorage: StorageSchema = {
     sidebarPinned: false,
     userName: "",
     developerMode: false,
-    apiKey: "",
-    openaiApiKey: "",
-    anthropicApiKey: "",
-    groqApiKey: "",
-    openrouterApiKey: "",
-    deepseekApiKey: "",
     ollamaUrl: "http://localhost:11434",
     provider: "gemini",
     model: "",
@@ -90,7 +96,16 @@ export const defaultStorage: StorageSchema = {
     fallbackProvider: "none",
     streaming: false,
     visionProvider: "none",
-    embeddingProvider: "none"
+    embeddingProvider: "none",
+    maxSessionTokens: 50000
+  },
+  apiKeys: {
+    apiKey: "",
+    openaiApiKey: "",
+    anthropicApiKey: "",
+    groqApiKey: "",
+    openrouterApiKey: "",
+    deepseekApiKey: ""
   },
   sidebarOpen: false,
   profile: {

@@ -197,8 +197,8 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col mesh-gradient text-zinc-900 dark:text-zinc-100 font-sans">
-      <header className="flex items-center justify-between border-b border-zinc-200/60 bg-white/75 backdrop-blur-md dark:border-zinc-800/60 dark:bg-zinc-950/75 px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.01)] shrink-0">
+    <div className="flex h-full flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
+      <header className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-4 py-3.5 shrink-0 shadow-sm">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-zinc-900 dark:border dark:border-zinc-800 shrink-0 shadow-sm">
             <User size={14} className="stroke-[2.5]" />
@@ -210,7 +210,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         </div>
         <button
           onClick={onBack}
-          className="text-[10px] font-black tracking-wider text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white px-2.5 transition duration-155 uppercase"
+          className="text-[10px] font-black tracking-wider text-zinc-500 hover:text-zinc-900 dark:text-[var(--text-secondary)] dark:hover:text-[var(--text-primary)] px-2.5 transition duration-155 uppercase"
         >
           Back to Chat
         </button>
@@ -266,7 +266,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate max-w-[220px] mx-auto">
                   {profile.resumeFileName}
                 </p>
-                <p className="text-[10px] text-zinc-455 dark:text-zinc-500 leading-none">
+                <p className="text-[10px] text-zinc-500 leading-none">
                   Click or drag here to upload a different resume
                 </p>
               </div>
@@ -279,7 +279,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                   <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                     Upload your resume
                   </p>
-                  <p className="text-[10px] text-zinc-450 dark:text-zinc-500">
+                  <p className="text-[10px] text-zinc-500">
                     Drag and drop or click to browse (PDF only)
                   </p>
                 </div>
@@ -424,7 +424,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-zinc-450 hover:text-[#f97316] dark:text-zinc-500 dark:hover:text-[#f97316] transition"
+                      className="text-zinc-400 hover:text-[#f97316] dark:text-zinc-500 dark:hover:text-[#f97316] transition"
                     >
                       <X size={10} className="stroke-[2.5]" />
                     </button>
@@ -467,13 +467,13 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                   >
                     <div
                       onClick={() => setExpandedLetterId(isExpanded ? null : letter.id)}
-                      className="flex cursor-pointer items-center justify-between gap-3 p-3 bg-zinc-50/20 dark:bg-zinc-955/20"
+                      className="flex cursor-pointer items-center justify-between gap-3 p-3 bg-zinc-50/20 dark:bg-zinc-900/20"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-extrabold text-zinc-900 dark:text-white">
                           {letter.company}
                         </p>
-                        <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-450 mt-0.5">
+                        <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                           {letter.role} · {new Date(letter.createdAt).toLocaleDateString()}
                         </p>
                       </div>
@@ -484,7 +484,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
 
                     {isExpanded && (
                       <div className="border-t border-zinc-200/60 p-3 dark:border-zinc-800/60 bg-white dark:bg-zinc-950/40 space-y-3">
-                        <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 p-2.5 dark:bg-black/30 text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-355 font-mono whitespace-pre-wrap select-text custom-scrollbar">
+                        <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 p-2.5 dark:bg-black/30 text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono whitespace-pre-wrap select-text custom-scrollbar">
                           {letter.content}
                         </div>
                         <div className="flex justify-end gap-2">
@@ -516,7 +516,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           <button
                             onClick={() => handleDeleteLetter(letter.id)}
                             title="Delete cover letter draft"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[10px] font-extrabold text-rose-600 hover:bg-rose-50 dark:border-zinc-800 dark:bg-black dark:text-rose-400 dark:hover:bg-rose-955/20 transition duration-150 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[10px] font-extrabold text-rose-600 hover:bg-rose-50 dark:border-zinc-800 dark:bg-black dark:text-rose-400 dark:hover:bg-rose-900/20 transition duration-155 shadow-sm active:scale-95"
                           >
                             <Trash2 size={11} />
                             Delete
@@ -534,7 +534,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         </div>
       </div>
 
-      <footer className="border-t border-zinc-200/60 bg-white/75 backdrop-blur-md dark:border-zinc-800/60 dark:bg-zinc-950/75 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.02)] dark:shadow-none shrink-0">
+      <footer className="border-t border-[var(--border-color)] bg-[var(--surface-overlay)] p-4 shrink-0 shadow-inner">
         <button
           onClick={handleSaveProfile}
           disabled={isSaving || isParsing}

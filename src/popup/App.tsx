@@ -21,30 +21,71 @@ export const App = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const { settings, setSettings } = useTheme();
+  const { value: apiKeys, setValue: setApiKeys } = useChromeStorage("apiKeys");
   const { value: applications } = useChromeStorage("applications");
 
   const hasApiKey = Boolean(
     settings?.provider === "openai"
-      ? settings.openaiApiKey?.trim()
+      ? apiKeys?.openaiApiKey?.trim()
       : settings?.provider === "anthropic"
-        ? settings.anthropicApiKey?.trim()
+        ? apiKeys?.anthropicApiKey?.trim()
         : settings?.provider === "groq"
-          ? settings.groqApiKey?.trim()
+          ? apiKeys?.groqApiKey?.trim()
           : settings?.provider === "openrouter"
-            ? settings.openrouterApiKey?.trim()
+            ? apiKeys?.openrouterApiKey?.trim()
             : settings?.provider === "deepseek"
-              ? settings.deepseekApiKey?.trim()
+              ? apiKeys?.deepseekApiKey?.trim()
               : settings?.provider === "ollama"
                 ? true
-                : settings?.apiKey?.trim()
+                : apiKeys?.apiKey?.trim()
   );
 
-  const decryptedApiKey = Encryption.decrypt(settings?.apiKey || "");
-  const decryptedOpenaiApiKey = Encryption.decrypt(settings?.openaiApiKey || "");
-  const decryptedAnthropicApiKey = Encryption.decrypt(settings?.anthropicApiKey || "");
-  const decryptedGroqApiKey = Encryption.decrypt(settings?.groqApiKey || "");
-  const decryptedOpenrouterApiKey = Encryption.decrypt(settings?.openrouterApiKey || "");
-  const decryptedDeepseekApiKey = Encryption.decrypt(settings?.deepseekApiKey || "");
+  const [decryptedKeys, setDecryptedKeys] = useState({
+    apiKey: "",
+    openaiApiKey: "",
+    anthropicApiKey: "",
+    groqApiKey: "",
+    openrouterApiKey: "",
+    deepseekApiKey: ""
+  });
+
+  useEffect(() => {
+    if (!apiKeys) return;
+    let active = true;
+    Promise.all([
+      Encryption.decrypt(apiKeys.apiKey || ""),
+      Encryption.decrypt(apiKeys.openaiApiKey || ""),
+      Encryption.decrypt(apiKeys.anthropicApiKey || ""),
+      Encryption.decrypt(apiKeys.groqApiKey || ""),
+      Encryption.decrypt(apiKeys.openrouterApiKey || ""),
+      Encryption.decrypt(apiKeys.deepseekApiKey || "")
+    ]).then(([gemini, openai, anthropic, groq, openrouter, deepseek]) => {
+      if (active) {
+        setDecryptedKeys({
+          apiKey: gemini,
+          openaiApiKey: openai,
+          anthropicApiKey: anthropic,
+          groqApiKey: groq,
+          openrouterApiKey: openrouter,
+          deepseekApiKey: deepseek
+        });
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [apiKeys]);
+
+  const handleKeyChange = async (field: keyof typeof decryptedKeys, value: string) => {
+    setDecryptedKeys((prev) => ({ ...prev, [field]: value }));
+    const encrypted = await Encryption.encrypt(value);
+    if (apiKeys) {
+      setApiKeys({
+        ...apiKeys,
+        [field]: encrypted
+      });
+    }
+  };
 
   // Fetch active tab snapshot & read current sidebar status
   useEffect(() => {
@@ -61,12 +102,12 @@ export const App = () => {
         setError("Navigate to a webpage to connect the assistant.");
       });
 
-    chrome.storage.sync.get("sidebarOpen").then((result) => {
+    chrome.storage.local.get("sidebarOpen").then((result) => {
       setSidebarStatus(result.sidebarOpen ? "open" : "closed");
     });
 
     const storageListener = (changes: Record<string, chrome.storage.StorageChange>, areaName: string) => {
-      if (areaName === "sync" && changes.sidebarOpen) {
+      if (areaName === "local" && changes.sidebarOpen) {
         setSidebarStatus(changes.sidebarOpen.newValue ? "open" : "closed");
       }
     };
@@ -76,20 +117,24 @@ export const App = () => {
 
   // Autofill configuration panel on missing API keys
   useEffect(() => {
-    if (settings) {
+    if (settings && apiKeys) {
       const activeKey =
         settings.provider === "openai"
-          ? settings.openaiApiKey
+          ? apiKeys.openaiApiKey
           : settings.provider === "anthropic"
-            ? settings.anthropicApiKey
+            ? apiKeys.anthropicApiKey
             : settings.provider === "groq"
-              ? settings.groqApiKey
-              : settings.apiKey;
-      if (!activeKey?.trim()) {
+              ? apiKeys.groqApiKey
+              : settings.provider === "openrouter"
+                ? apiKeys.openrouterApiKey
+                : settings.provider === "deepseek"
+                  ? apiKeys.deepseekApiKey
+                  : apiKeys.apiKey;
+      if (!activeKey?.trim() && settings.provider !== "ollama") {
         setShowSettings(true);
       }
     }
-  }, [settings]);
+  }, [settings, apiKeys]);
 
   const handleToggleSidebar = async () => {
     try {
@@ -193,8 +238,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedApiKey}
-                    onChange={(e) => setSettings({ ...settings, apiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.apiKey}
+                    onChange={(e) => handleKeyChange("apiKey", e.target.value)}
                     placeholder="AI Studio API Key"
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -215,8 +260,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedOpenaiApiKey}
-                    onChange={(e) => setSettings({ ...settings, openaiApiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.openaiApiKey}
+                    onChange={(e) => handleKeyChange("openaiApiKey", e.target.value)}
                     placeholder="sk-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -237,8 +282,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedAnthropicApiKey}
-                    onChange={(e) => setSettings({ ...settings, anthropicApiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.anthropicApiKey}
+                    onChange={(e) => handleKeyChange("anthropicApiKey", e.target.value)}
                     placeholder="sk-ant-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -259,8 +304,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedGroqApiKey}
-                    onChange={(e) => setSettings({ ...settings, groqApiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.groqApiKey}
+                    onChange={(e) => handleKeyChange("groqApiKey", e.target.value)}
                     placeholder="gsk_..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -281,8 +326,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedOpenrouterApiKey}
-                    onChange={(e) => setSettings({ ...settings, openrouterApiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.openrouterApiKey}
+                    onChange={(e) => handleKeyChange("openrouterApiKey", e.target.value)}
                     placeholder="sk-or-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -303,8 +348,8 @@ export const App = () => {
                   </div>
                   <input
                     type={showKey ? "text" : "password"}
-                    value={decryptedDeepseekApiKey}
-                    onChange={(e) => setSettings({ ...settings, deepseekApiKey: Encryption.encrypt(e.target.value) })}
+                    value={decryptedKeys.deepseekApiKey}
+                    onChange={(e) => handleKeyChange("deepseekApiKey", e.target.value)}
                     placeholder="sk-..."
                     className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
                   />
@@ -408,6 +453,19 @@ export const App = () => {
                   <option value="openrouter">OpenRouter</option>
                   <option value="ollama">Ollama</option>
                 </select>
+              </div>
+
+              <div className="space-y-0.5">
+                <label className="text-[8.5px] font-mono text-[var(--text-muted)] uppercase tracking-wide">Max Session Tokens</label>
+                <input
+                  type="number"
+                  min="1000"
+                  max="1000000"
+                  step="5000"
+                  value={settings.maxSessionTokens !== undefined ? settings.maxSessionTokens : 50000}
+                  onChange={(e) => setSettings({ ...settings, maxSessionTokens: parseInt(e.target.value, 10) || 50000 })}
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+                />
               </div>
 
               <div className="flex items-center justify-between py-1 text-[9.5px]">

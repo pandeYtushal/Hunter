@@ -58,12 +58,22 @@ const publishStatus = async (status: SidebarStatus) => {
 
 const getStorageState = async (): Promise<StorageSchema> => {
   try {
-    if (typeof chrome === "undefined" || !chrome.storage || !chrome.storage.sync) {
-      console.warn("HUNTERR: chrome.storage.sync is not available. Using default storage.");
+    if (typeof chrome === "undefined" || !chrome.storage) {
+      console.warn("HUNTERR: chrome.storage is not available. Using default storage.");
       return defaultStorage;
     }
-    const result = await chrome.storage.sync.get(defaultStorage);
-    return { ...defaultStorage, ...result } as StorageSchema;
+    const [localRes, syncRes] = await Promise.all([
+      chrome.storage.local.get(defaultStorage),
+      chrome.storage.sync.get("settings")
+    ]);
+    return {
+      ...defaultStorage,
+      ...localRes,
+      settings: {
+        ...defaultStorage.settings,
+        ...(syncRes?.settings || localRes?.settings)
+      }
+    } as StorageSchema;
   } catch (err) {
     console.error("HUNTERR: Failed to get storage state:", err);
     return defaultStorage;
@@ -116,7 +126,6 @@ class SidebarController {
             <div class="agent-remove-btn" data-action="remove" title="Remove toggle from page">×</div>
           </button>
           <section class="agent-panel ${this.isOpen ? 'agent-panel-visible' : ''}" aria-label="HUNTERR sidebar">
-            <div class="agent-resize-handle"></div>
             <iframe
               class="agent-frame"
               title="HUNTERR chat"
@@ -179,6 +188,82 @@ class SidebarController {
     this.render();
   }
 
+  setExpanded(expanded: boolean) {
+    if (!this.appRoot) return;
+    const panel = this.appRoot.querySelector(".agent-panel") as HTMLElement;
+    if (panel) {
+      if (expanded) {
+        panel.classList.add("expanded");
+      } else {
+        panel.classList.remove("expanded");
+      }
+    }
+  }
+
+  startDragging(iframeClientX: number, iframeClientY: number) {
+    if (!this.appRoot || !this.host || this.isPinned) return;
+
+    const shell = this.appRoot.querySelector(".agent-shell") as HTMLElement;
+    if (!shell) return;
+
+    const startTop = parseInt(shell.style.top || window.getComputedStyle(shell).top) || 86;
+    const startRight = parseInt(shell.style.right || window.getComputedStyle(shell).right) || 18;
+
+    const overlay = document.createElement("div");
+    overlay.id = "hunter-drag-overlay";
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 2147483647;
+      cursor: grabbing;
+      background: transparent;
+      pointer-events: auto !important;
+    `;
+
+    const shadow = this.host.shadowRoot;
+    if (shadow) {
+      shadow.appendChild(overlay);
+    } else {
+      document.body.appendChild(overlay);
+    }
+
+    let isFirst = true;
+    let startX = 0;
+    let startY = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (isFirst) {
+        startX = e.clientX;
+        startY = e.clientY;
+        isFirst = false;
+        return;
+      }
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+
+      const newTop = startTop + deltaY;
+      const newRight = startRight - deltaX;
+
+      const maxTop = window.innerHeight - 100;
+      const maxRight = window.innerWidth - 100;
+
+      shell.style.top = Math.max(10, Math.min(newTop, maxTop)) + "px";
+      shell.style.right = Math.max(10, Math.min(newRight, maxRight)) + "px";
+    };
+
+    const onMouseUp = () => {
+      overlay.remove();
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }
+
   private resolveTheme() {
     if (this.theme === "system") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -198,6 +283,13 @@ class SidebarController {
     const toggleBtn = this.appRoot.querySelector(".agent-toggle") as HTMLElement | null;
 
     const shell = this.appRoot.querySelector(".agent-shell") as HTMLElement | null;
+
+    if (frame) {
+      frame.setAttribute("allowtransparency", "true");
+      frame.style.background = "transparent";
+      frame.style.border = "none";
+      frame.style.boxShadow = "none";
+    }
 
     if (panel) {
       if (this.isOpen) {
@@ -249,10 +341,9 @@ class SidebarController {
     const shell = this.appRoot.querySelector(".agent-shell") as HTMLElement;
     const toggleBtn = this.appRoot.querySelector(".agent-toggle") as HTMLElement;
     const panel = this.appRoot.querySelector(".agent-panel") as HTMLElement;
-    const resizeHandle = this.appRoot.querySelector(".agent-resize-handle") as HTMLElement;
     const removeBtn = this.appRoot.querySelector('[data-action="remove"]') as HTMLElement;
 
-    if (!shell || !toggleBtn || !panel || !resizeHandle || !removeBtn) return;
+    if (!shell || !toggleBtn || !panel || !removeBtn) return;
 
     // ─── 1. Movable Toggle Drag & Click Logic ───
     let startX = 0;
@@ -376,63 +467,7 @@ class SidebarController {
       this.host?.remove();
     });
 
-    // ─── 3. Dynamic Resize Handle Logic ───
-    const onStartResize = (clientX: number, isTouchEvent: boolean) => {
-      const startWidth = panel.offsetWidth || 380;
-      const startX = clientX;
-
-      resizeHandle.classList.add("resizing");
-      panel.classList.add("resizing");
-
-      const onResize = (moveEvent: MouseEvent | TouchEvent) => {
-        let currentX = 0;
-        if (window.TouchEvent && moveEvent instanceof TouchEvent) {
-          if (moveEvent.touches.length === 0) return;
-          currentX = moveEvent.touches[0].clientX;
-        } else {
-          currentX = (moveEvent as MouseEvent).clientX;
-        }
-
-        const deltaX = startX - currentX;
-        let newWidth = startWidth + deltaX;
-
-        newWidth = Math.max(285, Math.min(newWidth, window.innerWidth - 32));
-        panel.style.width = newWidth + "px";
-      };
-
-      const onStopResize = () => {
-        resizeHandle.classList.remove("resizing");
-        panel.classList.remove("resizing");
-
-        if (isTouchEvent) {
-          document.removeEventListener("touchmove", onResize);
-          document.removeEventListener("touchend", onStopResize);
-        } else {
-          document.removeEventListener("mousemove", onResize);
-          document.removeEventListener("mouseup", onStopResize);
-        }
-      };
-
-      if (isTouchEvent) {
-        document.addEventListener("touchmove", onResize, { passive: false });
-        document.addEventListener("touchend", onStopResize);
-      } else {
-        document.addEventListener("mousemove", onResize);
-        document.addEventListener("mouseup", onStopResize);
-      }
-    };
-
-    resizeHandle.addEventListener("mousedown", (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      onStartResize(e.clientX, false);
-    });
-
-    resizeHandle.addEventListener("touchstart", (e) => {
-      if (e.touches.length > 0) {
-        onStartResize(e.touches[0].clientX, true);
-      }
-    }, { passive: true });
+    // Panel sizing is handled by responsive CSS clamps and native resize.
 
     document.addEventListener("mousedown", (e) => {
       const path = e.composedPath();
@@ -476,16 +511,30 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 });
 
 window.addEventListener("message", (event) => {
+  const expectedOrigin = chrome.runtime.getURL("").slice(0, -1);
+  if (event.origin !== expectedOrigin) {
+    return;
+  }
+
   if (event.source !== document.getElementById(rootId)?.shadowRoot?.querySelector("iframe")?.contentWindow) {
     return;
   }
 
-  if ((event.data as { source?: string; type?: string })?.source !== "ai-job-agent-sidebar") {
+  const data = event.data;
+  if (data?.source !== "ai-job-agent-sidebar") {
     return;
   }
 
-  if ((event.data as { type?: string }).type === "CLOSE_SIDEBAR") {
-    void controller.close();
+  switch (data.type) {
+    case "CLOSE_SIDEBAR":
+      void controller.close();
+      break;
+    case "START_DRAGGING":
+      controller.startDragging(data.clientX, data.clientY);
+      break;
+    case "SET_EXPANDED":
+      controller.setExpanded(data.expanded);
+      break;
   }
 });
 
@@ -551,7 +600,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         const origTransition = htmlEl.style.transition;
         
         htmlEl.style.transition = "outline 0.3s ease";
-        htmlEl.style.outline = "3px solid #ff6b35";
+        htmlEl.style.outline = "3px solid #2563eb";
         
         setTimeout(() => {
           htmlEl.style.outline = origOutline;
@@ -696,15 +745,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
           box.style.top = `${topPercent}vh`;
           box.style.width = `${widthPercent}vw`;
           box.style.height = `${heightPercent}vh`;
-          box.style.border = "2px dashed #ff6b35";
-          box.style.backgroundColor = "rgba(255, 107, 53, 0.1)";
+          box.style.border = "2px dashed #2563eb";
+          box.style.backgroundColor = "rgba(37, 99, 235, 0.1)";
 
           const label = document.createElement("div");
-          label.textContent = `🟧 ${el.text || el.type} (${Math.round(el.confidence * 100)}%)`;
+          label.textContent = `${el.text || el.type} (${Math.round(el.confidence * 100)}%)`;
           label.style.position = "absolute";
           label.style.top = "-16px";
           label.style.left = "0";
-          label.style.backgroundColor = "#ff6b35";
+          label.style.backgroundColor = "#2563eb";
           label.style.color = "white";
           label.style.fontSize = "8px";
           label.style.fontWeight = "bold";

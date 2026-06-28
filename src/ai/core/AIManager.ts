@@ -9,9 +9,11 @@ import { ProviderFactory } from "./ProviderFactory";
 import { CapabilityRegistry } from "./CapabilityRegistry";
 import { ProviderHealth } from "./ProviderHealth";
 import { Encryption } from "../../shared/encryption";
+import type { AgentSettings, ApiKeys } from "../../shared/types/storage";
 
 export class AIManager {
   private static instance: AIManager;
+  private cumulativeSessionTokens = 0;
 
   private constructor() {}
 
@@ -22,30 +24,41 @@ export class AIManager {
     return AIManager.instance;
   }
 
+  public resetSessionTokens(): void {
+    this.cumulativeSessionTokens = 0;
+  }
+
+  public getSessionTokens(): number {
+    return this.cumulativeSessionTokens;
+  }
+
   /**
    * Helper to check if a provider has configured API key
    */
-  private async isProviderConfigured(provider: string, settings: any): Promise<boolean> {
-    if (!settings) return false;
+  private async isProviderConfigured(provider: string, apiKeys: ApiKeys | null | undefined): Promise<boolean> {
+    if (!apiKeys) return false;
     const pName = provider.toLowerCase();
-    const hasKey = (value?: string) => Boolean(Encryption.decrypt(value || "").trim());
+    const hasKey = async (value?: string) => {
+      const decrypted = await Encryption.decrypt(value || "");
+      return Boolean(decrypted.trim());
+    };
 
     switch (pName) {
       case "openai":
-        return hasKey(settings.openaiApiKey);
+        return await hasKey(apiKeys.openaiApiKey);
       case "anthropic":
-        return hasKey(settings.anthropicApiKey);
+        return await hasKey(apiKeys.anthropicApiKey);
       case "groq":
-        return hasKey(settings.groqApiKey);
+        return await hasKey(apiKeys.groqApiKey);
       case "openrouter":
-        return hasKey(settings.openrouterApiKey);
+        return await hasKey(apiKeys.openrouterApiKey);
       case "deepseek":
-        return hasKey(settings.deepseekApiKey);
+        return await hasKey(apiKeys.deepseekApiKey);
       case "ollama":
         return true; // Ollama is local, doesn't mandate keys
       case "gemini":
       default:
-        return hasKey(settings.apiKey);
+        return await hasKey(apiKeys.apiKey);
     }
   }
 
@@ -57,11 +70,14 @@ export class AIManager {
     preferredProvider: string,
     fallbackProvider?: string
   ): Promise<string> {
-    const settings = await storage.get("settings").catch(() => null);
+    const [settings, apiKeys] = await Promise.all([
+      storage.get("settings").catch(() => null),
+      storage.get("apiKeys").catch(() => null)
+    ]);
     const primary = preferredProvider.toLowerCase();
     
     // 1. Check if preferred provider is configured & supports the capability
-    const primaryConfigured = await this.isProviderConfigured(primary, settings);
+    const primaryConfigured = await this.isProviderConfigured(primary, apiKeys);
     const primarySupports = CapabilityRegistry.supports(primary, capability);
     
     if (primaryConfigured && primarySupports) {
@@ -71,7 +87,7 @@ export class AIManager {
     // 2. Try the configured fallback provider
     if (fallbackProvider && fallbackProvider !== "none") {
       const fb = fallbackProvider.toLowerCase();
-      const fbConfigured = await this.isProviderConfigured(fb, settings);
+      const fbConfigured = await this.isProviderConfigured(fb, apiKeys);
       const fbSupports = CapabilityRegistry.supports(fb, capability);
       if (fbConfigured && fbSupports) {
         ProviderHealth.recordFallback(primary, fb, `Primary provider ${primary} lacked ${capability} capability or credentials.`);
@@ -83,7 +99,7 @@ export class AIManager {
     const providers = ["gemini", "openai", "anthropic", "groq", "openrouter", "deepseek", "ollama"];
     for (const prov of providers) {
       if (prov === primary) continue;
-      const isConfigured = await this.isProviderConfigured(prov, settings);
+      const isConfigured = await this.isProviderConfigured(prov, apiKeys);
       const supports = CapabilityRegistry.supports(prov, capability);
       if (isConfigured && supports) {
         ProviderHealth.recordFallback(primary, prov, `Automatic fallback: selected healthy ${prov} for ${capability}.`);
@@ -103,15 +119,33 @@ export class AIManager {
     preferredProvider: string,
     executeFn: (providerName: string) => Promise<T>
   ): Promise<T> {
-    const settings = await storage.get("settings").catch(() => null);
+    const [settings, apiKeys] = await Promise.all([
+      storage.get("settings").catch(() => null),
+      storage.get("apiKeys").catch(() => null)
+    ]);
     const fallbackProvider = settings?.fallbackProvider || "none";
+    const limit = settings?.maxSessionTokens || 50000;
+    if (this.cumulativeSessionTokens > limit) {
+      throw new Error(`Session token budget exceeded (${this.cumulativeSessionTokens.toLocaleString()} / ${limit.toLocaleString()} tokens). Aborting execution to prevent quota exhaustion.`);
+    }
     
     // Resolve primary target
     let activeProvider = await this.resolveProvider(capability, preferredProvider, fallbackProvider);
     
+    const trackTokens = (res: any) => {
+      if (res && typeof res === "object" && "tokensUsed" in res) {
+        const total = res.tokensUsed?.totalTokens;
+        if (typeof total === "number") {
+          this.cumulativeSessionTokens += total;
+        }
+      }
+      return res;
+    };
+
     try {
       // Primary attempt
-      return await executeFn(activeProvider);
+      const result = await executeFn(activeProvider);
+      return trackTokens(result);
     } catch (err: any) {
       console.warn(`Primary execution failed on ${activeProvider}: ${err.message}. Retrying...`);
       ProviderHealth.recordFailure(activeProvider, err.message?.includes("rate limit") || err.status === 429);
@@ -119,7 +153,8 @@ export class AIManager {
       try {
         // Retry once
         await new Promise(resolve => setTimeout(resolve, 200));
-        return await executeFn(activeProvider);
+        const result = await executeFn(activeProvider);
+        return trackTokens(result);
       } catch (retryErr: any) {
         console.warn(`Retry failed on ${activeProvider}. Executing fallback routing...`);
         ProviderHealth.recordFailure(activeProvider);
@@ -128,12 +163,13 @@ export class AIManager {
         if (fallbackProvider && fallbackProvider !== "none" && fallbackProvider.toLowerCase() !== activeProvider) {
           const fb = fallbackProvider.toLowerCase();
           const supports = CapabilityRegistry.supports(fb, capability);
-          const isConfigured = await this.isProviderConfigured(fb, settings);
+          const isConfigured = await this.isProviderConfigured(fb, apiKeys);
           
           if (supports && isConfigured) {
             try {
               ProviderHealth.recordFallback(activeProvider, fb, retryErr.message || "Primary provider retry failed");
-              return await executeFn(fb);
+              const result = await executeFn(fb);
+              return trackTokens(result);
             } catch (fbErr: any) {
               console.error(`Fallback provider ${fb} failed: ${fbErr.message}`);
               ProviderHealth.recordFailure(fb);
@@ -147,11 +183,12 @@ export class AIManager {
           
         for (const alt of alternatives) {
           const supports = CapabilityRegistry.supports(alt, capability);
-          const isConfigured = await this.isProviderConfigured(alt, settings);
+          const isConfigured = await this.isProviderConfigured(alt, apiKeys);
           if (supports && isConfigured) {
             try {
               ProviderHealth.recordFallback(activeProvider, alt, "Fallback cascading to alternative");
-              return await executeFn(alt);
+              const result = await executeFn(alt);
+              return trackTokens(result);
             } catch (altErr: any) {
               console.error(`Alternative provider ${alt} failed: ${altErr.message}`);
               ProviderHealth.recordFailure(alt);

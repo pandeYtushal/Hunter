@@ -48,7 +48,7 @@ export class ClaudeProvider implements AIProvider {
     const body: any = {
       model: this.model,
       messages,
-      max_tokens: request.maxTokens ?? 1024,
+      max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.6
     };
 
@@ -185,7 +185,7 @@ export class ClaudeProvider implements AIProvider {
     const body: any = {
       model: this.model,
       messages,
-      max_tokens: request.maxTokens ?? 1024,
+      max_tokens: request.maxTokens ?? 4096,
       temperature: request.temperature ?? 0.6,
       stream: true
     };

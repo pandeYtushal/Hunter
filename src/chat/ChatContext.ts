@@ -1,6 +1,7 @@
 import { ScreenCapture } from "../vision/ScreenCapture";
 import { longTermMemory } from "../ai/longTermMemory";
 import { memory } from "../ai/memory";
+import { storage } from "../shared/storage";
 import type { PageSnapshot } from "../shared/types/messages";
 import type { ChatContextInfo } from "./ChatTypes";
 
@@ -53,6 +54,7 @@ export const ChatContext = {
     
     const ltm = await longTermMemory.retrieveMemory().catch(() => null);
     const agentState = await memory.getAgentState().catch(() => null);
+    const profile = (await storage.get("profile").catch(() => null)) || null;
 
     return {
       currentUrl: tab?.url || pageSnapshot?.url || "",
@@ -61,7 +63,8 @@ export const ChatContext = {
       screenshotBase64,
       longTermMemory: ltm,
       currentGoal: agentState?.goal || null,
-      currentAgent: agentState?.currentAgent || null
+      currentAgent: agentState?.currentAgent || null,
+      profile
     };
   }
 };

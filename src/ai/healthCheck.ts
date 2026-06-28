@@ -51,14 +51,17 @@ export const runStartupDiagnostics = async (): Promise<HealthCheckResult[]> => {
     });
   }
 
-  const settings = await storage.get("settings");
+  const [settings, apiKeys] = await Promise.all([
+    storage.get("settings"),
+    storage.get("apiKeys")
+  ]);
   const hasKey = Boolean(
-    settings.apiKey?.trim() ||
-    settings.openaiApiKey?.trim() ||
-    settings.anthropicApiKey?.trim() ||
-    settings.groqApiKey?.trim() ||
-    settings.openrouterApiKey?.trim() ||
-    settings.deepseekApiKey?.trim() ||
+    apiKeys.apiKey?.trim() ||
+    apiKeys.openaiApiKey?.trim() ||
+    apiKeys.anthropicApiKey?.trim() ||
+    apiKeys.groqApiKey?.trim() ||
+    apiKeys.openrouterApiKey?.trim() ||
+    apiKeys.deepseekApiKey?.trim() ||
     (settings.provider === "ollama" && settings.ollamaUrl?.trim())
   );
 

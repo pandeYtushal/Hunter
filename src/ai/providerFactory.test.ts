@@ -18,15 +18,31 @@ vi.mock("../shared/storage", () => ({
 
 describe("ProviderFactory Instantiation", () => {
   it("creates the correct provider instances based on configuration", async () => {
-    vi.mocked(storage.get).mockResolvedValue({
-      apiKey: Encryption.encrypt("g-key"),
-      openaiApiKey: Encryption.encrypt("o-key"),
-      anthropicApiKey: Encryption.encrypt("a-key"),
-      groqApiKey: Encryption.encrypt("gr-key"),
-      openrouterApiKey: Encryption.encrypt("or-key"),
-      deepseekApiKey: Encryption.encrypt("ds-key"),
-      ollamaUrl: "http://localhost:11434",
-      model: "test-model"
+    const gKey = await Encryption.encrypt("g-key");
+    const oKey = await Encryption.encrypt("o-key");
+    const aKey = await Encryption.encrypt("a-key");
+    const grKey = await Encryption.encrypt("gr-key");
+    const orKey = await Encryption.encrypt("or-key");
+    const dsKey = await Encryption.encrypt("ds-key");
+
+    vi.mocked(storage.get).mockImplementation(async (key) => {
+      if (key === "apiKeys") {
+        return {
+          apiKey: gKey,
+          openaiApiKey: oKey,
+          anthropicApiKey: aKey,
+          groqApiKey: grKey,
+          openrouterApiKey: orKey,
+          deepseekApiKey: dsKey
+        };
+      }
+      if (key === "settings") {
+        return {
+          ollamaUrl: "http://localhost:11434",
+          model: "test-model"
+        };
+      }
+      return {};
     });
 
     const gemini = await ProviderFactory.createProvider("gemini");

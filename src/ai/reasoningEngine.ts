@@ -3,6 +3,7 @@ import { robustJsonParse } from "../shared/json";
 import type { ActionType } from "../types";
 import type { PageSnapshot } from "../shared/types/messages";
 import { PromptManager } from "./core/PromptManager";
+import { evaluateDomConfidence, DOM_CONFIDENCE_THRESHOLD } from "./domConfidence";
 
 export interface ReasoningDecision {
   reasoning: string;
@@ -18,14 +19,11 @@ export const ReasoningEngine = {
    */
   async reason(contextString: string, pageContext?: PageSnapshot): Promise<ReasoningDecision> {
     // 1. Calculate DOM parser confidence score
-    let domConfidence = 0.85;
-    if (!pageContext || !pageContext.content || pageContext.content.trim().length < 300) {
-      domConfidence = 0.42; // Low confidence flag
-    }
+    const domConfidence = evaluateDomConfidence(pageContext);
 
     // 2. Inject warnings if DOM confidence is too low
     let lowDomWarningNotice = "";
-    if (domConfidence < 0.50) {
+    if (domConfidence < DOM_CONFIDENCE_THRESHOLD) {
       lowDomWarningNotice = `\n[WARNING: LOW DOM CONFIDENCE (${domConfidence})] The standard DOM parser could not locate sufficient structured text or fields on this page (likely canvas-based, rich visual, or heavily obfuscated). You MUST select visual tools such as "vision_click", "vision_fill", or "vision_analyze" to capture screenshots and interact by visual coordinates instead of DOM elements.`;
     }
 
@@ -45,7 +43,7 @@ export const ReasoningEngine = {
       const confidence = typeof parsed.confidence === "number" ? parsed.confidence : 0.5;
       
       // Auto-fallback mapping on low DOM confidence
-      if (domConfidence < 0.50) {
+      if (domConfidence < DOM_CONFIDENCE_THRESHOLD) {
         if (selectedTool === "click_element") {
           selectedTool = "vision_click";
         } else if (selectedTool === "fill_input") {

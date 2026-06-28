@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { Copy, Check, RotateCw, Edit2, Play, User, Bot, AlertCircle, Cpu } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Copy, Check, RotateCw, Edit2, User, Bot, AlertCircle, Cpu } from "lucide-react";
 import { Markdown } from "../../shared/components/Markdown";
 import { ImageBubble } from "./ImageBubble";
-import type { ChatMessage, MessageRole } from "../../chat/ChatTypes";
+import type { ChatMessage } from "../../chat/ChatTypes";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -22,6 +22,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
+  const [isLastAssistant, setIsLastAssistant] = useState(false);
+  
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = async () => {
     try {
@@ -47,10 +50,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isThinking = message.role === "thinking";
   const isLog = message.role === "system" || message.role === "tool" || message.role === "agent" || message.role === "progress";
 
+  // Check if this bubble is the last assistant bubble while generating
+  useEffect(() => {
+    if (!isGenerating || isUser || isLog || isThinking) {
+      setIsLastAssistant(false);
+      return;
+    }
+
+    const container = bubbleRef.current?.parentElement;
+    if (container) {
+      const assistantRows = container.querySelectorAll(".assistant-row");
+      if (assistantRows.length > 0) {
+        const lastAssistant = assistantRows[assistantRows.length - 1];
+        setIsLastAssistant(lastAssistant === bubbleRef.current);
+      }
+    }
+  }, [isGenerating, isUser, isLog, isThinking]);
+
   if (isLog) {
     return (
       <div className="flex justify-center my-2 select-none animate-fade-in">
-        <div className="rounded-full bg-zinc-900/60 border border-[rgba(255,255,255,0.04)] px-3 py-1 text-[10.5px] font-mono text-zinc-500 font-medium">
+        <div className="rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-color)] px-3 py-1.5 text-[11px] font-mono text-[var(--text-muted)] font-semibold shadow-sm">
           {message.content}
         </div>
       </div>
@@ -59,144 +79,164 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   return (
     <div
-      className={`flex gap-3 px-4 py-3 transition-all duration-200 animate-fade-in ${
-        isUser ? "bg-transparent flex-row-reverse" : "bg-[var(--bg-secondary)] border-y border-[var(--border-color)]"
+      ref={bubbleRef}
+      className={`w-full py-2 transition-all duration-200 animate-fade-in group ${
+        isUser ? "user-row" : "assistant-row border-b border-[var(--border-color)]"
       }`}
     >
-      {/* Icon Avatar */}
-      <div className="shrink-0 select-none">
-        {isUser ? (
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-850 text-zinc-300 font-semibold text-xs border border-zinc-800">
-            <User size={13} />
-          </div>
-        ) : (
-          <div className={`flex h-7 w-7 items-center justify-center rounded-full border bg-[#ff6b35]/10 border-[#ff6b35]/25 text-[#ff6b35] animate-scale-up`}>
-            {isError ? <AlertCircle size={13} /> : <Bot size={13} />}
-          </div>
-        )}
-      </div>
-
-      {/* Content wrapper */}
-      <div className={`flex-1 min-w-0 max-w-2xl space-y-1.5 flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-        {/* Header Details */}
-        <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-zinc-500 select-none">
-          <span>{isUser ? "You" : "Hunter"}</span>
-          <span className="text-[9.5px] font-medium opacity-50">•</span>
-          <span className="text-[9.5px] font-medium opacity-55">
-            {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </span>
-          {message.metadata?.model && (
-            <>
-              <span className="text-[9.5px] font-medium opacity-50">•</span>
-              <span className="flex items-center gap-0.5 text-[9px] text-zinc-500 bg-[var(--bg-tertiary)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">
-                <Cpu size={9} />
-                {message.metadata.provider}: {message.metadata.model.replace("models/", "")}
-              </span>
-            </>
-          )}
-        </div>
-
-        {/* Text / Markdown Render within speech bubble */}
-        <div className={`rounded-2xl px-4 py-2.5 text-[12.5px] leading-relaxed font-sans select-text max-w-lg shadow-sm border ${
-          isUser 
-            ? "user-bubble text-left" 
-            : isError 
-            ? "bg-rose-955/15 border-rose-900/30 text-rose-400 text-left font-mono text-[11px]" 
-            : "assistant-bubble text-left text-zinc-300"
-        }`}>
-          {isEditing ? (
-            <div className="space-y-2 text-left mt-1 min-w-[220px]">
-              <textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                className="w-full min-h-[70px] rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-2.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[#ff6b35]"
-              />
-              <div className="flex gap-2 justify-end">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="px-2.5 py-1 rounded border border-zinc-800 text-[10.5px] text-zinc-450 hover:text-zinc-200 transition cursor-pointer bg-transparent"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="px-2.5 py-1 rounded bg-[#ff6b35] hover:bg-[#ff8255] text-black font-semibold text-[10.5px] transition cursor-pointer"
-                >
-                  Save & Retry
-                </button>
-              </div>
-            </div>
-          ) : isThinking ? (
-            <div className="flex items-center gap-1.5 select-none font-medium italic text-zinc-500 py-1">
-              <span className="bounce-dot bg-zinc-500" />
-              <span>{message.content || "Hunter is thinking..."}</span>
+      <div className={`max-w-full w-full mx-auto px-3 flex gap-4 ${
+        isUser ? "flex-row-reverse" : "flex-row"
+      }`}>
+        
+        {/* Icon Avatar */}
+        <div className="shrink-0 select-none">
+          {isUser ? (
+            <div className="user-avatar flex h-7 w-7 items-center justify-center rounded-full border font-semibold text-xs shadow-sm">
+              <User size={13} />
             </div>
           ) : (
-            <div className="markdown-wrapper">
-              <Markdown content={message.content} />
+            <div className={`flex h-7 w-7 items-center justify-center rounded-full border ${
+              isError 
+                ? "bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-950/30 dark:border-rose-500/30 dark:text-rose-400" 
+                : "assistant-avatar"
+            } shadow-sm`}>
+              {isError ? <AlertCircle size={13} /> : <Bot size={13} />}
             </div>
           )}
         </div>
 
-        {/* Attachments (e.g. uploaded images or screenshots) */}
-        {message.attachments && message.attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2.5 mt-1">
-            {message.attachments.map((att) => (
-              <ImageBubble key={att.id} attachment={att} />
-            ))}
+        {/* Content Wrapper */}
+        <div className={`flex-1 min-w-0 flex flex-col ${isUser ? "items-end" : "items-start"} space-y-1.5`}>
+          
+          {/* Header Details (You/Hunter + Time + Model metadata) */}
+          <div className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)] tracking-wider uppercase font-mono select-none">
+            <span>{isUser ? "You" : "Hunter"}</span>
+            <span className="text-[var(--text-muted)] opacity-60 font-normal">/</span>
+            <span className="text-[11px] font-medium lowercase font-sans opacity-85">
+              {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+            {!isUser && message.metadata?.model && (
+              <>
+                <span className="text-[var(--text-muted)] opacity-60 font-normal">/</span>
+                <span className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-primary)] border border-[var(--border-color)] px-1.5 py-0.5 rounded font-mono lowercase">
+                  <Cpu size={8.5} className="text-[var(--text-secondary)]" />
+                  {message.metadata.provider}: {message.metadata.model.replace("models/", "")}
+                </span>
+              </>
+            )}
           </div>
-        )}
 
-        {/* Vision Detection Element card if returned inside message bubble directly */}
-        {message.metadata?.detectedElements && message.metadata.detectedElements.length > 0 && !message.attachments && (
-          <div className="mt-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-3 text-[11px] font-mono max-w-sm">
-            <div className="text-zinc-500 font-bold mb-1">Confidence: {message.metadata.confidence ? `${Math.round(message.metadata.confidence * 100)}%` : "92%"}</div>
-            <div className="text-zinc-455">
-              Interactive page controls detected:
-              <ul className="list-disc list-inside mt-1 space-y-0.5 text-[10px] text-zinc-500">
-                {message.metadata.detectedElements.slice(0, 3).map((el: any, i: number) => (
-                  <li key={i} className="truncate">• {el.text} ({el.type})</li>
-                ))}
-              </ul>
+          {/* Text / Markdown bubble */}
+          {isUser ? (
+            /* User Speech Bubble style (ChatGPT desktop style user bubble) */
+            <div className="user-message-bubble w-fit max-w-[min(88%,34rem)] rounded-[20px] rounded-tr-[6px] border px-3 py-2 shadow-sm text-[13.5px] leading-relaxed text-left whitespace-pre-wrap select-text">
+              {isEditing ? (
+                <div className="space-y-2 mt-1 min-w-[240px]">
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full min-h-[70px] rounded-xl border border-[var(--border-color)] bg-[var(--bg-primary)] p-2.5 text-[12px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-muted)] focus:ring-1 focus:ring-[var(--border-hover)]/20"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-2.5 py-1 rounded-lg border border-[var(--border-color)] text-[11px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer bg-transparent"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-2.5 py-1 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 font-semibold text-[11px] transition cursor-pointer"
+                    >
+                      Save & Retry
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                message.content
+              )}
             </div>
-          </div>
-        )}
+          ) : (
+            /* Assistant Open Style (No border bubble wrapper, flows naturally) */
+            <div className="w-full text-[var(--text-primary)] text-[13.5px] leading-relaxed text-left select-text">
+              {isThinking ? (
+                <div className="flex items-center gap-2 select-none font-medium italic text-[var(--text-muted)] py-1">
+                  <span className="bounce-dot bg-[var(--text-muted)]" />
+                  <span>{message.content || "Hunter is thinking..."}</span>
+                </div>
+              ) : isError ? (
+                <div className="p-3.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-mono text-[11.5px] leading-relaxed max-w-xl">
+                  {message.content}
+                </div>
+              ) : (
+                <div className="markdown-container">
+                  <Markdown content={message.content} isStreaming={isLastAssistant} />
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Action Controls Footer */}
-        {!isEditing && !isThinking && (
-          <div className="flex items-center gap-3 pt-1 select-none">
-            <button
-              onClick={handleCopy}
-              className="flex items-center gap-1 text-[10px] font-medium text-zinc-550 hover:text-zinc-350 transition cursor-pointer"
-              title="Copy response"
-            >
-              {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
-              <span>{copied ? "Copied" : "Copy"}</span>
-            </button>
+          {/* Attachments (e.g. uploaded images or screenshots) */}
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1.5">
+              {message.attachments.map((att) => (
+                <ImageBubble key={att.id} attachment={att} />
+              ))}
+            </div>
+          )}
 
-            {isUser && onEditAndRetry && !isGenerating && (
+          {/* Vision Detection Element card */}
+          {message.metadata?.detectedElements && message.metadata.detectedElements.length > 0 && !message.attachments && (
+            <div className="mt-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)]/50 p-3 text-[11px] font-mono max-w-md w-full">
+              <div className="text-[var(--text-muted)] font-bold mb-1 select-none">Confidence: {message.metadata.confidence ? `${Math.round(message.metadata.confidence * 100)}%` : "92%"}</div>
+              <div className="text-[var(--text-secondary)]">
+                Interactive page controls detected:
+                <ul className="list-disc list-inside mt-1 space-y-0.5 text-[10px] text-[var(--text-muted)]">
+                  {message.metadata.detectedElements.slice(0, 3).map((el: any, i: number) => (
+                    <li key={i} className="truncate">{el.text} ({el.type})</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Action Toolbar footer */}
+          {!isEditing && !isThinking && (
+            <div className="flex items-center gap-3.5 pt-1 select-none opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
               <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1 text-[10px] font-medium text-zinc-550 hover:text-zinc-350 transition cursor-pointer"
-                title="Edit Prompt"
+                onClick={handleCopy}
+                className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition cursor-pointer bg-transparent border-0 p-0"
+                title="Copy response"
               >
-                <Edit2 size={11} />
-                <span>Edit</span>
+                {copied ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                <span>{copied ? "Copied" : "Copy"}</span>
               </button>
-            )}
 
-            {isAssistant && onRegenerate && !isGenerating && (
-              <button
-                onClick={() => onRegenerate(message.id)}
-                className="flex items-center gap-1 text-[10px] font-medium text-zinc-550 hover:text-zinc-350 transition cursor-pointer"
-                title="Regenerate this response"
-              >
-                <RotateCw size={11} />
-                <span>Regenerate</span>
-              </button>
-            )}
-          </div>
-        )}
+              {isUser && onEditAndRetry && !isGenerating && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition cursor-pointer bg-transparent border-0 p-0"
+                  title="Edit Prompt"
+                >
+                  <Edit2 size={11} />
+                  <span>Edit</span>
+                </button>
+              )}
+
+              {isAssistant && onRegenerate && !isGenerating && (
+                <button
+                  onClick={() => onRegenerate(message.id)}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition cursor-pointer bg-transparent border-0 p-0"
+                  title="Regenerate this response"
+                >
+                  <RotateCw size={11} />
+                  <span>Regenerate</span>
+                </button>
+              )}
+            </div>
+          )}
+
+        </div>
       </div>
     </div>
   );

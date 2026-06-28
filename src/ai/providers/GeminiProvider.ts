@@ -47,7 +47,7 @@ export class GeminiProvider implements AIProvider {
       contents,
       generationConfig: {
         temperature: request.temperature ?? 0.6,
-        maxOutputTokens: request.maxTokens ?? 1024
+        maxOutputTokens: request.maxTokens ?? 4096
       }
     };
 
@@ -194,7 +194,7 @@ export class GeminiProvider implements AIProvider {
       contents,
       generationConfig: {
         temperature: request.temperature ?? 0.6,
-        maxOutputTokens: request.maxTokens ?? 1024
+        maxOutputTokens: request.maxTokens ?? 4096
       }
     };
 

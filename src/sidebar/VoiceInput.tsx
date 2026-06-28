@@ -68,11 +68,11 @@ export const VoiceInput = ({
       type="button"
       aria-label={isListening ? "Stop voice input" : "Start voice input"}
       aria-pressed={isListening}
-      className={`h-[28px] w-[28px] shrink-0 rounded-[8px] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${isListening ? "ring-1 ring-[#ff6b35] text-[#ff6b35]" : ""}`}
+      className={`h-8 w-8 shrink-0 rounded-lg text-[var(--text-secondary)] flex items-center justify-center hover:bg-[var(--border-color)]/45 hover:text-[var(--text-primary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${isListening ? "bg-red-500/10 text-red-500" : ""}`}
       disabled={disabled}
       onClick={toggleListening}
     >
-      {isListening ? <MicOff size={12} /> : <Mic size={12} />}
+      {isListening ? <MicOff size={13} /> : <Mic size={13} />}
     </button>
   );
 };

@@ -10,34 +10,34 @@ export const sidebarStyles = `
   pointer-events: none !important;
 
   color-scheme: light dark;
-  --agent-bg: #ffffff;
-  --agent-fg: #09090b;
-  --agent-muted: #71717a;
-  --agent-border: #e4e4e7;
-  --agent-soft: #fafafa;
-  --agent-primary: #000000;
-  --agent-primary-strong: #27272a;
-  --agent-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
-  --agent-toggle-bg: linear-gradient(135deg, #18181b 0%, #09090b 100%);
-  --agent-toggle-shadow: 0 4px 14px rgba(9, 9, 11, 0.2), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  --agent-toggle-hover-shadow: 0 8px 28px rgba(9, 9, 11, 0.3), 0 0 20px rgba(9, 9, 11, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  --agent-toggle-active-shadow: 0 2px 8px rgba(9, 9, 11, 0.15);
+  --agent-bg: rgba(251, 251, 250, 0.72);
+  --agent-fg: #171717;
+  --agent-muted: #737373;
+  --agent-border: rgba(23, 23, 23, 0.08);
+  --agent-soft: rgba(37, 99, 235, 0.08);
+  --agent-primary: #2563eb;
+  --agent-primary-strong: #14b8a6;
+  --agent-shadow: 0 18px 56px rgba(15, 23, 42, 0.16);
+  --agent-toggle-bg: linear-gradient(135deg, #2563eb 0%, #14b8a6 100%);
+  --agent-toggle-shadow: 0 8px 24px rgba(37, 99, 235, 0.25), 0 1px 3px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  --agent-toggle-hover-shadow: 0 14px 34px rgba(37, 99, 235, 0.32), 0 0 18px rgba(20, 184, 166, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  --agent-toggle-active-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
 }
 
 :host([data-theme="dark"]) {
-  --agent-bg: #000000;
-  --agent-fg: #fafafa;
-  --agent-muted: #a1a1aa;
-  --agent-border: #27272a;
-  --agent-soft: #09090b;
-  --agent-primary: #ffffff;
-  --agent-primary-strong: #e4e4e7;
-  --agent-shadow: 0 22px 60px rgba(0, 0, 0, 0.52);
-  --agent-toggle-bg: linear-gradient(135deg, #27272a 0%, #18181b 100%);
-  --agent-toggle-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  --agent-toggle-hover-shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  --agent-toggle-active-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --agent-bg: rgba(11, 13, 16, 0.64);
+  --agent-fg: #f5f7fa;
+  --agent-muted: #747c89;
+  --agent-border: rgba(245, 247, 250, 0.1);
+  --agent-soft: rgba(96, 165, 250, 0.1);
+  --agent-primary: #60a5fa;
+  --agent-primary-strong: #2dd4bf;
+  --agent-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  --agent-toggle-bg: linear-gradient(135deg, #2563eb 0%, #0f766e 100%);
+  --agent-toggle-shadow: 0 8px 24px rgba(37, 99, 235, 0.28), 0 1px 3px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --agent-toggle-hover-shadow: 0 14px 34px rgba(37, 99, 235, 0.34), 0 0 20px rgba(45, 212, 191, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --agent-toggle-active-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -150,17 +150,21 @@ export const sidebarStyles = `
   display: none !important;
 }
 
-/* ───── Panel (Sidebar) ───── */
+/* ───── Panel (Sidebar/Companion Window) ───── */
 .agent-panel {
-  width: min(380px, calc(100vw - 32px));
-  height: min(680px, calc(100vh - 112px));
-  overflow: hidden;
-  border: 1px solid var(--agent-border);
-  border-radius: 16px;
-  background: var(--agent-bg);
-  box-shadow: var(--agent-shadow);
+  width: 15cm !important;
+  height: 12cm !important;
+  min-width: min(280px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  min-height: min(280px, calc(100vh - 24px)) !important;
+  max-height: calc(100vh - 24px) !important;
+  overflow: hidden !important;
+  border: none !important;
+  border-radius: 16px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  resize: both !important;
   transform-origin: top right;
-
   opacity: 0;
   transform: scale(0.05) translate(24px, -24px);
   pointer-events: none;
@@ -169,17 +173,34 @@ export const sidebarStyles = `
     opacity 350ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
     visibility 350ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 350ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 350ms cubic-bezier(0.16, 1, 0.3, 1);
+    width 350ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agent-panel.expanded {
+  width: min(820px, 64vw) !important;
+  height: min(720px, 76vh) !important;
 }
 
 .agent-panel.pinned {
-  height: 100vh;
-  border-radius: 16px 0 0 16px;
-  border-top: none;
-  border-bottom: none;
-  border-right: none;
-  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.12);
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+  width: min(420px, 38vw) !important;
+  min-width: 360px !important;
+  max-width: min(520px, 48vw) !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  resize: horizontal !important;
+}
+
+.agent-panel.pinned.expanded {
+  width: min(760px, 55vw) !important;
+  min-width: 500px !important;
+  max-width: min(960px, 70vw) !important;
 }
 
 .agent-panel-visible {
@@ -198,136 +219,31 @@ export const sidebarStyles = `
   height: 100%;
   border: 0;
   display: block;
-  background: var(--agent-bg);
-  border-radius: 16px;
+  background: transparent !important;
+  border-radius: 20px;
+  pointer-events: auto;
 }
 
-.agent-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px;
-  border-bottom: 1px solid var(--agent-border);
-}
-
-.agent-title {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-.agent-subtitle {
-  margin: 3px 0 0;
-  color: var(--agent-muted);
-  font-size: 12px;
-  line-height: 1.35;
-  max-width: 270px;
-  overflow-wrap: anywhere;
-}
-
-.agent-close {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--agent-border);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--agent-fg);
-  cursor: pointer;
-}
-
-.agent-body {
-  padding: 14px;
-  display: grid;
-  gap: 12px;
-}
-
-.agent-card {
-  border: 1px solid var(--agent-border);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--agent-soft);
-}
-
-.agent-label {
-  color: var(--agent-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.agent-value {
-  font-size: 13px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.agent-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.agent-button {
-  height: 38px;
-  border: 0;
-  border-radius: 6px;
-  background: var(--agent-primary);
-  color: white;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.agent-button.secondary {
-  border: 1px solid var(--agent-border);
-  background: transparent;
-  color: var(--agent-fg);
-}
-
-.agent-note {
-  margin: 0;
-  color: var(--agent-muted);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-@media (max-width: 460px) {
-  .agent-shell {
-    top: 68px;
-    right: 10px;
-  }
-
-  .agent-actions {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* ───── Resize Handles ───── */
 .agent-resize-handle {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6px;
-  height: 100%;
-  cursor: ew-resize;
-  z-index: 10000;
-  background: transparent;
-  transition: background 180ms ease;
+  display: none !important;
 }
-.agent-resize-handle:hover, .agent-resize-handle.resizing {
-  background: var(--agent-muted);
-  opacity: 0.5;
-}
-:host([data-theme="dark"]) .agent-resize-handle:hover, :host([data-theme="dark"]) .agent-resize-handle.resizing {
-  background: var(--agent-primary);
-  opacity: 0.8;
+
+@media (max-width: 640px) {
+  .agent-shell {
+    top: 8px !important;
+    right: 8px !important;
+  }
+
+  .agent-panel {
+    width: calc(100vw - 16px) !important;
+    height: calc(100vh - 16px) !important;
+    min-width: calc(100vw - 16px) !important;
+    min-height: calc(100vh - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 16px) !important;
+    resize: none !important;
+  }
 }
 
 .agent-remove-btn {
@@ -364,3 +280,4 @@ export const sidebarStyles = `
   transform: scale(1.1);
 }
 `;
+;

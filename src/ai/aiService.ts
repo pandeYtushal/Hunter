@@ -30,6 +30,3 @@ export const generateAiReply = async ({
 
   return response.text;
 };
-
-// Backwards-compatibility alias
-export const generateGeminiReply = generateAiReply;

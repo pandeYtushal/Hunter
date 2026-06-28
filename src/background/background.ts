@@ -12,6 +12,7 @@ import { runStartupDiagnostics } from "../ai/healthCheck";
 import { AgentManager } from "../agents/AgentManager";
 import type { ChatMessage, RuntimeMessage } from "../shared/types/messages";
 import { defaultStorage, type StorageSchema } from "../shared/types/storage";
+import { storage } from "../shared/storage";
 
 
 type StorageKey = keyof StorageSchema;
@@ -30,17 +31,15 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 const getStorageValue = async <K extends StorageKey>(key: K): Promise<StorageSchema[K]> => {
-  const result = await chrome.storage.sync.get({ [key]: defaultStorage[key] });
-  return result[key] as StorageSchema[K];
+  return await storage.get(key);
 };
 
 const setStorageValue = async <K extends StorageKey>(key: K, value: StorageSchema[K]) => {
-  await chrome.storage.sync.set({ [key]: value });
+  await storage.set(key, value);
 };
 
 const patchSettings = async (value: Partial<StorageSchema["settings"]>) => {
-  const current = await getStorageValue("settings");
-  await setStorageValue("settings", { ...current, ...value });
+  await storage.patch("settings", value);
 };
 
 const createChatMessage = (role: ChatMessage["role"], content: string): ChatMessage => ({
@@ -71,7 +70,7 @@ const addMessageListener = (
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason === "install") {
-    await chrome.storage.sync.set(defaultStorage);
+    await storage.reset();
   }
 });
 
@@ -80,12 +79,12 @@ const autoInjectContentScript = async () => {
   try {
     const tabs = await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] });
     
-    // Process tabs in parallel using map to prevent blocking
-    tabs.map(async (tab) => {
-      if (!tab.id || !tab.url) return;
-      if (tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://")) return;
+    // Process tabs in parallel using map and wait with Promise.allSettled to handle errors
+    const results = await Promise.allSettled(
+      tabs.map(async (tab) => {
+        if (!tab.id || !tab.url) return;
+        if (tab.url.startsWith("chrome://") || tab.url.startsWith("chrome-extension://")) return;
 
-      try {
         // Fast 1-second timeout check to see if content script is active
         const response = await Promise.race([
           chrome.tabs.sendMessage(tab.id, { type: "PING" }).catch(() => undefined),
@@ -102,8 +101,12 @@ const autoInjectContentScript = async () => {
           files: ["assets/content.js"]
         });
         console.log(`Injected content script into tab: ${tab.id}`);
-      } catch (e) {
-        // Silently ignore restricted tabs
+      })
+    );
+
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.warn(`Content script injection failed for tab ${tabs[index]?.id || "unknown"}:`, result.reason);
       }
     });
   } catch (err) {

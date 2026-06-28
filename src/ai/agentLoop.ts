@@ -15,6 +15,7 @@ import { EventBus } from "../core/EventBus";
 import { AgentMetrics } from "../debug/AgentMetrics";
 import { ExecutionLogger } from "../debug/ExecutionLogger";
 import type { ActionType, ActionErrorReport } from "../types/Action";
+import { evaluateDomConfidence, DOM_CONFIDENCE_THRESHOLD } from "./domConfidence";
 
 const retryLimit = 3;
 const maxIterations = 10;
@@ -116,14 +117,8 @@ export const AgentLoop = {
       }
 
       // Intercept low DOM confidence and override standard tools with vision counterparts
-      const evaluateDomConfidence = (pageCtx?: any): number => {
-        if (!pageCtx || !pageCtx.content || pageCtx.content.trim().length < 300) {
-          return 0.42;
-        }
-        return 0.85;
-      };
       const domConfidence = evaluateDomConfidence(runtime.pageContext);
-      if (domConfidence < 0.50) {
+      if (domConfidence < DOM_CONFIDENCE_THRESHOLD) {
         if (selectedTool === "click_element") {
           selectedTool = "vision_click";
         } else if (selectedTool === "fill_input") {
@@ -189,9 +184,20 @@ export const AgentLoop = {
           }
 
           if (permission.requiresConfirmation) {
+            const confirmMsg = PermissionGuard.createConfirmationMessage(selectedTool);
             onProgress({
               machineState: "WAITING_CONFIRMATION",
-              currentStep: PermissionGuard.createConfirmationMessage(selectedTool)
+              currentStep: confirmMsg
+            });
+
+            const approved = await PermissionGuard.awaitConfirmation(selectedTool, confirmMsg);
+            if (!approved) {
+              throw new Error("Action declined by user.");
+            }
+
+            onProgress({
+              machineState: "EXECUTING",
+              currentStep: `Running: ${selectedTool.replace(/_/g, " ")}...`
             });
           }
 
