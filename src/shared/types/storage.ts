@@ -28,6 +28,8 @@ export interface AgentSettings {
   visionProvider?: "gemini" | "openai" | "anthropic" | "openrouter" | "ollama" | "none";
   embeddingProvider?: "gemini" | "openai" | "openrouter" | "ollama" | "none";
   maxSessionTokens?: number;
+  sidebarWidth?: number;
+  sidebarHeight?: number;
 }
 
 export interface ApprovalState {
@@ -54,6 +56,7 @@ export interface UserProfile {
   resumeFileName?: string;
   linkedIn?: string;
   portfolio?: string;
+  gitHub?: string;
 }
 
 export interface CoverLetterRecord {
@@ -97,7 +100,9 @@ export const defaultStorage: StorageSchema = {
     streaming: false,
     visionProvider: "none",
     embeddingProvider: "none",
-    maxSessionTokens: 50000
+    maxSessionTokens: 50000,
+    sidebarWidth: 560,
+    sidebarHeight: 450
   },
   apiKeys: {
     apiKey: "",
@@ -116,7 +121,8 @@ export const defaultStorage: StorageSchema = {
     experience: "",
     resumeFileName: "",
     linkedIn: "",
-    portfolio: ""
+    portfolio: "",
+    gitHub: ""
   },
   coverLetters: [],
   longTermMemory: {

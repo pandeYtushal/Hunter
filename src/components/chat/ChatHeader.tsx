@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Menu, Trash2, Sun, Moon, Maximize2, Minimize2 } from "lucide-react";
+import { User, Trash2, Sun, Moon, Maximize2, Minimize2 } from "lucide-react";
 
 interface ChatHeaderProps {
   currentUrl?: string;
@@ -7,10 +7,8 @@ interface ChatHeaderProps {
   activeAgent?: string | null;
   provider: string;
   theme: "light" | "dark";
-  isSidebarOpen: boolean;
   isExpanded?: boolean;
   onToggleTheme: () => void;
-  onToggleSidebar: () => void;
   onClearChat: () => void;
   onToggleProfile: () => void;
   onToggleExpand?: () => void;
@@ -22,10 +20,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   activeAgent,
   provider,
   theme,
-  isSidebarOpen,
   isExpanded = false,
   onToggleTheme,
-  onToggleSidebar,
   onClearChat,
   onToggleProfile,
   onToggleExpand
@@ -57,21 +53,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-3 select-none cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-center gap-2 min-w-0">
-        <button
-          type="button"
-          onMouseDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            console.log("ChatHeader Hamburger button onClick! Target:", e.target);
-            e.stopPropagation();
-            onToggleSidebar();
-          }}
-          aria-label={isSidebarOpen ? "Close conversations" : "Open conversations"}
-          aria-expanded={isSidebarOpen}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-transparent bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition cursor-pointer"
-          title="Toggle Conversations List"
-        >
-          <Menu size={14} className="pointer-events-none" />
-        </button>
         <div className="min-w-0">
           <h1 className="text-[13px] font-medium text-[var(--text-primary)] flex items-center gap-1 leading-none">
             Hunter

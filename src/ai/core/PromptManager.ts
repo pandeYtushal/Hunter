@@ -224,6 +224,7 @@ Return a clean, valid JSON object with the following keys. Do not include any ma
   "phone": "Phone Number (or 'Unknown')",
   "linkedIn": "LinkedIn URL if found (or 'Unknown')",
   "portfolio": "Portfolio or personal website URL if found (or 'Unknown')",
+  "gitHub": "GitHub URL if found (or 'Unknown')",
   "skills": ["Skill 1", "Skill 2", ...] (an array of skills/technologies),
   "experience": "A clear description/summary of work history (or 'Unknown')"
 }
@@ -232,12 +233,30 @@ Parsing rules:
 - The candidate name is usually near the top. Do not use a job title, section heading, email, phone number, or URL as the name.
 - Put only linkedin.com profile URLs in "linkedIn".
 - Put only a personal website or portfolio domain in "portfolio".
-- Do not put GitHub, Twitter/X, Instagram, Facebook, LeetCode, HackerRank, Kaggle, Medium, or Dev.to URLs in "portfolio".
+- Do not put GitHub, Twitter/X, Instagram, Facebook, LeetCode, HackerRank, Kaggle, Medium, or Dev.to URLs in "portfolio". Map GitHub profile URLs strictly to "gitHub".
 - Extract skills from explicit Skills/Technical Skills/Technologies sections first, then infer additional technologies from projects and work experience.
 - Keep skill names concise and deduplicated.
+- **CRITICAL**: Do NOT extract generic action phrases, project responsibilities, or job duties (e.g. "document matching", "writing reports", "answering calls", "meeting deadlines", "collaboration", "teamwork") as skills.
+- Skills must be specific, recognizable technologies (e.g. React, Python, Docker, Git), frameworks, databases, developer tools, or concrete professional domains (e.g. UI/UX Design, SEO, Agile Methodology). Do not extract raw task details.
 
 Resume Text:
 ${resumeText}`;
+  }
+
+  /**
+   * AI Profile Template Generator prompt
+   */
+  static getProfileTemplatePrompt(role: string): string {
+    return `You are a professional resume writer. Generate a structured JSON profile for a candidate seeking a role as a "${role}".
+Return ONLY a valid JSON object with the following keys. Do not include any markdown formatting, surrounding text, or explanation, just the raw JSON block:
+{
+  "skills": ["Skill 1", "Skill 2", "Skill 3", "Skill 4", "Skill 5", "Skill 6"],
+  "experience": "• Summarize key responsibilities and achievements for a ${role}.\\n• Focus on accomplishments, tools, and impacts.\\n• Format each point with bullet points •"
+}
+
+Rules:
+- The generated skills must be specific, recognizable technologies (e.g., React, Python, Git) or concrete domains related to the role. No generic action phrases.
+- The experience summary must contain high-quality professional bullet points formatted with the bullet symbol •.` ;
   }
 
   /**

@@ -152,8 +152,8 @@ export const sidebarStyles = `
 
 /* ───── Panel (Sidebar/Companion Window) ───── */
 .agent-panel {
-  width: 15cm !important;
-  height: 12cm !important;
+  width: 560px;
+  height: 450px;
   min-width: min(280px, calc(100vw - 24px)) !important;
   max-width: calc(100vw - 24px) !important;
   min-height: min(280px, calc(100vh - 24px)) !important;
@@ -163,7 +163,7 @@ export const sidebarStyles = `
   border-radius: 16px !important;
   background: transparent !important;
   box-shadow: none !important;
-  resize: both !important;
+  resize: none !important;
   transform-origin: top right;
   opacity: 0;
   transform: scale(0.05) translate(24px, -24px);
@@ -175,6 +175,10 @@ export const sidebarStyles = `
     visibility 350ms cubic-bezier(0.16, 1, 0.3, 1),
     width 350ms cubic-bezier(0.16, 1, 0.3, 1),
     height 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.agent-panel.resizing {
+  transition: none !important;
 }
 
 .agent-panel.expanded {
@@ -194,7 +198,7 @@ export const sidebarStyles = `
   height: 100vh !important;
   min-height: 100vh !important;
   max-height: 100vh !important;
-  resize: horizontal !important;
+  resize: none !important;
 }
 
 .agent-panel.pinned.expanded {
@@ -224,9 +228,67 @@ export const sidebarStyles = `
   pointer-events: auto;
 }
 
-/* ───── Resize Handles ───── */
-.agent-resize-handle {
-  display: none !important;
+/* ───── Custom Resize Handles ───── */
+.agent-resizer {
+  position: absolute;
+  background: transparent;
+  z-index: 2147483647;
+  pointer-events: auto !important;
+}
+
+.resizer-l {
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+}
+
+.resizer-b {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resizer-lb {
+  left: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nesw-resize;
+  z-index: 2147483647;
+}
+
+/* Interactive hover line indicators for premium feedback */
+.agent-resizer::after {
+  content: "";
+  position: absolute;
+  background: var(--agent-primary);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.resizer-l::after {
+  left: 3px;
+  top: 10%;
+  width: 2px;
+  height: 80%;
+  border-radius: 999px;
+}
+
+.resizer-b::after {
+  left: 10%;
+  bottom: 3px;
+  width: 80%;
+  height: 2px;
+  border-radius: 999px;
+}
+
+.agent-resizer:hover::after,
+.agent-panel.resizing .agent-resizer::after {
+  opacity: 0.55;
 }
 
 @media (max-width: 640px) {

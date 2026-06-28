@@ -86,6 +86,8 @@ class SidebarController {
   private isOpen = false;
   private isPinned = false;
   private theme: ThemeMode = "system";
+  private sidebarWidth = 560;
+  private sidebarHeight = 450;
 
   async mount() {
     console.log("HUNTERR: Mount called. Checking DOM...");
@@ -104,6 +106,8 @@ class SidebarController {
       this.isOpen = state.sidebarOpen;
       this.isPinned = state.settings.sidebarPinned;
       this.theme = state.settings.theme;
+      this.sidebarWidth = state.settings.sidebarWidth || 560;
+      this.sidebarHeight = state.settings.sidebarHeight || 450;
       console.log("HUNTERR: Storage loaded. isOpen:", this.isOpen, "isPinned:", this.isPinned, "theme:", this.theme);
 
       this.host = document.createElement("ai-job-agent");
@@ -126,6 +130,9 @@ class SidebarController {
             <div class="agent-remove-btn" data-action="remove" title="Remove toggle from page">×</div>
           </button>
           <section class="agent-panel ${this.isOpen ? 'agent-panel-visible' : ''}" aria-label="HUNTERR sidebar">
+            <div class="agent-resizer resizer-l" data-resize="l"></div>
+            <div class="agent-resizer resizer-b" data-resize="b"></div>
+            <div class="agent-resizer resizer-lb" data-resize="lb"></div>
             <iframe
               class="agent-frame"
               title="HUNTERR chat"
@@ -139,6 +146,7 @@ class SidebarController {
       document.documentElement.appendChild(this.host);
       this.render();
       this.setupInteractions();
+      this.setupResizing();
       console.log("HUNTERR: Mount completed successfully.");
     } catch (e) {
       console.error("HUNTERR: Critical error during mount:", e);
@@ -194,10 +202,114 @@ class SidebarController {
     if (panel) {
       if (expanded) {
         panel.classList.add("expanded");
+        panel.style.removeProperty("width");
+        panel.style.removeProperty("height");
       } else {
         panel.classList.remove("expanded");
+        panel.style.setProperty("width", `${this.sidebarWidth}px`, "important");
+        if (!this.isPinned) {
+          panel.style.setProperty("height", `${this.sidebarHeight}px`, "important");
+        }
       }
     }
+  }
+
+  setSize(width: number, height: number) {
+    this.sidebarWidth = width;
+    this.sidebarHeight = height;
+    if (!this.appRoot) return;
+    const panel = this.appRoot.querySelector(".agent-panel") as HTMLElement;
+    if (panel) {
+      panel.style.setProperty("width", `${width}px`, "important");
+      if (!this.isPinned) {
+        panel.style.setProperty("height", `${height}px`, "important");
+      }
+    }
+  }
+
+  setupResizing() {
+    if (!this.appRoot) return;
+    const panel = this.appRoot.querySelector(".agent-panel") as HTMLElement;
+    const resizers = this.appRoot.querySelectorAll(".agent-resizer");
+    if (!panel || resizers.length === 0) return;
+
+    resizers.forEach((resizer) => {
+      resizer.addEventListener("mousedown", (e: Event) => {
+        const mouseEvent = e as MouseEvent;
+        if (mouseEvent.button !== 0) return;
+        mouseEvent.preventDefault();
+        mouseEvent.stopPropagation();
+
+        const type = (resizer as HTMLElement).dataset.resize;
+        const startX = mouseEvent.clientX;
+        const startY = mouseEvent.clientY;
+        const startWidth = panel.offsetWidth;
+        const startHeight = panel.offsetHeight;
+
+        if (panel.classList.contains("expanded")) {
+          panel.classList.remove("expanded");
+        }
+        panel.classList.add("resizing");
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          const deltaX = moveEvent.clientX - startX;
+          const deltaY = moveEvent.clientY - startY;
+
+          let newWidth = startWidth;
+          let newHeight = startHeight;
+
+          if (type === "l" || type === "lb") {
+            newWidth = startWidth - deltaX;
+          }
+          if (type === "b" || type === "lb") {
+            newHeight = startHeight + deltaY;
+          }
+
+          const minWidth = 280;
+          const minHeight = 280;
+          const maxWidth = window.innerWidth - 24;
+          const maxHeight = window.innerHeight - 24;
+
+          const finalWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+          const finalHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
+
+          this.sidebarWidth = finalWidth;
+          if (!this.isPinned) {
+            this.sidebarHeight = finalHeight;
+          }
+
+          panel.style.setProperty("width", `${finalWidth}px`, "important");
+          if (!this.isPinned) {
+            panel.style.setProperty("height", `${finalHeight}px`, "important");
+          }
+        };
+
+        const onMouseUp = async () => {
+          panel.classList.remove("resizing");
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+
+          try {
+            const state = await getStorageState();
+            const updatedSettings = {
+              ...state.settings,
+              sidebarWidth: this.sidebarWidth,
+              sidebarHeight: this.sidebarHeight
+            };
+            if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync) {
+              await chrome.storage.sync.set({ settings: updatedSettings });
+            } else if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+              await chrome.storage.local.set({ settings: updatedSettings });
+            }
+          } catch (err) {
+            console.error("HUNTERR: Failed to save resized dimensions:", err);
+          }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+    });
   }
 
   startDragging(iframeClientX: number, iframeClientY: number) {
@@ -310,15 +422,28 @@ class SidebarController {
       if (this.isPinned) {
         shell?.classList.add("pinned");
         panel.classList.add("pinned");
+        if (!panel.classList.contains("expanded")) {
+          panel.style.setProperty("width", `${this.sidebarWidth}px`, "important");
+        } else {
+          panel.style.removeProperty("width");
+        }
+        panel.style.setProperty("height", "", "important");
       } else {
         shell?.classList.remove("pinned");
         panel.classList.remove("pinned");
+        if (!panel.classList.contains("expanded")) {
+          panel.style.setProperty("width", `${this.sidebarWidth}px`, "important");
+          panel.style.setProperty("height", `${this.sidebarHeight}px`, "important");
+        } else {
+          panel.style.removeProperty("width");
+          panel.style.removeProperty("height");
+        }
       }
     }
 
     // Handle body margin pushing
     if (this.isOpen && this.isPinned) {
-      const panelWidth = panel ? panel.offsetWidth : 380;
+      const panelWidth = panel ? panel.offsetWidth : this.sidebarWidth;
       document.body.style.marginRight = `${panelWidth}px`;
       document.body.style.transition = "margin-right 350ms cubic-bezier(0.16, 1, 0.3, 1)";
     } else {
@@ -500,12 +625,17 @@ const sendPageContentToBackground = async () => {
 
 void sendPageContentToBackground();
 
-// Listen for storage changes to instantly apply pinning changes
+// Listen for storage changes to instantly apply pinning or size changes
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "sync" && changes.settings) {
     const newSettings = changes.settings.newValue;
-    if (newSettings && typeof newSettings.sidebarPinned === "boolean") {
-      controller.setPinned(newSettings.sidebarPinned);
+    if (newSettings) {
+      if (typeof newSettings.sidebarPinned === "boolean") {
+        controller.setPinned(newSettings.sidebarPinned);
+      }
+      if (typeof newSettings.sidebarWidth === "number" && typeof newSettings.sidebarHeight === "number") {
+        controller.setSize(newSettings.sidebarWidth, newSettings.sidebarHeight);
+      }
     }
   }
 });

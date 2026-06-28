@@ -50,6 +50,7 @@ export type RuntimeMessage =
       };
     }
   | { type: "PARSE_RESUME"; resumeText: string }
+  | { type: "GENERATE_PROFILE_TEMPLATE"; role: string }
   | { type: "AUTOFILL_FORM" }
   | { type: "ANALYZE_FORM_FIELDS"; formHtmlExcerpt: string }
   | { type: "SCAN_FORM" }
@@ -83,6 +84,7 @@ export interface RuntimeResponseMap {
   THEME_CHANGED: { ok: true };
   PAGE_CONTENT_UPDATED: { ok: true };
   PARSE_RESUME: { ok: true; profile: UserProfile } | { ok: false; error: string };
+  GENERATE_PROFILE_TEMPLATE: { ok: true; profile: { skills: string[]; experience: string } } | { ok: false; error: string };
   AUTOFILL_FORM: { ok: true; filled: string[]; skipped: string[]; highlighted: string[] } | { ok: false; error: string };
   ANALYZE_FORM_FIELDS: { ok: true; mappings: Array<{ fieldId: string; mappedType: string }> } | { ok: false; error: string };
   SCAN_FORM: {

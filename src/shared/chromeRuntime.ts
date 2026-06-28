@@ -82,6 +82,7 @@ export const isRuntimeMessage = (value: unknown): value is RuntimeMessage => {
     "THEME_CHANGED",
     "PAGE_CONTENT_UPDATED",
     "PARSE_RESUME",
+    "GENERATE_PROFILE_TEMPLATE",
     "AUTOFILL_FORM",
     "ANALYZE_FORM_FIELDS",
     "SCAN_FORM",

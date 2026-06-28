@@ -857,6 +857,200 @@ html:not(.dark) .bg-zinc-950 button:hover {
   transition: var(--transition-smooth) !important;
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Premium styled horizontal scrollbar */
+.premium-scrollbar::-webkit-scrollbar {
+  height: 6px !important;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-radius: 99px !important;
+}
+
+:root.dark .premium-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01) !important;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-rgb), 0.25) !important;
+  border-radius: 99px !important;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb), 0.5) !important;
+}
+
+/* Premium scroll buttons positioning and hover */
+.suggestion-scroll-btn {
+  position: absolute !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  display: flex !important;
+  height: 22px !important;
+  width: 22px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+}
+
+:root.dark .suggestion-scroll-btn {
+  background-color: rgba(24, 24, 27, 0.8) !important;
+  border-color: rgba(63, 63, 70, 0.6) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.suggestion-scroll-btn:hover {
+  transform: translateY(-50%) scale(1.1) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background-color: var(--bg-primary) !important;
+  box-shadow: 0 4px 12px var(--accent-faint) !important;
+}
+
+.suggestion-scroll-btn:active {
+  transform: translateY(-50%) scale(0.92) !important;
+}
+
+/* Fix text colors inside code blocks and other dark containers in light mode */
+html:not(.dark) .bg-zinc-950,
+html:not(.dark) .bg-zinc-950 .text-zinc-100,
+html:not(.dark) .bg-zinc-950 code,
+html:not(.dark) .bg-zinc-950 pre {
+  color: #f4f4f5 !important;
+  /* Zinc 100 */
+}
+
+html:not(.dark) .bg-zinc-950 .text-zinc-400 {
+  color: #a1a1aa !important;
+  /* Zinc 400 */
+}
+
+html:not(.dark) .bg-zinc-950 .text-zinc-500 {
+  color: #71717a !important;
+  /* Zinc 500 */
+}
+
+html:not(.dark) .bg-zinc-950 button:hover {
+  color: #ffffff !important;
+}
+
+/* Premium Design System Core Utility Components */
+
+/* Premium Glassmorphism utility */
+.glass-panel {
+  background: var(--bg-primary) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.glass-modal {
+  background: var(--surface-overlay) !important;
+  backdrop-filter: blur(24px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(140%) !important;
+  border: 1px solid var(--border-hover) !important;
+  box-shadow: var(--shadow-premium) !important;
+}
+
+/* Premium Card Components */
+.card-premium {
+  border-radius: var(--radius-xl) !important;
+  padding: var(--space-2) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.card-premium:hover {
+  border-color: var(--border-hover) !important;
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-1px);
+}
+
+/* Premium Button style overrides */
+.btn-premium-primary {
+  border-radius: var(--radius-md) !important;
+  background-color: var(--text-primary) !important;
+  color: var(--bg-primary) !important;
+  font-weight: 600 !important;
+  padding: var(--space-1) var(--space-2) !important;
+  transition: var(--transition-smooth) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.btn-premium-primary:hover {
+  opacity: 0.9 !important;
+  transform: scale(1.02) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.btn-premium-primary:active {
+  transform: scale(0.98) !important;
+}
+
+.btn-premium-secondary {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: transparent !important;
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  padding: var(--space-1) var(--space-2) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.btn-premium-secondary:hover {
+  border-color: var(--border-hover) !important;
+  color: var(--text-primary) !important;
+  background-color: var(--bg-tertiary) !important;
+  transform: scale(1.02) !important;
+}
+
+.btn-premium-secondary:active {
+  transform: scale(0.98) !important;
+}
+
+/* Premium Input styling */
+.input-premium {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  padding: var(--space-1) var(--space-2) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.input-premium:focus {
+  border-color: var(--accent) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--accent-faint) !important;
+}
+
+/* Premium Badge styling */
+.badge-premium {
+  border-radius: var(--radius-sm) !important;
+  padding: 2px 8px !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border: 1px solid var(--border-color) !important;
+  transition: var(--transition-smooth) !important;
+}
+
 /* Unified Animations */
 .transition-premium {
   transition: var(--transition-smooth) !important;
@@ -865,4 +1059,170 @@ html:not(.dark) .bg-zinc-950 button:hover {
 /* Premium timeline pulse effects */
 .timeline-step-pulse {
   box-shadow: 0 0 0 2px var(--accent-faint);
+}
+
+/* ───── Premium Profile Settings UI Upgrades ───── */
+
+/* Skills pill tags */
+.skill-chip-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 9999px;
+  padding: 4px 10px 4px 12px;
+  font-size: 11.5px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-sm);
+}
+
+.skill-chip-premium:hover {
+  transform: translateY(-1px) scale(1.03);
+  border-color: var(--border-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.skill-chip-premium-delete {
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+  padding: 1px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.skill-chip-premium-delete:hover {
+  color: var(--danger);
+  background: rgba(225, 29, 72, 0.08);
+}
+
+/* Suggestion pills */
+.suggestion-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--accent-faint);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.suggestion-pill:hover {
+  transform: translateY(-0.5px);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent);
+  border-style: solid;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Live Resume Preview Sheet */
+.resume-preview-sheet {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sheet watermark / header effect */
+.resume-preview-sheet::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  opacity: 0.85;
+}
+
+.preview-timeline {
+  position: relative;
+  padding-left: 20px;
+  margin-left: 6px;
+  border-left: 1.5px dashed var(--border-color);
+}
+
+.preview-timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.preview-timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+/* glowing node marker */
+.timeline-node-accent {
+  position: absolute;
+  left: -27px;
+  top: 3.5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-faint);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.preview-timeline-item:hover .timeline-node-accent {
+  background: var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-faint), 0 2px 8px rgba(var(--accent-rgb), 0.2);
+}
+
+/* Structured doc container gutter */
+.editor-document-gutter {
+  border-left: 3px solid var(--accent);
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+/* Tab button selector styling */
+.profile-tab-btn {
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-tab-btn.active {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.profile-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 15%;
+  width: 70%;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+  animation: slide-in-bottom 0.2s ease;
+}
+
+@keyframes slide-in-bottom {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }

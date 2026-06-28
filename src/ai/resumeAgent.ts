@@ -4,49 +4,15 @@ import { robustJsonParse } from "../shared/json";
 import { PromptManager } from "./core/PromptManager";
 
 const KNOWN_SKILLS = [
-  "Angular",
-  "AWS",
-  "Azure",
-  "Bootstrap",
-  "C",
-  "C#",
-  "C++",
-  "Communication",
-  "CSS",
-  "Data Analysis",
-  "Deep Learning",
-  "Django",
-  "Docker",
-  "Express",
-  "FastAPI",
-  "Firebase",
-  "Flask",
-  "GCP",
-  "Git",
-  "GitHub",
-  "GraphQL",
-  "HTML",
-  "Java",
-  "JavaScript",
-  "Jest",
-  "Kubernetes",
-  "Leadership",
-  "Machine Learning",
-  "MongoDB",
-  "MySQL",
-  "Next.js",
-  "Node.js",
-  "PostgreSQL",
-  "Python",
-  "PyTorch",
-  "React",
-  "Redux",
-  "REST",
-  "SQL",
-  "Tailwind",
-  "TensorFlow",
-  "TypeScript",
-  "Vue"
+  "Angular", "AWS", "Azure", "Bootstrap", "C", "C#", "C++", "CSS",
+  "Data Analysis", "Deep Learning", "Django", "Docker", "Express",
+  "FastAPI", "Firebase", "Flask", "GCP", "Git", "GitHub", "GraphQL",
+  "HTML", "Java", "JavaScript", "Jest", "Kubernetes", "Machine Learning",
+  "MongoDB", "MySQL", "Next.js", "Node.js", "PostgreSQL", "Python",
+  "PyTorch", "React", "Redux", "REST", "SQL", "Tailwind", "TensorFlow",
+  "TypeScript", "Vue", "Spring Boot", "Laravel", "Ruby on Rails", "Agile",
+  "Scrum", "Figma", "Sass", "Webpack", "Vite", "Linux",
+  "Data Structures", "Algorithms", "jQuery", "PHP", "Go", "Rust", "Kotlin", "Swift"
 ];
 
 const SECTION_HEADINGS = [
@@ -135,7 +101,13 @@ const extractSkills = (text: string, lines: string[]) => {
     sectionText
       .split(/[,|;•·]+/)
       .map((item) => item.trim().replace(/^[-*]\s*/, ""))
-      .filter((item) => item.length >= 2 && item.length <= 32 && !/^\d+$/.test(item))
+      .filter((item) => {
+        if (item.length < 2 || item.length > 30) return false;
+        if (/^\d+$/.test(item)) return false;
+        if (/\b(using|working|developed|built|managed|led|created|implemented|designing|developing|testing|strong|excellent|good|skills|knowledge|ability|history|experience)\b/i.test(item)) return false;
+        if (item.split(/\s+/).length > 3) return false;
+        return true;
+      })
       .forEach((item) => sectionSkills.push(item));
   }
 
@@ -154,6 +126,7 @@ const extractLocalResumeProfile = (resumeText: string): UserProfile => {
     compactText.match(/(?:\+?\d[\d\s().-]{7,}\d)/)?.[0]?.replace(/\s+/g, " ").trim() || "";
   const urls = getUrls(compactText);
   const linkedIn = urls.find((url) => /(^|\.)linkedin\.com$/i.test(getUrlHost(url))) || "";
+  const gitHub = urls.find((url) => /(^|\.)github\.com$/i.test(getUrlHost(url))) || "";
   const labelledPortfolio = extractNamedUrl(lines, /\b(portfolio|website|personal site|web site)\b/i);
   const portfolio =
     labelledPortfolio && !isSocialUrl(labelledPortfolio)
@@ -169,7 +142,7 @@ const extractLocalResumeProfile = (resumeText: string): UserProfile => {
   const experienceStart = lines.findIndex((line) => /experience|employment|work history/i.test(line));
   const experience =
     experienceStart >= 0
-      ? lines.slice(experienceStart, experienceStart + 10).join(" ").slice(0, 1200)
+      ? lines.slice(experienceStart, experienceStart + 15).join("\n").slice(0, 1200)
       : compactText.slice(0, 1200);
 
   return {
@@ -178,6 +151,7 @@ const extractLocalResumeProfile = (resumeText: string): UserProfile => {
     phone,
     linkedIn,
     portfolio,
+    gitHub,
     skills,
     experience
   };
@@ -203,6 +177,7 @@ export const parseResumeText = async (resumeText: string): Promise<UserProfile> 
       phone: parsed.phone || localProfile.phone,
       linkedIn: parsed.linkedIn === "Unknown" ? "" : parsed.linkedIn || "",
       portfolio: parsed.portfolio === "Unknown" ? "" : parsed.portfolio || localProfile.portfolio,
+      gitHub: parsed.gitHub === "Unknown" ? "" : parsed.gitHub || localProfile.gitHub || "",
       skills: Array.isArray(parsed.skills) && parsed.skills.length > 0 ? parsed.skills : localProfile.skills,
       experience: parsed.experience || localProfile.experience
     };

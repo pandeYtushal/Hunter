@@ -5,7 +5,6 @@ import {
 } from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
-import { ConversationSidebar } from "./ConversationSidebar";
 import { MessageBubble } from "./MessageBubble";
 import { AttachmentPreview } from "./AttachmentPreview";
 import { PromptSuggestions, getDynamicSuggestions } from "./PromptSuggestions";
@@ -95,7 +94,6 @@ export const ChatWindow: React.FC = () => {
 
   const { value: approvalState } = useChromeStorage("approvalState");
   const { theme, setTheme } = useTheme();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [devModeOpen, setDevModeOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
@@ -262,17 +260,6 @@ export const ChatWindow: React.FC = () => {
 
   return (
     <div className="chat-shell flex h-full w-full text-[var(--text-primary)] font-sans overflow-hidden relative">
-      {/* Collapsible Left Sidebar */}
-      <ConversationSidebar
-        conversations={conversations}
-        activeId={activeId}
-        isOpen={sidebarOpen}
-        onSelect={selectConversation}
-        onCreate={createConversation}
-        onDelete={deleteConversation}
-        onClose={() => setSidebarOpen(false)}
-      />
-
       {/* Main Panel Content Container */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         <ChatHeader
@@ -280,15 +267,10 @@ export const ChatWindow: React.FC = () => {
           activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : activeConversation && activeConversation.messages.length > 0 ? "Automated browser goal" : null}
           provider={devMetrics.selectedProvider}
           theme={resolveTheme(theme)}
-          isSidebarOpen={sidebarOpen}
           isExpanded={isExpanded}
           onToggleTheme={() => {
             const nextTheme = resolveTheme(theme) === "dark" ? "light" : "dark";
             void setTheme(nextTheme);
-          }}
-          onToggleSidebar={() => {
-            console.log("onToggleSidebar clicked. Current sidebarOpen state:", sidebarOpen);
-            setSidebarOpen((open) => !open);
           }}
           onClearChat={clearCurrentConversation}
           onToggleProfile={() => setShowProfile(true)}

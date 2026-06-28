@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Upload, X, Loader2, Check, User, Mail, Phone, Award, FileText, Copy, Download, Trash2, ChevronDown, ChevronUp, Linkedin, Globe } from "lucide-react";
+import { Upload, X, Loader2, Check, User, Mail, Phone, Award, FileText, Copy, Download, Trash2, ChevronDown, ChevronUp, Linkedin, Globe, Github } from "lucide-react";
 import { storage } from "../shared/storage";
 import { extractTextFromPdf } from "../shared/pdfExtractor";
 import type { UserProfile, CoverLetterRecord } from "../shared/types/storage";
@@ -7,6 +7,8 @@ import type { UserProfile, CoverLetterRecord } from "../shared/types/storage";
 interface ProfileSettingsProps {
   onBack: () => void;
 }
+
+
 
 export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   const [profile, setProfile] = useState<UserProfile>({
@@ -17,8 +19,11 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     experience: "",
     resumeFileName: "",
     linkedIn: "",
-    portfolio: ""
+    portfolio: "",
+    gitHub: ""
   });
+
+
 
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +49,8 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           experience: storedProfile.experience || "",
           resumeFileName: storedProfile.resumeFileName || "",
           linkedIn: storedProfile.linkedIn || "",
-          portfolio: storedProfile.portfolio || ""
+          portfolio: storedProfile.portfolio || "",
+          gitHub: storedProfile.gitHub || ""
         });
       }
     });
@@ -144,7 +150,8 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           experience: parsed.experience || profile.experience,
           resumeFileName: file.name,
           linkedIn: parsed.linkedIn || profile.linkedIn || "",
-          portfolio: parsed.portfolio || profile.portfolio || ""
+          portfolio: parsed.portfolio || profile.portfolio || "",
+          gitHub: parsed.gitHub || profile.gitHub || ""
         });
         setSuccessMsg("Resume loaded successfully. Review the details, then save your profile.");
       } else {
@@ -384,6 +391,22 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               />
             </div>
           </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              GitHub URL
+            </label>
+            <div className="relative">
+              <Github size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+              <input
+                type="url"
+                value={profile.gitHub || ""}
+                onChange={(e) => setProfile((prev) => ({ ...prev, gitHub: e.target.value }))}
+                placeholder="E.g. https://github.com/username"
+                className="premium-input h-10 w-full rounded-xl pl-10 pr-4 text-[12.5px] outline-none font-medium"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Skills & Experience Card */}
@@ -414,19 +437,20 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               </button>
             </form>
             {profile.skills && profile.skills.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1.5 border border-zinc-200/40 bg-white/20 dark:bg-zinc-950/20 p-2 rounded-xl backdrop-blur-sm dark:border-zinc-800/50">
+              <div className="mt-2.5 flex flex-wrap gap-1.5 border border-zinc-200/40 bg-white/20 dark:bg-zinc-950/20 p-2.5 rounded-xl backdrop-blur-sm dark:border-zinc-800/50">
                 {profile.skills.map((skill) => (
                   <span
                     key={skill}
-                    className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 pl-2.5 pr-2 py-0.5 text-[10px] font-bold text-zinc-700 dark:text-zinc-300 border border-zinc-200/40 shadow-sm transition-all hover:scale-[1.02]"
+                    className="skill-chip-premium"
                   >
                     {skill}
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill)}
-                      className="text-zinc-400 hover:text-[#f97316] dark:text-zinc-500 dark:hover:text-[#f97316] transition"
+                      className="skill-chip-premium-delete"
+                      title={`Remove ${skill}`}
                     >
-                      <X size={10} className="stroke-[2.5]" />
+                      <X size={11} className="stroke-[2.5]" />
                     </button>
                   </span>
                 ))}
@@ -443,7 +467,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               onChange={(e) => setProfile((prev) => ({ ...prev, experience: e.target.value }))}
               placeholder="Provide a summary of your career background..."
               rows={4}
-              className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium"
+              className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium leading-relaxed font-sans"
             />
           </div>
         </div>

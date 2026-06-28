@@ -13,6 +13,7 @@ import { AgentManager } from "../agents/AgentManager";
 import type { ChatMessage, RuntimeMessage } from "../shared/types/messages";
 import { defaultStorage, type StorageSchema } from "../shared/types/storage";
 import { storage } from "../shared/storage";
+import { robustJsonParse } from "../shared/json";
 
 
 type StorageKey = keyof StorageSchema;
@@ -146,6 +147,18 @@ addMessageListener(async (message, sender) => {
         return { ok: true, profile };
       } catch (error) {
         const messageText = error instanceof Error ? error.message : "Unknown resume parsing error";
+        return { ok: false, error: messageText };
+      }
+    }
+
+    case "GENERATE_PROFILE_TEMPLATE": {
+      try {
+        const prompt = PromptManager.getProfileTemplatePrompt((message as any).role);
+        const responseText = await generateAiReply({ prompt, history: [] });
+        const parsed = robustJsonParse<{ skills?: string[]; experience?: string }>(responseText);
+        return { ok: true, profile: parsed };
+      } catch (error) {
+        const messageText = error instanceof Error ? error.message : "Unknown template generation error";
         return { ok: false, error: messageText };
       }
     }
