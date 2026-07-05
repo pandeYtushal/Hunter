@@ -83,6 +83,24 @@ export class WorkflowExecutor {
       // Content script not loaded or restricted page
     }
 
+    if (!pageContext && activeTab.url) {
+      let host = "";
+      try {
+        host = new URL(activeTab.url).host;
+      } catch {
+        host = "";
+      }
+
+      pageContext = {
+        title: activeTab.title || "",
+        url: activeTab.url,
+        host,
+        selectedText: "",
+        description: "",
+        content: ""
+      };
+    }
+
     const profile = await storage.get("profile").catch(() => null);
 
     const runtime = {

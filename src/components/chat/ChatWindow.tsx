@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { 
   Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock, 
-  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle
+  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle,
+  History, Plus, Trash2
 } from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
@@ -103,6 +104,7 @@ export const ChatWindow: React.FC = () => {
   const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
   const { value: activeMode, setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
   const [showTaskManager, setShowTaskManager] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [copilot, setCopilot] = useState<CopilotState>({
@@ -192,9 +194,14 @@ export const ChatWindow: React.FC = () => {
         addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
       }
       CopilotEngine.getInstance().cancel();
+    } else if (copilot.machineState === "failed" && prevMachineStateRef.current !== "failed") {
+      addMessageToHistory(
+        "error",
+        copilot.blockReason || copilot.lastResult || "Hunter could not continue this autonomous goal."
+      );
     }
     prevMachineStateRef.current = copilot.machineState;
-  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal]);
+  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal, copilot.blockReason]);
 
   const handleCopyMessage = useCallback((text: string) => {
     console.log("Message copied");
@@ -218,7 +225,13 @@ export const ChatWindow: React.FC = () => {
     if (isGoalMode) {
       setInput("");
       await addMessageToHistory("user", query);
-      await CopilotEngine.getInstance().startGoal(query);
+      try {
+        await CopilotEngine.getInstance().startGoal(query);
+      } catch (err: any) {
+        const message = err?.message || "Hunter could not start autonomous mode.";
+        setError(message);
+        await addMessageToHistory("error", message);
+      }
     } else {
       await sendMessage();
     }
@@ -240,7 +253,13 @@ export const ChatWindow: React.FC = () => {
     if (isGoalMode) {
       setInput("");
       await addMessageToHistory("user", prompt);
-      await CopilotEngine.getInstance().startGoal(prompt);
+      try {
+        await CopilotEngine.getInstance().startGoal(prompt);
+      } catch (err: any) {
+        const message = err?.message || "Hunter could not start autonomous mode.";
+        setError(message);
+        await addMessageToHistory("error", message);
+      }
     } else {
       await sendMessage(prompt);
       setInput("");
@@ -283,6 +302,82 @@ export const ChatWindow: React.FC = () => {
           onToggleProfile={() => setShowProfile(true)}
           onToggleExpand={handleToggleExpand}
         />
+
+        {activeView === "chat" && (
+          <div className="mx-3 mb-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHistory((value) => !value)}
+              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition ${
+                showHistory
+                  ? "border-[rgba(255,107,53,0.35)] bg-[rgba(255,107,53,0.1)] text-[var(--text-primary)]"
+                  : "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              }`}
+              aria-expanded={showHistory}
+              aria-label="Open chat history"
+            >
+              <History size={13} />
+              Chats
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await createConversation();
+                setShowHistory(false);
+              }}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+              aria-label="Start new chat"
+            >
+              <Plus size={13} />
+              New
+            </button>
+          </div>
+        )}
+
+        {activeView === "chat" && showHistory && (
+          <div className="mx-3 mb-2 max-h-52 overflow-y-auto rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1.5 shadow-[var(--shadow-product)] custom-scrollbar">
+            {conversations.length === 0 ? (
+              <div className="px-3 py-4 text-center text-[12px] text-[var(--text-muted)]">No chats yet.</div>
+            ) : (
+              conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={`group flex items-center gap-2 rounded-xl px-2 py-2 transition ${
+                    conversation.id === activeId ? "bg-[var(--cards)]" : "hover:bg-[var(--bg-tertiary)]"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectConversation(conversation.id);
+                      setShowHistory(false);
+                    }}
+                    className="min-w-0 flex-1 text-left"
+                    aria-current={conversation.id === activeId ? "true" : undefined}
+                  >
+                    <div className="truncate text-[12px] font-medium text-[var(--text-primary)]">
+                      {conversation.title || "New Conversation"}
+                    </div>
+                    <div className="mt-0.5 truncate text-[10.5px] text-[var(--text-muted)]">
+                      {conversation.messages.length} messages
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async (event) => {
+                      event.stopPropagation();
+                      await deleteConversation(conversation.id);
+                    }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-70 hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
+                    aria-label={`Delete ${conversation.title || "chat"}`}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Workspace switcher */}
         <div className="mx-3 mb-1 grid grid-cols-4 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1 text-[11px] shrink-0 font-medium text-center select-none">
