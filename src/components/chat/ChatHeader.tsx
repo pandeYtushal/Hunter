@@ -5,7 +5,7 @@ interface ChatHeaderProps {
   currentUrl?: string;
   activeGoal?: string | null;
   activeAgent?: string | null;
-  provider: string;
+  provider?: string;
   theme: "light" | "dark";
   isExpanded?: boolean;
   onToggleTheme: () => void;
@@ -18,7 +18,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   currentUrl,
   activeGoal,
   activeAgent,
-  provider,
   theme,
   isExpanded = false,
   onToggleTheme,
@@ -50,14 +49,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   return (
     <header
       onMouseDown={handleHeaderMouseDown}
-      className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-3 select-none cursor-grab active:cursor-grabbing"
+      className="flex h-12 items-center justify-between bg-[var(--surface-overlay)] px-3 select-none cursor-grab active:cursor-grabbing"
     >
       <div className="flex items-center gap-2 min-w-0">
         <div className="min-w-0">
-          <h1 className="text-[13px] font-medium text-[var(--text-primary)] flex items-center gap-1 leading-none">
+          <h1 className="text-[13.5px] font-semibold text-[var(--text-primary)] flex items-center gap-1 leading-none">
             Hunter
           </h1>
-          <p className="text-[10.5px] text-[var(--text-muted)] font-normal truncate max-w-[150px] mt-0.5" title={currentUrl}>
+          <p className="text-[11px] text-[var(--text-muted)] font-normal truncate max-w-[180px] mt-0.5" title={currentUrl}>
             {shortUrl}
           </p>
         </div>
@@ -65,9 +64,9 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
       <div className="flex items-center gap-1.5">
         {activeGoal && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md border border-[var(--border-color)] px-2 py-1 text-[10.5px] font-normal text-[var(--text-secondary)]">
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[rgba(255,107,53,0.28)] bg-[rgba(255,107,53,0.08)] px-2 py-1 text-[10.5px] font-medium text-[var(--text-secondary)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-            {activeAgent || "Agent"}: {activeGoal.length > 15 ? activeGoal.substring(0, 12) + "..." : activeGoal}
+            {activeGoal.length > 18 ? activeGoal.substring(0, 16) + "..." : activeGoal}
           </div>
         )}
 

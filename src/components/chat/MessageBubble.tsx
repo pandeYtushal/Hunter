@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Copy, Check, RotateCw, Edit2, User, Bot, AlertCircle, Cpu } from "lucide-react";
+import { Copy, Check, RotateCw, Edit2, User, Bot, AlertCircle } from "lucide-react";
 import { Markdown } from "../../shared/components/Markdown";
 import { ImageBubble } from "./ImageBubble";
 import type { ChatMessage } from "../../chat/ChatTypes";
@@ -118,22 +118,13 @@ const _MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Content Wrapper */}
         <div className={`flex-1 min-w-0 flex flex-col ${isUser ? "items-end" : "items-start"} space-y-1.5`}>
           
-          {/* Header Details (You/Hunter + Time + Model metadata) */}
-          <div className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)] tracking-wider uppercase font-mono select-none">
+          {/* Header Details */}
+          <div className="flex items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)] select-none">
             <span>{isUser ? "You" : "Hunter"}</span>
-            <span className="text-[var(--text-muted)] opacity-60 font-normal">/</span>
+            <span className="text-[var(--text-muted)] opacity-50 font-normal">/</span>
             <span className="text-[11px] font-medium lowercase font-sans opacity-85">
               {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </span>
-            {!isUser && message.metadata?.model && (
-              <>
-                <span className="text-[var(--text-muted)] opacity-60 font-normal">/</span>
-                <span className="flex items-center gap-1 text-[10px] text-[var(--text-secondary)] bg-[var(--bg-primary)] border border-[var(--border-color)] px-1.5 py-0.5 rounded font-mono lowercase">
-                  <Cpu size={8.5} className="text-[var(--text-secondary)]" />
-                  {message.metadata.provider}: {message.metadata.model.replace("models/", "")}
-                </span>
-              </>
-            )}
           </div>
 
           {/* Text / Markdown bubble */}

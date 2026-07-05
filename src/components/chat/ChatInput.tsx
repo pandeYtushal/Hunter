@@ -59,8 +59,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="bg-transparent px-3 py-3 select-none shrink-0">
-      <div className="chat-composer relative flex items-end gap-1.5 rounded-xl p-1.5 transition duration-150">
+    <div className="bg-transparent px-3 pb-3 pt-0 select-none shrink-0">
+      <div className="chat-composer relative flex items-end gap-1.5 rounded-2xl p-1.5 transition duration-150">
         
         {/* Attachment & Screenshot Controls */}
         <div className="flex items-center gap-1">
@@ -72,7 +72,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             onClick={() => onCaptureScreenshot()}
             disabled={isGenerating || disabled}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-150 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-150 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary)]"
             title="Capture Browser Tab Screenshot"
           >
             <Camera size={13} />
@@ -107,7 +107,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="button"
             onClick={() => onStop()}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary)]"
             title="Stop generation"
           >
             <Square size={10} fill="currentColor" />
@@ -117,7 +117,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             onClick={() => onSend()}
             disabled={(!value.trim() && !isGenerating) || disabled}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-30 transition cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary)] text-white hover:brightness-110 disabled:opacity-30 transition cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--primary)]"
             title="Send query"
           >
             <ArrowUp size={13} strokeWidth={2.5} />

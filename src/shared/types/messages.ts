@@ -16,6 +16,17 @@ export interface PageSnapshot {
   description: string;
   content?: string;
   metadata?: Record<string, string>;
+  readiness?: {
+    ready: boolean;
+    reason: string;
+    observedMutationCount: number;
+  };
+  structuredData?: {
+    skill: string;
+    confidence: number;
+    summary: string;
+    data: Record<string, unknown>;
+  };
 }
 
 export type ChatRole = "user" | "assistant";
@@ -32,6 +43,7 @@ export type SidebarStatus = "open" | "closed";
 export type RuntimeMessage =
   | { type: "PING" }
   | { type: "GET_PAGE_SNAPSHOT" }
+  | { type: "WAIT_FOR_PAGE_READY" }
   | { type: "SEND_CHAT_MESSAGE"; prompt: string; pageContext?: PageSnapshot }
   | { type: "GET_CHAT_HISTORY" }
   | { type: "CLEAR_CHAT_HISTORY" }
@@ -84,6 +96,7 @@ export type RuntimeMessage =
 export interface RuntimeResponseMap {
   PING: { ok: true };
   GET_PAGE_SNAPSHOT: { snapshot: PageSnapshot };
+  WAIT_FOR_PAGE_READY: { ready: boolean; reason: string; observedMutationCount: number };
   SEND_CHAT_MESSAGE: { message: ChatMessage; history: ChatMessage[] };
   GET_CHAT_HISTORY: { history: ChatMessage[] };
   CLEAR_CHAT_HISTORY: { history: ChatMessage[] };

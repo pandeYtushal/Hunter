@@ -28,6 +28,7 @@ export interface CopilotState {
   timeline: TimelineEntry[];
   isBlocked: boolean;
   blockReason?: string;
+  pendingConfirmationMessage?: string;
   estimatedCompletionTimeSeconds: number;
   lastResult?: string;
 }
@@ -42,6 +43,7 @@ export class CopilotEngine {
     progress: 0,
     timeline: [],
     isBlocked: false,
+    pendingConfirmationMessage: undefined,
     estimatedCompletionTimeSeconds: 0,
     lastResult: undefined
   };
@@ -134,6 +136,7 @@ export class CopilotEngine {
 
     this.state.machineState = "planning";
     this.state.currentGoal = goalText;
+    this.executor = new WorkflowExecutor();
     AIManager.getInstance().resetSessionTokens();
     this.broadcast();
 
@@ -203,10 +206,12 @@ export class CopilotEngine {
           (msg, onConfirm, onSkip) => {
             // Confirmation Handler Gate
             this.state.machineState = "waiting_confirmation";
+            this.state.pendingConfirmationMessage = msg;
             this.broadcast();
 
             this.confirmResolver = (approved) => {
               this.state.machineState = "executing";
+              this.state.pendingConfirmationMessage = undefined;
               this.broadcast();
               if (approved) {
                 onConfirm();
@@ -310,6 +315,7 @@ export class CopilotEngine {
   cancel(): void {
     this.state.machineState = "idle";
     this.state.lastResult = undefined;
+    this.state.pendingConfirmationMessage = undefined;
     this.scheduler = new TaskScheduler([]);
     this.updateTracker();
     this.broadcast();

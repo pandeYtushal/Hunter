@@ -11,6 +11,7 @@ import { PromptSuggestions, getDynamicSuggestions } from "./PromptSuggestions";
 import { ChatInput } from "./ChatInput";
 import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
+import { ContextBar } from "./ContextBar";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
 import { ProfileSettings } from "../../sidebar/ProfileSettings";
 import { TaskManager } from "./TaskManager";
@@ -283,36 +284,36 @@ export const ChatWindow: React.FC = () => {
           onToggleExpand={handleToggleExpand}
         />
 
-        {/* Switcher tabs: Chat vs Tasks vs Workspace vs Workflows */}
-        <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[9.5px] shrink-0 font-semibold text-center select-none uppercase tracking-wider">
+        {/* Workspace switcher */}
+        <div className="mx-3 mb-1 grid grid-cols-4 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1 text-[11px] shrink-0 font-medium text-center select-none">
           <button
             onClick={() => setActiveView("chat")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "chat" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${
+              activeView === "chat" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Chat
           </button>
           <button
             onClick={() => setActiveView("tasks")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "tasks" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${
+              activeView === "tasks" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Tasks
           </button>
           <button
             onClick={() => setActiveView("dashboard")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "dashboard" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${
+              activeView === "dashboard" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Workspace
           </button>
           <button
             onClick={() => setActiveView("workflows")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer ${
-              activeView === "workflows" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${
+              activeView === "workflows" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Flows
@@ -333,13 +334,12 @@ export const ChatWindow: React.FC = () => {
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Mode Selector dropdown */}
-            <div className="px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] flex items-center justify-between gap-2 shrink-0">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Workspace Mode:</span>
+            <div className="px-3 py-2 bg-[var(--bg-primary)] flex items-center justify-between gap-2 shrink-0">
+              <span className="text-[11px] font-medium text-[var(--text-muted)]">Mode</span>
               <select
                 value={activeMode || "general"}
                 onChange={(e) => setActiveMode(e.target.value)}
-                className="bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-[11px] rounded-md px-2 py-1 outline-none cursor-pointer hover:border-[var(--accent)] transition-colors"
+                className="bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-primary)] text-[11px] rounded-full px-2.5 py-1 outline-none cursor-pointer hover:border-[var(--primary)] transition-colors"
               >
                 <option value="general">General Assistant</option>
                 <option value="research">Research Assistant</option>
@@ -452,16 +452,16 @@ export const ChatWindow: React.FC = () => {
 
         {/* Copilot Engine Timeline Progress Card Dashboard Overlay */}
         {copilot.machineState !== "idle" && (
-          <div className="mx-4 my-2.5 p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-lg space-y-4 animate-scale-up select-none">
-            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
+          <div className="mx-3 my-2.5 p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--cards)] shadow-[var(--shadow-product)] space-y-4 animate-scale-up select-none">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-ping" />
-                <h3 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                  Autonomous Copilot Mode: {copilot.machineState}
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--primary)] animate-ping" />
+                <h3 className="text-[11px] font-semibold text-[var(--text-secondary)]">
+                  Working on your goal
                 </h3>
               </div>
-              <span className="text-[10.5px] text-[var(--text-muted)] font-mono">
-                Est. completion: {copilot.estimatedCompletionTimeSeconds}s
+              <span className="text-[10.5px] text-[var(--text-muted)]">
+                about {copilot.estimatedCompletionTimeSeconds}s
               </span>
             </div>
 
@@ -473,11 +473,11 @@ export const ChatWindow: React.FC = () => {
                     className="h-full transition-all duration-300"
                     style={{
                       width: `${copilot.progress}%`,
-                      background: "linear-gradient(90deg, var(--accent), var(--accent-strong))"
+                      background: "linear-gradient(90deg, var(--primary), #ff9a5c)"
                     }}
                   />
                 </div>
-                <span className="text-[11px] font-bold font-mono text-[var(--accent)]">{copilot.progress}%</span>
+                <span className="text-[11px] font-bold text-[var(--primary)]">{copilot.progress}%</span>
               </div>
             </div>
 
@@ -547,7 +547,7 @@ export const ChatWindow: React.FC = () => {
                 </p>
                 <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
                   {copilot.machineState === "waiting_confirmation"
-                    ? "Hunter has paused before performing a critical operation (Submit, Purchase, Delete, Upload). Do you confirm?"
+                    ? copilot.pendingConfirmationMessage || "Hunter has paused before a protected action. Do you approve?"
                     : approvalState?.message}
                 </p>
                 <div className="flex gap-2">
@@ -637,23 +637,32 @@ export const ChatWindow: React.FC = () => {
 
         {/* Standard input footer area */}
         {activeView === "chat" && !showTaskManager && (
-          <ChatInput
-            value={input}
-            isGenerating={isGenerating || isCopilotRunning}
-            onChange={setInput}
-            onSend={handleSend}
-            onStop={handleStop}
-            onCaptureScreenshot={captureScreen}
-            onAttachFile={attachFile}
-            onAttachImageObject={(att) => {
-              try {
-                const blob = base64ToBlob(att.base64Data, att.mimeType);
-                attachFile(new File([blob], att.name, { type: att.mimeType }));
-              } catch (err) {
-                console.error("Failed to reconstruct image from pasted attachment:", err);
-              }
-            }}
-          />
+          <>
+            <ContextBar
+              currentUrl={currentUrl}
+              hasAttachments={attachments.length > 0}
+              hasMemory={Boolean(activeConversation?.messages.length)}
+              browserControlEnabled={Boolean(currentUrl)}
+              activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : undefined}
+            />
+            <ChatInput
+              value={input}
+              isGenerating={isGenerating || isCopilotRunning}
+              onChange={setInput}
+              onSend={handleSend}
+              onStop={handleStop}
+              onCaptureScreenshot={captureScreen}
+              onAttachFile={attachFile}
+              onAttachImageObject={(att) => {
+                try {
+                  const blob = base64ToBlob(att.base64Data, att.mimeType);
+                  attachFile(new File([blob], att.name, { type: att.mimeType }));
+                } catch (err) {
+                  console.error("Failed to reconstruct image from pasted attachment:", err);
+                }
+              }}
+            />
+          </>
         )}
 
         {/* Developer Mode Drawer panel */}
