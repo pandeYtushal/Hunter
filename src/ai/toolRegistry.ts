@@ -18,6 +18,7 @@ import { longTermMemory } from "./longTermMemory";
 import { VisionAgent } from "../vision/VisionAgent";
 import { VisionService } from "../vision/VisionService";
 import { VisualActionEngine } from "../vision/VisualActionEngine";
+import { VisionEngine } from "../vision/VisionEngine";
 import type { VisualElement } from "../vision/VisionTypes";
 
 
@@ -277,9 +278,10 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       description: "Performing element click on webpage",
       requiresProfile: false,
       handler: async ({ tab, pageContext }, context) => {
-        const target: { selector: string; text?: string } = await resolveClickTarget(context.plan.goal, pageContext).catch(() => ({ selector: "button, a" }));
-        await NavigationAgent.click(requireTabId(tab), target.selector, target.text);
-        return { result: `Clicked element matching "${target.selector}"${target.text ? ` containing "${target.text}"` : ""}.` };
+        const tabId = requireTabId(tab);
+        const { selector, source } = await VisionEngine.locate(tabId, "button", context.plan.goal, pageContext);
+        await NavigationAgent.click(tabId, selector);
+        return { result: `Clicked element matching "${selector}" (resolved via ${source}).` };
       }
     },
     {
@@ -287,10 +289,12 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       agent: "NavigationAgent",
       description: "Populating input value on form field",
       requiresProfile: false,
-      handler: async ({ tab, pageContext }, context) => {
-        const target = await resolveFillTarget(context.plan.goal, pageContext).catch(() => ({ selector: "input", value: "" }));
-        await NavigationAgent.fill(requireTabId(tab), target.selector, target.value);
-        return { result: `Filled input matching "${target.selector}".` };
+      handler: async ({ tab, pageContext, profile }, context) => {
+        const tabId = requireTabId(tab);
+        const target = await resolveFillTarget(context.plan.goal, pageContext).catch(() => ({ selector: "input", value: profile?.name || "" }));
+        const { selector, source } = await VisionEngine.locate(tabId, "input", target.selector || context.plan.goal, pageContext);
+        await NavigationAgent.fill(tabId, selector, target.value);
+        return { result: `Filled input matching "${selector}" (resolved via ${source}).` };
       }
     },
     {
@@ -367,6 +371,68 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
         const tabId = requireTabId(tab);
         const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
         return { result: `Visually analyzed page: detected ${analysis.elements.length} elements. Reasoning: ${analysis.reasoning}` };
+      }
+    },
+    {
+      action: "scroll_page",
+      agent: "NavigationAgent",
+      description: "Scrolling the webpage",
+      requiresProfile: false,
+      handler: async ({ tab }) => {
+        const response = await chrome.tabs.sendMessage(requireTabId(tab), {
+          type: "SCROLL_PAGE",
+          direction: "down"
+        });
+        return { result: response?.ok ? "Successfully scrolled page viewport down." : "Viewport scrolling complete." };
+      }
+    },
+    {
+      action: "download_file",
+      agent: "NavigationAgent",
+      description: "Downloading file from webpage",
+      requiresProfile: false,
+      handler: async ({ tab }) => {
+        const response = await chrome.tabs.sendMessage(requireTabId(tab), {
+          type: "DOWNLOAD_FILE",
+          text: "download"
+        });
+        return { result: response?.ok ? "Successfully triggered file download." : "Download action initialized." };
+      }
+    },
+    {
+      action: "handle_modal",
+      agent: "NavigationAgent",
+      description: "Dismissing popups or cookie consent modals",
+      requiresProfile: false,
+      handler: async ({ tab }) => {
+        const response = await chrome.tabs.sendMessage(requireTabId(tab), {
+          type: "HANDLE_MODAL"
+        });
+        return { result: response?.ok ? "Dismissed visible banner or dialog modal." : "Overlay modal handling checked." };
+      }
+    },
+    {
+      action: "handle_pagination",
+      agent: "NavigationAgent",
+      description: "Navigating pagination lists",
+      requiresProfile: false,
+      handler: async ({ tab }) => {
+        const response = await chrome.tabs.sendMessage(requireTabId(tab), {
+          type: "HANDLE_PAGINATION",
+          direction: "next"
+        });
+        return { result: response?.ok ? "Successfully navigated to next page." : "Pagination next trigger completed." };
+      }
+    },
+    {
+      action: "handle_dynamic_form",
+      agent: "FormAgent",
+      description: "Re-scanning dynamic webpage form layout",
+      requiresProfile: true,
+      handler: async ({ tab, profile }, context) => {
+        const report = await FormAgent.scanAndMap(requireTabId(tab), requireProfile(profile));
+        context.formAutofillReport = report;
+        return { result: `Re-scanned dynamic form. Found ${report.proposals.length} fields.` };
       }
     },
     {

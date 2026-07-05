@@ -10,6 +10,8 @@ import { CapabilityRegistry } from "./CapabilityRegistry";
 import { ProviderHealth } from "./ProviderHealth";
 import { Encryption } from "../../shared/encryption";
 import type { AgentSettings, ApiKeys } from "../../shared/types/storage";
+import { LoggerService } from "../../core/services/LoggerService";
+import { AnalyticsService } from "../../core/services/AnalyticsService";
 
 export class AIManager {
   private static instance: AIManager;
@@ -132,32 +134,65 @@ export class AIManager {
     // Resolve primary target
     let activeProvider = await this.resolveProvider(capability, preferredProvider, fallbackProvider);
     
+    const startTime = performance.now();
     const trackTokens = (res: any) => {
+      const durationMs = Math.round(performance.now() - startTime);
+      let totalTokens = 0;
       if (res && typeof res === "object" && "tokensUsed" in res) {
         const total = res.tokensUsed?.totalTokens;
         if (typeof total === "number") {
           this.cumulativeSessionTokens += total;
+          totalTokens = total;
         }
       }
+      AnalyticsService.trackEvent("AI_REQUEST_SUCCESS", durationMs, {
+        provider: activeProvider,
+        capability,
+        tokensUsed: totalTokens
+      });
       return res;
     };
+
+    const isRateLimit = (err: any): boolean => {
+      const errMsg = String(err.message || "").toLowerCase();
+      return (
+        errMsg.includes("rate limit") ||
+        errMsg.includes("429") ||
+        err.status === 429 ||
+        err.statusCode === 429
+      );
+    };
+
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     try {
       // Primary attempt
       const result = await executeFn(activeProvider);
       return trackTokens(result);
     } catch (err: any) {
-      console.warn(`Primary execution failed on ${activeProvider}: ${err.message}. Retrying...`);
-      ProviderHealth.recordFailure(activeProvider, err.message?.includes("rate limit") || err.status === 429);
+      LoggerService.warn(`Primary execution failed on ${activeProvider}: ${err.message}. Retrying...`);
+      const rateLimited = isRateLimit(err);
+      ProviderHealth.recordFailure(activeProvider, rateLimited);
       
       try {
-        // Retry once
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Retry once with exponential backoff if rate limited, or default 200ms delay
+        let delay = 200;
+        if (rateLimited) {
+          const jitter = Math.random() * 300;
+          delay = Math.min(500 + jitter, 3000);
+          LoggerService.warn(`Encountered rate limit on ${activeProvider}. Backing off for ${Math.round(delay)}ms before retry...`);
+        }
+        await sleep(delay);
         const result = await executeFn(activeProvider);
         return trackTokens(result);
       } catch (retryErr: any) {
-        console.warn(`Retry failed on ${activeProvider}. Executing fallback routing...`);
-        ProviderHealth.recordFailure(activeProvider);
+        LoggerService.warn(`Retry failed on ${activeProvider}. Executing fallback routing...`);
+        ProviderHealth.recordFailure(activeProvider, isRateLimit(retryErr));
+        AnalyticsService.trackEvent("AI_REQUEST_RETRY_FAILED", Math.round(performance.now() - startTime), {
+          provider: activeProvider,
+          capability,
+          error: retryErr.message
+        });
 
         // Fallback provider attempt
         if (fallbackProvider && fallbackProvider !== "none" && fallbackProvider.toLowerCase() !== activeProvider) {
@@ -171,7 +206,7 @@ export class AIManager {
               const result = await executeFn(fb);
               return trackTokens(result);
             } catch (fbErr: any) {
-              console.error(`Fallback provider ${fb} failed: ${fbErr.message}`);
+              LoggerService.error(`Fallback provider ${fb} failed`, fbErr);
               ProviderHealth.recordFailure(fb);
             }
           }
@@ -190,7 +225,7 @@ export class AIManager {
               const result = await executeFn(alt);
               return trackTokens(result);
             } catch (altErr: any) {
-              console.error(`Alternative provider ${alt} failed: ${altErr.message}`);
+              LoggerService.error(`Alternative provider ${alt} failed`, altErr);
               ProviderHealth.recordFailure(alt);
             }
           }

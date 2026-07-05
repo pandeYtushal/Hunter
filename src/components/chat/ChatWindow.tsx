@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { 
   Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock, 
   Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle
@@ -13,6 +13,9 @@ import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
 import { ProfileSettings } from "../../sidebar/ProfileSettings";
+import { TaskManager } from "./TaskManager";
+import { WorkspaceDashboard } from "./WorkspaceDashboard";
+import { WorkflowBuilder } from "./WorkflowBuilder";
 import { storage } from "../../shared/storage";
 import { resolveTheme } from "../../shared/theme";
 import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
@@ -96,6 +99,9 @@ export const ChatWindow: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [devModeOpen, setDevModeOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
+  const { value: activeMode, setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
+  const [showTaskManager, setShowTaskManager] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [copilot, setCopilot] = useState<CopilotState>({
@@ -189,9 +195,9 @@ export const ChatWindow: React.FC = () => {
     prevMachineStateRef.current = copilot.machineState;
   }, [copilot.machineState, copilot.lastResult, copilot.currentGoal]);
 
-  const handleCopyMessage = (text: string) => {
+  const handleCopyMessage = useCallback((text: string) => {
     console.log("Message copied");
-  };
+  }, []);
 
   const handleSend = async () => {
     const query = input.trim();
@@ -277,88 +283,158 @@ export const ChatWindow: React.FC = () => {
           onToggleExpand={handleToggleExpand}
         />
 
-        {/* Drag and Drop wrapper */}
-        <DragDropZone onDropFile={attachFile}>
-          {/* Messages Thread Log */}
-          <div className="chat-thread flex-1 overflow-y-auto px-1 py-2 space-y-1 custom-scrollbar bg-transparent">
-            {!activeConversation || activeConversation.messages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-5 max-w-sm mx-auto h-full justify-self-center">
-                
-                {/* Brand Greeting */}
-                <div className="space-y-1.5">
-                  <h2 className="text-[15px] font-bold tracking-normal text-[var(--text-primary)]">
-                    Hunter
-                  </h2>
-                  <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed">
-                    Ask about the current page.
-                  </p>
-                </div>
+        {/* Switcher tabs: Chat vs Tasks vs Workspace vs Workflows */}
+        <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[9.5px] shrink-0 font-semibold text-center select-none uppercase tracking-wider">
+          <button
+            onClick={() => setActiveView("chat")}
+            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
+              activeView === "chat" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Chat
+          </button>
+          <button
+            onClick={() => setActiveView("tasks")}
+            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
+              activeView === "tasks" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Tasks
+          </button>
+          <button
+            onClick={() => setActiveView("dashboard")}
+            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
+              activeView === "dashboard" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Workspace
+          </button>
+          <button
+            onClick={() => setActiveView("workflows")}
+            className={`flex-1 py-2.5 transition-all cursor-pointer ${
+              activeView === "workflows" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            }`}
+          >
+            Flows
+          </button>
+        </div>
 
-                {/* Page Awareness Card */}
-                <div className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2.5 text-left space-y-2 select-none">
-                  <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-normal">
-                    <span>Current page</span>
-                    <span className="text-[var(--text-muted)] flex items-center gap-1.5 font-normal">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-                      Connected
-                    </span>
-                  </div>
-                  <div className="text-[12px] font-normal text-[var(--text-primary)] truncate">
-                    {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "Page analyzed"}
-                  </div>
-                </div>
-
-                {/* Quick actions wrapper */}
-                <div className="w-full space-y-2 text-left">
-                  <span className="text-[11px] font-bold text-[var(--text-muted)] block mb-1 select-none">
-                    Suggestions
-                  </span>
-                  <div className="flex flex-col gap-1.5 w-full">
-                    {getDynamicSuggestions(currentUrl).map((act, i) => {
-                      const Icon = act.icon;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => handleSendFromSuggestion(act.prompt)}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150 cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Icon size={12} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                            <span className="truncate">{act.label}</span>
-                          </div>
-                          <span className="text-[10px] text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity font-mono">-&gt;</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              </div>
-            ) : (
-              activeConversation.messages.map((msg, index) => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  onCopy={handleCopyMessage}
-                  onRegenerate={regenerateResponse}
-                  onEditAndRetry={editPromptAndRetry}
-                  isGenerating={isGenerating || isCopilotRunning}
-                />
-              ))
-            )}
-
-            {/* Typing thinking dot animation */}
-            {isGenerating && activeConversation && activeConversation.messages.length > 0 && (
-              activeConversation.messages[activeConversation.messages.length - 1].role === "user" && (
-                <div className="px-4 py-2">
-                  <TypingIndicator />
-                </div>
-              )
-            )}
-
-            <div ref={messagesEndRef} />
+        {activeView === "dashboard" ? (
+          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
+            <WorkspaceDashboard />
           </div>
-        </DragDropZone>
+        ) : activeView === "tasks" ? (
+          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
+            <TaskManager />
+          </div>
+        ) : activeView === "workflows" ? (
+          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
+            <WorkflowBuilder />
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Mode Selector dropdown */}
+            <div className="px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] flex items-center justify-between gap-2 shrink-0">
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Workspace Mode:</span>
+              <select
+                value={activeMode || "general"}
+                onChange={(e) => setActiveMode(e.target.value)}
+                className="bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-[11px] rounded-md px-2 py-1 outline-none cursor-pointer hover:border-[var(--accent)] transition-colors"
+              >
+                <option value="general">General Assistant</option>
+                <option value="research">Research Assistant</option>
+                <option value="shopping">Shopping Assistant</option>
+                <option value="learning">Learning Assistant</option>
+                <option value="email">Email Assistant</option>
+                <option value="job_search">Job Search Assistant</option>
+                <option value="travel">Travel Assistant</option>
+                <option value="documents">Document Assistant</option>
+              </select>
+            </div>
+
+            <DragDropZone onDropFile={attachFile}>
+              {/* Messages Thread Log */}
+              <div className="chat-thread flex-1 overflow-y-auto px-1 py-2 space-y-1 custom-scrollbar bg-transparent">
+                {!activeConversation || activeConversation.messages.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-5 max-w-sm mx-auto h-full justify-self-center">
+                    
+                    {/* Brand Greeting */}
+                    <div className="space-y-1.5">
+                      <h2 className="text-[15px] font-bold tracking-normal text-[var(--text-primary)]">
+                        Hunter
+                      </h2>
+                      <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed">
+                        Ask about the current page.
+                      </p>
+                    </div>
+
+                    {/* Page Awareness Card */}
+                    <div className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2.5 text-left space-y-2 select-none">
+                      <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-normal">
+                        <span>Current page</span>
+                        <span className="text-[var(--text-muted)] flex items-center gap-1.5 font-normal">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+                          Connected
+                        </span>
+                      </div>
+                      <div className="text-[12px] font-normal text-[var(--text-primary)] truncate">
+                        {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "Page analyzed"}
+                      </div>
+                    </div>
+
+                    {/* Quick actions wrapper */}
+                    <div className="w-full space-y-2 text-left">
+                      <span className="text-[11px] font-bold text-[var(--text-muted)] block mb-1 select-none">
+                        Suggestions
+                      </span>
+                      <div className="flex flex-col gap-1.5 w-full">
+                        {getDynamicSuggestions(currentUrl).map((act, i) => {
+                          const Icon = act.icon;
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => handleSendFromSuggestion(act.prompt)}
+                              className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150 cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Icon size={12} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                                <span className="truncate">{act.label}</span>
+                              </div>
+                              <span className="text-[10px] text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity font-mono">-&gt;</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  activeConversation.messages.map((msg, index) => (
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      onCopy={handleCopyMessage}
+                      onRegenerate={regenerateResponse}
+                      onEditAndRetry={editPromptAndRetry}
+                      isGenerating={isGenerating || isCopilotRunning}
+                    />
+                  ))
+                )}
+
+                {/* Typing thinking dot animation */}
+                {isGenerating && activeConversation && activeConversation.messages.length > 0 && (
+                  activeConversation.messages[activeConversation.messages.length - 1].role === "user" && (
+                    <div className="px-4 py-2">
+                      <TypingIndicator />
+                    </div>
+                  )
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            </DragDropZone>
+          </div>
+        )}
 
         {/* Error Notification Bar */}
         {error && (
@@ -560,23 +636,25 @@ export const ChatWindow: React.FC = () => {
         <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
 
         {/* Standard input footer area */}
-        <ChatInput
-          value={input}
-          isGenerating={isGenerating || isCopilotRunning}
-          onChange={setInput}
-          onSend={handleSend}
-          onStop={handleStop}
-          onCaptureScreenshot={captureScreen}
-          onAttachFile={attachFile}
-          onAttachImageObject={(att) => {
-            try {
-              const blob = base64ToBlob(att.base64Data, att.mimeType);
-              attachFile(new File([blob], att.name, { type: att.mimeType }));
-            } catch (err) {
-              console.error("Failed to reconstruct image from pasted attachment:", err);
-            }
-          }}
-        />
+        {activeView === "chat" && !showTaskManager && (
+          <ChatInput
+            value={input}
+            isGenerating={isGenerating || isCopilotRunning}
+            onChange={setInput}
+            onSend={handleSend}
+            onStop={handleStop}
+            onCaptureScreenshot={captureScreen}
+            onAttachFile={attachFile}
+            onAttachImageObject={(att) => {
+              try {
+                const blob = base64ToBlob(att.base64Data, att.mimeType);
+                attachFile(new File([blob], att.name, { type: att.mimeType }));
+              } catch (err) {
+                console.error("Failed to reconstruct image from pasted attachment:", err);
+              }
+            }}
+          />
+        )}
 
         {/* Developer Mode Drawer panel */}
         {devModeOpen && (

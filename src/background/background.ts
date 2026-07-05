@@ -153,7 +153,7 @@ addMessageListener(async (message, sender) => {
 
     case "GENERATE_PROFILE_TEMPLATE": {
       try {
-        const prompt = PromptManager.getProfileTemplatePrompt((message as any).role);
+        const prompt = PromptManager.getProfileTemplatePrompt(message.role);
         const responseText = await generateAiReply({ prompt, history: [] });
         const parsed = robustJsonParse<{ skills?: string[]; experience?: string }>(responseText);
         return { ok: true, profile: parsed };
@@ -241,7 +241,25 @@ addMessageListener(async (message, sender) => {
       }
 
       const assistantMessage = createChatMessage("assistant", reply);
-      const nextHistory = [...history, userMessage, assistantMessage].slice(-40);
+      const combinedHistory = [...history, userMessage, assistantMessage];
+      
+      // Prune history dynamically to fit within estimated context limits (max 24k chars ~ 6k tokens)
+      const pruneChatHistory = (historyList: ChatMessage[], maxChars = 24000): ChatMessage[] => {
+        const pruned: ChatMessage[] = [];
+        let currentLength = 0;
+        for (let i = historyList.length - 1; i >= 0; i--) {
+          const msg = historyList[i];
+          const msgLength = msg.content.length;
+          if (currentLength + msgLength > maxChars && pruned.length >= 2) {
+            break;
+          }
+          pruned.unshift(msg);
+          currentLength += msgLength;
+        }
+        return pruned;
+      };
+      
+      const nextHistory = pruneChatHistory(combinedHistory);
 
       await setStorageValue("chatHistory", nextHistory);
       return { message: assistantMessage, history: nextHistory };

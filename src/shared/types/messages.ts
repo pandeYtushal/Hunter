@@ -63,6 +63,16 @@ export type RuntimeMessage =
   | { type: "UPLOAD_RESUME" }
   | { type: "GET_ACTIVE_TAB" }
   | { type: "SEND_TO_ACTIVE_TAB"; message: RuntimeMessage }
+  | { type: "SCROLL_PAGE"; direction: "down" | "up" | "top" | "bottom"; selector?: string }
+  | { type: "HANDLE_MODAL" }
+  | { type: "DOWNLOAD_FILE"; text?: string }
+  | { type: "HANDLE_PAGINATION"; direction: "next" | "prev" | number }
+  | { type: "LOCATE_ELEMENT_HYBRID"; query: { selector?: string; role?: string; text?: string } }
+  | { type: "PAUSE_TASK"; taskId: string }
+  | { type: "RESUME_TASK"; taskId: string }
+  | { type: "CANCEL_TASK"; taskId: string }
+  | { type: "RETRY_TASK"; taskId: string }
+  | { type: "SHOW_TOAST"; title: string; message: string; duration?: number }
   | { type: "HIGHLIGHT_DOM_ELEMENT"; selector: string; text?: string }
   | { type: "SCROLL_TO_ELEMENT"; selector: string }
   | { type: "HOVER_ELEMENT"; selector: string }

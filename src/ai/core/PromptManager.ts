@@ -14,7 +14,7 @@ export class PromptManager {
   /**
    * System instruction builder (formerly buildSystemContext in aiService)
    */
-  static getSystemInstruction(pageContext?: PageSnapshot, profile?: UserProfile): string {
+  static getSystemInstruction(pageContext?: PageSnapshot, profile?: UserProfile, mode = "general"): string {
     const pageLines = pageContext
       ? [
           `Current page title: ${pageContext.title || "Unknown"}`,
@@ -39,11 +39,35 @@ export class PromptManager {
         ]
       : [];
 
+    const modeGuidance = (() => {
+      switch (mode) {
+        case "research":
+          return "\n[RESEARCH ASSISTANT MODE ACTIVE]: Prioritize deep analysis of company stats, structure, financials, leadership, and competitors. Provide structured bullet points.";
+        case "shopping":
+          return "\n[SHOPPING ASSISTANT MODE ACTIVE]: Prioritize price comparisons, discount codes, checkout fields mapping, and transaction validations.";
+        case "learning":
+          return "\n[LEARNING ASSISTANT MODE ACTIVE]: Prioritize clear explanations, definition of terms, structured study notes, and syllabus breakdowns.";
+        case "email":
+          return "\n[EMAIL ASSISTANT MODE ACTIVE]: Prioritize professional communication structures, formal email drafting, meeting schedule proposals, and follow-up templates.";
+        case "job_search":
+          return "\n[JOB SEARCH ASSISTANT MODE ACTIVE]: Prioritize job matches, resume tailoring score analyses, missing skills listings, and cover letter drafts.";
+        case "travel":
+          return "\n[TRAVEL ASSISTANT MODE ACTIVE]: Prioritize flight/hotel comparisons, reservation dates verification, travel itinerary drafting, and local sightseeing recommendations.";
+        case "documents":
+          return "\n[DOCUMENTS ASSISTANT MODE ACTIVE]: Prioritize text summarization, contract clause reviews, invoice calculations, and document metadata extraction.";
+        default:
+          return "";
+      }
+    })();
+
+    const modeLines = modeGuidance ? [modeGuidance] : [];
+
     return [
-      "You are HUNTERR, a concise assistant for job searching, resume tailoring, and application preparation.",
+      "You are HUNTERR, a concise assistant for browser workspace workflows.",
       "Use the page context and the user's resume/profile details to answer queries or tailor materials when requested.",
       ...profileLines,
-      ...pageLines
+      ...pageLines,
+      ...modeLines
     ].join("\n");
   }
 

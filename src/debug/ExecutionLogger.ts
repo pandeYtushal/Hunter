@@ -22,7 +22,7 @@ export const ExecutionLogger = {
         timestamp: new Date().toISOString(),
         ...entry
       },
-      ...(logs ?? [])
+      ...(Array.isArray(logs) ? logs : [])
     ].slice(0, maxEntries);
 
     await storage.set("executionLogs", next);

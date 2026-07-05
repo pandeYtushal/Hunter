@@ -14,7 +14,12 @@ export type ActionType =
   | "chat_fallback"
   | "vision_click"
   | "vision_fill"
-  | "vision_analyze";
+  | "vision_analyze"
+  | "scroll_page"
+  | "download_file"
+  | "handle_modal"
+  | "handle_pagination"
+  | "handle_dynamic_form";
 
 export type IntentType =
   | "APPLY_JOB"

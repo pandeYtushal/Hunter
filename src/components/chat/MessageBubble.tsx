@@ -12,7 +12,7 @@ interface MessageBubbleProps {
   isGenerating?: boolean;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
+const _MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   onCopy,
   onRegenerate,
@@ -251,3 +251,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     </div>
   );
 };
+
+export const MessageBubble = React.memo(_MessageBubble, (prevProps, nextProps) => {
+  if (prevProps.message.id !== nextProps.message.id) return false;
+  if (prevProps.message.content !== nextProps.message.content) return false;
+  if (prevProps.isGenerating !== nextProps.isGenerating) return false;
+  if (prevProps.onCopy !== nextProps.onCopy) return false;
+  if (prevProps.onRegenerate !== nextProps.onRegenerate) return false;
+  if (prevProps.onEditAndRetry !== nextProps.onEditAndRetry) return false;
+  return true;
+});

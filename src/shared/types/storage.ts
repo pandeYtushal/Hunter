@@ -81,6 +81,7 @@ export interface StorageSchema {
   visualMemory?: any;
   apiKeys: ApiKeys;
   approvalState?: ApprovalState;
+  activeWorkspaceMode?: string;
 }
 
 export const defaultStorage: StorageSchema = {
@@ -136,5 +137,6 @@ export const defaultStorage: StorageSchema = {
   executionLogs: [],
   agentMetrics: {},
   healthChecks: [],
-  visualMemory: { interactions: [], layouts: [] }
+  visualMemory: { interactions: [], layouts: [] },
+  activeWorkspaceMode: "general"
 };

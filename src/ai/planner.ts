@@ -78,7 +78,12 @@ const sanitizePlan = (parsed: Partial<ExecutionPlan>, fallback: ExecutionPlan): 
     "extract_text",
     "navigate_page",
     "upload_resume",
-    "chat_fallback"
+    "chat_fallback",
+    "scroll_page",
+    "download_file",
+    "handle_modal",
+    "handle_pagination",
+    "handle_dynamic_form"
   ]);
   const validAgents = new Set<AgentType>(["JobAgent", "ResumeAgent", "FormAgent", "ResearchAgent", "NavigationAgent", "Unknown"]);
 

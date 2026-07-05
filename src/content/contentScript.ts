@@ -8,6 +8,11 @@ import { fillInput } from "../actions/fillInput";
 import { extractText } from "../actions/extractText";
 import { navigatePage } from "../actions/navigatePage";
 import { uploadResume } from "../actions/uploadResume";
+import { scrollPage } from "../actions/scrollPage";
+import { handleModal } from "../actions/handleModal";
+import { downloadFile } from "../actions/downloadFile";
+import { handlePagination } from "../actions/handlePagination";
+import { locateHybrid } from "../actions/locateHybrid";
 
 const rootId = "ai-job-agent-root";
 
@@ -127,7 +132,7 @@ class SidebarController {
               <span class="icon-chat-open">${icons.chatOpen}</span>
               <span class="icon-chat-close">${icons.chatClose}</span>
             </div>
-            <div class="agent-remove-btn" data-action="remove" title="Remove toggle from page">×</div>
+             <div class="agent-remove-btn" data-action="remove" role="button" tabindex="0" title="Remove toggle from page">×</div>
           </button>
           <section class="agent-panel ${this.isOpen ? 'agent-panel-visible' : ''}" aria-label="HUNTERR sidebar">
             <div class="agent-resizer resizer-l" data-resize="l"></div>
@@ -592,6 +597,15 @@ class SidebarController {
       this.host?.remove();
     });
 
+    removeBtn.addEventListener("keydown", (e: Event) => {
+      const keyboardEvent = e as KeyboardEvent;
+      if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+        keyboardEvent.preventDefault();
+        keyboardEvent.stopPropagation();
+        this.host?.remove();
+      }
+    });
+
     // Panel sizing is handled by responsive CSS clamps and native resize.
 
     document.addEventListener("mousedown", (e) => {
@@ -742,6 +756,33 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         const target = document.querySelector(message.selector);
         if (!target) throw new Error(`Could not find element matching "${message.selector}" to scroll to.`);
         target.scrollIntoView({ behavior: "smooth", block: "center" });
+        return { ok: true };
+      }
+      case "SCROLL_PAGE": {
+        const ok = scrollPage(message.direction, message.selector);
+        return { ok };
+      }
+      case "HANDLE_MODAL": {
+        const ok = handleModal();
+        return { ok };
+      }
+      case "DOWNLOAD_FILE": {
+        const ok = downloadFile(message.text);
+        return { ok };
+      }
+      case "HANDLE_PAGINATION": {
+        const ok = handlePagination(message.direction);
+        return { ok };
+      }
+      case "LOCATE_ELEMENT_HYBRID": {
+        const res = locateHybrid(message.query);
+        if (res) {
+          return { ok: true, selector: res.selector, source: res.source };
+        }
+        return { ok: false, error: "Element not found" };
+      }
+      case "SHOW_TOAST": {
+        showToast(message.title, message.message, message.duration);
         return { ok: true };
       }
       case "HOVER_ELEMENT": {
@@ -928,3 +969,54 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
 
   return true;
 });
+
+function showToast(title: string, message: string, duration = 3500) {
+  let container = document.getElementById("hunter-toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "hunter-toast-container";
+    container.style.position = "fixed";
+    container.style.bottom = "20px";
+    container.style.left = "20px";
+    container.style.zIndex = "9999999";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "10px";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.style.background = "#18181b";
+  toast.style.color = "#f4f4f5";
+  toast.style.border = "1px solid #ff6b35";
+  toast.style.padding = "10px 14px";
+  toast.style.borderRadius = "8px";
+  toast.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+  toast.style.fontFamily = "system-ui, -apple-system, sans-serif";
+  toast.style.fontSize = "11px";
+  toast.style.minWidth = "220px";
+  toast.style.maxWidth = "300px";
+  toast.style.transform = "translateX(-120%)";
+  toast.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+  
+  toast.innerHTML = `
+    <div style="font-weight: bold; color: #ff6b35; margin-bottom: 2px; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px;">\${title}</div>
+    <div style="line-height: 1.4; color: #a1a1aa;">\${message}</div>
+  `;
+
+  container.appendChild(toast);
+  
+  requestAnimationFrame(() => {
+    toast.style.transform = "translateX(0)";
+  });
+
+  setTimeout(() => {
+    toast.style.transform = "translateX(-120%)";
+    setTimeout(() => {
+      toast.remove();
+      if (container && container.childElementCount === 0) {
+        container.remove();
+      }
+    }, 300);
+  }, duration);
+}

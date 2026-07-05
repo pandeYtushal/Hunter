@@ -18,7 +18,8 @@ export const generateAiReply = async ({
   profile
 }: GenerateAiReplyInput): Promise<string> => {
   const settings = await storage.get("settings").catch(() => null);
-  const systemInstruction = PromptManager.getSystemInstruction(pageContext, profile);
+  const mode = await storage.get("activeWorkspaceMode").catch(() => "general");
+  const systemInstruction = PromptManager.getSystemInstruction(pageContext, profile, mode);
 
   const response = await AIManager.getInstance().chat({
     prompt,
