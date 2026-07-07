@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ConversationManager } from "./ConversationManager";
+import { ConversationManager, LIST_KEY } from "./ConversationManager";
 import { ChatContext } from "./ChatContext";
 import { AttachmentManager } from "./AttachmentManager";
 import { StreamingManager } from "./StreamingManager";
@@ -32,25 +32,57 @@ export function useChatController() {
   // Load initial settings and conversations list
   useEffect(() => {
     async function init() {
-      const list = await ConversationManager.getConversations();
-      setConversations(list);
-      if (list.length > 0) {
-        setActiveId(list[0].id);
-      } else {
-        const newConv = await ConversationManager.createConversation();
-        setConversations([newConv]);
-        setActiveId(newConv.id);
-      }
+      try {
+        const list = await ConversationManager.getConversations();
+        setConversations(list);
+        if (list.length > 0) {
+          setActiveId(list[0].id);
+        } else {
+          const newConv = await ConversationManager.createConversation();
+          setConversations([newConv]);
+          setActiveId(newConv.id);
+        }
 
-      // Load active provider names
-      const settings = await storage.get("settings").catch(() => null);
-      setDevMetrics((prev) => ({
-        ...prev,
-        selectedProvider: settings?.provider || "gemini",
-        visionProvider: settings?.visionProvider || settings?.provider || "gemini"
-      }));
+        // Load active provider names
+        const settings = await storage.get("settings").catch(() => null);
+        setDevMetrics((prev) => ({
+          ...prev,
+          selectedProvider: settings?.provider || "gemini",
+          visionProvider: settings?.visionProvider || settings?.provider || "gemini"
+        }));
+      } catch (err: any) {
+        setError(err.message || "Failed to initialize conversation history.");
+      }
     }
     init();
+  }, []);
+
+  // Listen for storage changes to sync conversations across UI instances or remounts
+  useEffect(() => {
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string
+    ) => {
+      if (areaName === "local" && changes[LIST_KEY]) {
+        const newList: ChatConversation[] = changes[LIST_KEY].newValue || [];
+        setConversations(newList);
+        
+        setActiveId((prevId) => {
+          if (!prevId && newList.length > 0) return newList[0].id;
+          if (prevId && !newList.some((c) => c.id === prevId)) {
+            return newList.length > 0 ? newList[0].id : null;
+          }
+          return prevId;
+        });
+      }
+    };
+
+    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.addListener(handleStorageChange);
+      return () => {
+        chrome.storage.onChanged.removeListener(handleStorageChange);
+      };
+    }
   }, []);
 
   const activeConversation = conversations.find((c) => c.id === activeId) || null;
@@ -61,32 +93,45 @@ export function useChatController() {
   };
 
   const createConversation = async (title = "New Conversation") => {
-    const newConv = await ConversationManager.createConversation(title);
-    setConversations((prev) => [newConv, ...prev]);
-    setActiveId(newConv.id);
-    setError("");
-    return newConv;
+    try {
+      const newConv = await ConversationManager.createConversation(title);
+      setConversations((prev) => [newConv, ...prev]);
+      setActiveId(newConv.id);
+      setError("");
+      return newConv;
+    } catch (err: any) {
+      setError(err.message || "Failed to create conversation.");
+      throw err;
+    }
   };
 
   const deleteConversation = async (id: string) => {
-    const updated = await ConversationManager.deleteConversation(id);
-    setConversations(updated);
-    if (activeId === id) {
-      if (updated.length > 0) {
-        setActiveId(updated[0].id);
-      } else {
-        const newConv = await ConversationManager.createConversation();
-        setConversations([newConv]);
-        setActiveId(newConv.id);
+    try {
+      const updated = await ConversationManager.deleteConversation(id);
+      setConversations(updated);
+      if (activeId === id) {
+        if (updated.length > 0) {
+          setActiveId(updated[0].id);
+        } else {
+          const newConv = await ConversationManager.createConversation();
+          setConversations([newConv]);
+          setActiveId(newConv.id);
+        }
       }
+    } catch (err: any) {
+      setError(err.message || "Failed to delete conversation.");
     }
   };
 
   const clearCurrentConversation = async () => {
     if (!activeId) return;
-    const cleared = await ConversationManager.clearConversation(activeId);
-    if (cleared) {
-      setConversations((prev) => prev.map((c) => (c.id === activeId ? cleared : c)));
+    try {
+      const cleared = await ConversationManager.clearConversation(activeId);
+      if (cleared) {
+        setConversations((prev) => prev.map((c) => (c.id === activeId ? cleared : c)));
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to clear conversation.");
     }
   };
 
@@ -165,10 +210,18 @@ export function useChatController() {
     };
 
     const updatedMessages = [...activeConversation.messages, newUserMsg];
-    await ConversationManager.updateConversationMessages(activeId, updatedMessages);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, messages: updatedMessages } : c))
-    );
+    try {
+      const updated = await ConversationManager.updateConversationMessages(activeId, updatedMessages);
+      if (updated) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeId ? updated : c))
+        );
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to save message.");
+      setIsGenerating(false);
+      return;
+    }
 
     // 2. Fetch runtime context
     let context = null;
@@ -249,10 +302,12 @@ export function useChatController() {
         };
 
         const finalMessages = [...updatedMessages, finalAssistantMsg];
-        await ConversationManager.updateConversationMessages(activeId, finalMessages);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === activeId ? { ...c, messages: finalMessages } : c))
-        );
+        const updated = await ConversationManager.updateConversationMessages(activeId, finalMessages);
+        if (updated) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === activeId ? updated : c))
+          );
+        }
 
         // Store response & vision results in conversation memory
         await ConversationMemory.addGeneratedResponse(activeId, assistantMsgId, userPrompt, response.text);
@@ -275,10 +330,16 @@ export function useChatController() {
           createdAt: new Date().toISOString()
         };
         const finalMessages = [...updatedMessages, errorMsg];
-        await ConversationManager.updateConversationMessages(activeId, finalMessages);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === activeId ? { ...c, messages: finalMessages } : c))
-        );
+        try {
+          const updated = await ConversationManager.updateConversationMessages(activeId, finalMessages);
+          if (updated) {
+            setConversations((prev) =>
+              prev.map((c) => (c.id === activeId ? updated : c))
+            );
+          }
+        } catch (e) {
+          console.error("Failed to save vision error message:", e);
+        }
       } finally {
         setIsGenerating(false);
       }
@@ -354,10 +415,12 @@ export function useChatController() {
         };
 
         const finalMessages = [...updatedMessages, finalAssistantMsg];
-        await ConversationManager.updateConversationMessages(activeId, finalMessages);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === activeId ? { ...c, messages: finalMessages } : c))
-        );
+        const updated = await ConversationManager.updateConversationMessages(activeId, finalMessages);
+        if (updated) {
+          setConversations((prev) =>
+            prev.map((c) => (c.id === activeId ? updated : c))
+          );
+        }
 
         // Store generated response in conversation memory
         await ConversationMemory.addGeneratedResponse(activeId, assistantMsgId, userPrompt, response.text);
@@ -396,10 +459,16 @@ export function useChatController() {
           createdAt: new Date().toISOString()
         };
         const finalMessages = [...updatedMessages, errorMsg];
-        await ConversationManager.updateConversationMessages(activeId, finalMessages);
-        setConversations((prev) =>
-          prev.map((c) => (c.id === activeId ? { ...c, messages: finalMessages } : c))
-        );
+        try {
+          const updated = await ConversationManager.updateConversationMessages(activeId, finalMessages);
+          if (updated) {
+            setConversations((prev) =>
+              prev.map((c) => (c.id === activeId ? updated : c))
+            );
+          }
+        } catch (e) {
+          console.error("Failed to save streaming error message:", e);
+        }
       } finally {
         streamingManagerRef.current.stop();
         setIsGenerating(false);
@@ -422,13 +491,18 @@ export function useChatController() {
 
     // Remove this assistant message and all messages after it
     const trimmedMessages = activeConversation.messages.slice(0, msgIndex);
-    await ConversationManager.updateConversationMessages(activeId, trimmedMessages);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, messages: trimmedMessages } : c))
-    );
-
-    // Resend user prompt
-    await sendMessage(precedingUserMsg.content);
+    try {
+      const updated = await ConversationManager.updateConversationMessages(activeId, trimmedMessages);
+      if (updated) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeId ? updated : c))
+        );
+      }
+      // Resend user prompt
+      await sendMessage(precedingUserMsg.content);
+    } catch (err: any) {
+      setError(err.message || "Failed to regenerate response.");
+    }
   };
 
   const editPromptAndRetry = async (messageId: string, newText: string) => {
@@ -438,13 +512,18 @@ export function useChatController() {
 
     // Remove this user message and all messages following it
     const trimmedMessages = activeConversation.messages.slice(0, msgIndex);
-    await ConversationManager.updateConversationMessages(activeId, trimmedMessages);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, messages: trimmedMessages } : c))
-    );
-
-    // Send edited prompt
-    await sendMessage(newText);
+    try {
+      const updated = await ConversationManager.updateConversationMessages(activeId, trimmedMessages);
+      if (updated) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeId ? updated : c))
+        );
+      }
+      // Send edited prompt
+      await sendMessage(newText);
+    } catch (err: any) {
+      setError(err.message || "Failed to edit message.");
+    }
   };
 
   const addMessageToHistory = async (role: MessageRole, content: unknown) => {
@@ -469,10 +548,16 @@ export function useChatController() {
       createdAt: new Date().toISOString()
     };
     const updatedMessages = [...activeConversation.messages, newMsg];
-    await ConversationManager.updateConversationMessages(activeId, updatedMessages);
-    setConversations((prev) =>
-      prev.map((c) => (c.id === activeId ? { ...c, messages: updatedMessages } : c))
-    );
+    try {
+      const updated = await ConversationManager.updateConversationMessages(activeId, updatedMessages);
+      if (updated) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === activeId ? updated : c))
+        );
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to save message to history.");
+    }
   };
 
   return {

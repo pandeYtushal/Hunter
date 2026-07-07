@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ChatWindow } from "./ChatWindow";
+import { ChatWindow } from "../components/chat/ChatWindow";
 import "./styles.css";
 
 const rootElement = document.getElementById("sidebar-root");

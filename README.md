@@ -88,7 +88,10 @@ HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page
 ## Tech Stack
 
 - **Framework**: React 18, TypeScript, Tailwind CSS v3
-- **Build Tool**: Vite (configured for bundle splitting extension assets)
+- **UI Architecture**: Standardized Shadcn/UI design conventions leveraging CVA (Class Variance Authority) and Radix primitives (Slot, Tooltip, Dialog, Dropdown Menu).
+- **Design System & Theme**: Dynamic CSS variable-based semantic theme system supporting full light/dark modes with a unified warm orange accent (`#ea4f1e` light / `#ff6b35` dark) and high-contrast surface layers.
+- **Iconography**: Structured scale icon system using Lucide React (14px inline/action, 16px nav/header, 20px empty states/banners).
+- **Build Tool**: Vite (configured for bundle splitting extension assets and content script bundling)
 - **APIs**: Chrome Extension Manifest V3 (Background Service Workers, Content Script Injection, Chrome Storage API)
 - **AI Integrations**: Direct client-side calls routed through `AIManager` using user-supplied API keys (XOR obfuscated) or local service endpoints (such as Ollama).
 

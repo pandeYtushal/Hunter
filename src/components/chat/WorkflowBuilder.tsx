@@ -85,9 +85,9 @@ export const WorkflowBuilder: React.FC = () => {
       display: "flex",
       flexDirection: "column",
       gap: "16px",
-      background: "#18181b",
-      color: "#f4f4f5",
-      fontFamily: "system-ui, -apple-system, sans-serif",
+      background: "var(--bg-primary)",
+      color: "var(--text-primary)",
+      fontFamily: "var(--font-sans)",
       fontSize: "12px",
       minHeight: "100%"
     }}>
@@ -98,11 +98,11 @@ export const WorkflowBuilder: React.FC = () => {
           onChange={(e) => setWorkflowName(e.target.value)}
           style={{
             flex: 1,
-            background: "#27272a",
-            border: "1px solid #3f3f46",
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)",
             borderRadius: "6px",
             padding: "6px 12px",
-            color: "#f4f4f5",
+            color: "var(--text-primary)",
             fontSize: "12px",
             outline: "none"
           }}
@@ -110,10 +110,10 @@ export const WorkflowBuilder: React.FC = () => {
         <button
           onClick={handleRun}
           style={{
-            background: "#ff6b35",
+            background: "var(--accent)",
             border: "none",
             borderRadius: "6px",
-            color: "#18181b",
+            color: "var(--bg-primary)",
             padding: "6px 12px",
             cursor: "pointer",
             fontWeight: "bold",
@@ -122,32 +122,32 @@ export const WorkflowBuilder: React.FC = () => {
             gap: "4px"
           }}
         >
-          <Play size={12} fill="#18181b" /> Run
+          <Play size={12} fill="var(--bg-primary)" /> Run
         </button>
       </div>
 
       {/* Human Approval Alert Panel */}
       {pendingApproval && (
         <div style={{
-          background: "#3f1a1a",
-          border: "1px solid #ef4444",
+          background: "rgba(var(--danger-rgb), 0.1)",
+          border: "1px solid var(--danger)",
           borderRadius: "8px",
           padding: "12px",
           display: "flex",
           flexDirection: "column",
           gap: "8px"
         }}>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center", color: "#f87171", fontWeight: "bold" }}>
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", color: "var(--danger)", fontWeight: "bold" }}>
             <ShieldAlert size={14} /> Human Approval Required
           </div>
-          <div style={{ fontSize: "11px", color: "#fca5a5" }}>{pendingApproval.prompt}</div>
+          <div style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{pendingApproval.prompt}</div>
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={() => handleApprovalResponse(true)}
               style={{
                 flex: 1,
-                background: "#10b981",
-                color: "#18181b",
+                background: "var(--success)",
+                color: "var(--bg-primary)",
                 border: "none",
                 borderRadius: "4px",
                 padding: "4px",
@@ -165,7 +165,7 @@ export const WorkflowBuilder: React.FC = () => {
               onClick={() => handleApprovalResponse(false)}
               style={{
                 flex: 1,
-                background: "#ef4444",
+                background: "var(--danger)",
                 color: "#ffffff",
                 border: "none",
                 borderRadius: "4px",
@@ -185,15 +185,15 @@ export const WorkflowBuilder: React.FC = () => {
       )}
 
       {/* Steps Editor Stack */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 12px 0" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 12px 0" }}>
           Workflow Blocks Stack
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {steps.map((step, idx) => (
             <div key={step.id} style={{
-              background: "#18181b",
-              border: "1px solid #3f3f46",
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border-color)",
               borderRadius: "6px",
               padding: "10px",
               display: "flex",
@@ -202,10 +202,10 @@ export const WorkflowBuilder: React.FC = () => {
               position: "relative"
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: "bold", color: "#a1a1aa" }}>#{idx + 1} {step.type.toUpperCase()}</span>
+                <span style={{ fontWeight: "bold", color: "var(--text-secondary)" }}>#{idx + 1} {step.type.toUpperCase()}</span>
                 <button
                   onClick={() => handleRemoveStep(step.id)}
-                  style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
+                  style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", padding: 0 }}
                 >
                   <Trash2 size={12} />
                 </button>
@@ -217,7 +217,7 @@ export const WorkflowBuilder: React.FC = () => {
                   value={step.params.url || ""}
                   onChange={(e) => handleParamChange(step.id, "url", e.target.value)}
                   placeholder="URL e.g., https://gmail.com"
-                  style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                 />
               )}
 
@@ -226,7 +226,7 @@ export const WorkflowBuilder: React.FC = () => {
                   value={step.params.selector || ""}
                   onChange={(e) => handleParamChange(step.id, "selector", e.target.value)}
                   placeholder="CSS Selector e.g., button.submit"
-                  style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                 />
               )}
 
@@ -236,13 +236,13 @@ export const WorkflowBuilder: React.FC = () => {
                     value={step.params.selector || ""}
                     onChange={(e) => handleParamChange(step.id, "selector", e.target.value)}
                     placeholder="CSS Input Selector"
-                    style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                   />
                   <input
                     value={step.params.value || ""}
                     onChange={(e) => handleParamChange(step.id, "value", e.target.value)}
                     placeholder="Text value (supports {{variable}})"
-                    style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                   />
                 </div>
               )}
@@ -253,13 +253,13 @@ export const WorkflowBuilder: React.FC = () => {
                     value={step.params.selector || ""}
                     onChange={(e) => handleParamChange(step.id, "selector", e.target.value)}
                     placeholder="CSS Element Selector"
-                    style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                   />
                   <input
                     value={step.params.conditionKey || ""}
                     onChange={(e) => handleParamChange(step.id, "conditionKey", e.target.value)}
                     placeholder="Variable name to save content to"
-                    style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                    style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                   />
                 </div>
               )}
@@ -270,7 +270,7 @@ export const WorkflowBuilder: React.FC = () => {
                   value={step.params.duration || 1000}
                   onChange={(e) => handleParamChange(step.id, "duration", parseInt(e.target.value) || 1000)}
                   placeholder="Duration (ms)"
-                  style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                 />
               )}
 
@@ -279,7 +279,7 @@ export const WorkflowBuilder: React.FC = () => {
                   value={step.params.prompt || ""}
                   onChange={(e) => handleParamChange(step.id, "prompt", e.target.value)}
                   placeholder="Approval prompt description"
-                  style={{ background: "#27272a", border: "1px solid #3f3f46", color: "#f4f4f5", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
+                  style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "11px", padding: "4px 8px", borderRadius: "4px", outline: "none" }}
                 />
               )}
             </div>
@@ -287,17 +287,17 @@ export const WorkflowBuilder: React.FC = () => {
         </div>
 
         {/* Action triggers to add steps */}
-        <div style={{ marginTop: "12px", borderTop: "1px solid #3f3f46", paddingTop: "12px" }}>
-          <span style={{ fontSize: "10px", color: "#a1a1aa", display: "block", marginBottom: "6px" }}>ADD AUTOMATION STEP:</span>
+        <div style={{ marginTop: "12px", borderTop: "1px solid var(--border-color)", paddingTop: "12px" }}>
+          <span style={{ fontSize: "10px", color: "var(--text-secondary)", display: "block", marginBottom: "6px" }}>ADD AUTOMATION STEP:</span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {(["navigate", "click", "fill", "extract", "wait", "approval"] as const).map((type) => (
               <button
                 key={type}
                 onClick={() => handleAddStep(type)}
                 style={{
-                  background: "#18181b",
-                  border: "1px solid #3f3f46",
-                  color: "#f4f4f5",
+                  background: "var(--bg-primary)",
+                  border: "1px solid var(--border-color)",
+                  color: "var(--text-primary)",
                   borderRadius: "4px",
                   padding: "4px 8px",
                   cursor: "pointer",
@@ -315,25 +315,25 @@ export const WorkflowBuilder: React.FC = () => {
       </div>
 
       {/* Execution Logs */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0", display: "flex", alignItems: "center", gap: "4px" }}>
           <ClipboardList size={12} /> Execution History
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "150px", overflowY: "auto" }}>
           {history.length === 0 ? (
-            <div style={{ color: "#71717a", fontSize: "10px" }}>No previous executions logged.</div>
+            <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>No previous executions logged.</div>
           ) : (
             history.map((log) => (
-              <div key={log.runId} style={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: "4px", padding: "6px" }}>
+              <div key={log.runId} style={{ background: "var(--bg-primary)", border: "1px solid var(--border-color)", borderRadius: "4px", padding: "6px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                   <span style={{ fontWeight: "bold" }}>{log.name}</span>
                   <span style={{
                     fontSize: "9px",
                     fontWeight: "bold",
-                    color: log.status === "completed" ? "#10b981" : log.status === "failed" ? "#ef4444" : "#ff6b35"
+                    color: log.status === "completed" ? "var(--success)" : log.status === "failed" ? "var(--danger)" : "var(--accent)"
                   }}>{log.status.toUpperCase()}</span>
                 </div>
-                <div style={{ fontSize: "10px", color: "#a1a1aa", fontFamily: "monospace", display: "flex", flexDirection: "column", gap: "2px" }}>
+                <div style={{ fontSize: "10px", color: "var(--text-secondary)", fontFamily: "var(--font-mono)", display: "flex", flexDirection: "column", gap: "2px" }}>
                   {log.logs.slice(-3).map((l, i) => (
                     <div key={i}>&gt; {l}</div>
                   ))}

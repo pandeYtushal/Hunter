@@ -102,6 +102,92 @@ interface MarkdownProps {
 export const Markdown = ({ content, className = "", isStreaming = false }: MarkdownProps) => {
   if (!content) return null;
 
+  // Intercept Profile Match Analysis to render custom premium card
+  if (content.includes("Profile Match Analysis") || content.includes("Match Score:")) {
+    const scoreMatch = content.match(/\*\*Match Score:\*\*\s*(\d+)%/i) || content.match(/Match Score:\s*(\d+)%/i);
+    const matchScore = scoreMatch ? scoreMatch[1] : null;
+
+    if (matchScore) {
+      // Extract Matched Skills
+      const matchedSection = content.split(/Matched Skills:/i)[1];
+      const matchedSkills: string[] = [];
+      if (matchedSection) {
+        const listPart = matchedSection.split(/Missing Skills:/i)[0].split(/Recommendations:/i)[0];
+        const matches = listPart.match(/-\s*([^\n\r]+)/g);
+        if (matches) {
+          matches.forEach(m => {
+            const clean = m.replace(/^-\s*/, "").replace(/\*\*/g, "").trim();
+            if (clean && clean !== "None") matchedSkills.push(clean);
+          });
+        }
+      }
+
+      // Extract Missing Skills
+      const missingSection = content.split(/Missing Skills:/i)[1];
+      const missingSkills: string[] = [];
+      if (missingSection) {
+        const listPart = missingSection.split(/Recommendations:/i)[0];
+        const matches = listPart.match(/-\s*([^\n\r]+)/g);
+        if (matches) {
+          matches.forEach(m => {
+            const clean = m.replace(/^-\s*/, "").replace(/\*\*/g, "").trim();
+            if (clean && clean !== "None") missingSkills.push(clean);
+          });
+        }
+      }
+
+      // Extract recommendations/explanation
+      const recommendationsSection = content.split(/Recommendations:/i)[1];
+      const recommendations = recommendationsSection ? recommendationsSection.trim().replace(/^\*\*:\*\*/, "").trim() : null;
+
+      return (
+        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-4 shadow-md space-y-4 my-2 text-[13px] w-full max-w-lg font-sans">
+          <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+            <span className="font-semibold text-[var(--text-secondary)]">Resume Match Analysis</span>
+            <span className="text-2xl font-black text-[var(--accent)]">{matchScore}%</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1.5 text-left">Matched</span>
+              <div className="space-y-1">
+                {matchedSkills.length === 0 ? (
+                  <span className="text-[11px] text-[var(--text-muted)] italic block text-left">None</span>
+                ) : (
+                  matchedSkills.map(skill => (
+                    <div key={skill} className="flex items-center gap-1.5 text-emerald-500 font-medium text-[12px] text-left">
+                      <span className="text-emerald-500">✓</span>
+                      <span className="text-[var(--text-primary)]">{skill}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1.5 text-left">Missing</span>
+              <div className="space-y-1">
+                {missingSkills.length === 0 ? (
+                  <span className="text-[11px] text-[var(--text-muted)] italic block text-left">None</span>
+                ) : (
+                  missingSkills.map(skill => (
+                    <div key={skill} className="flex items-center gap-1.5 text-[var(--text-muted)] text-[12px] text-left">
+                      <span className="text-rose-500">×</span>
+                      <span>{skill}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+          {recommendations && (
+            <div className="border-t border-[var(--border-color)] pt-3 text-[12px] text-[var(--text-secondary)] leading-relaxed text-left">
+              {recommendations}
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
   const elements: React.ReactNode[] = [];
   const lines = content.split("\n");
   
@@ -240,16 +326,16 @@ export const Markdown = ({ content, className = "", isStreaming = false }: Markd
         lastElement,
         lastElement.props,
         ...React.Children.toArray(lastElement.props.children),
-        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-violet-500 dark:bg-violet-400 animate-pulse rounded-sm align-middle" />
+        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
       );
     } else {
       elements.push(
-        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-violet-500 dark:bg-violet-400 animate-pulse rounded-sm align-middle" />
+        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
       );
     }
   } else if (isStreaming) {
     elements.push(
-      <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-violet-500 dark:bg-violet-400 animate-pulse rounded-sm align-middle" />
+      <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
     );
   }
 

@@ -152,7 +152,7 @@ export const App = () => {
   const isConnected = !!(snapshot?.url && !snapshot.url.startsWith("chrome://") && !snapshot.url.startsWith("about:"));
 
   return (
-    <main className="flex h-[520px] w-[380px] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[#ff6b35]/30 select-none overflow-hidden">
+    <main className="flex h-[520px] w-[380px] flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans selection:bg-[var(--accent)]/30 select-none overflow-hidden">
       {/* Header */}
       <header className="flex h-11 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-primary)] px-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -179,8 +179,8 @@ export const App = () => {
             onClick={() => setShowSettings(!showSettings)}
             aria-label="Settings"
             className={`flex h-7 w-7 items-center justify-center rounded border transition-all duration-200 cursor-pointer ${showSettings
-              ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
-              : "border-[var(--border-color)] hover:border-zinc-400 bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              ? "border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)]"
+              : "border-[var(--border-color)] hover:border-[var(--border-hover)] bg-[var(--bg-secondary)]/30 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               }`}
           >
             <Settings size={12} />
@@ -215,9 +215,9 @@ export const App = () => {
         <div className="flex flex-col gap-2.5 border-t border-[var(--border-color)] pt-2.5 shrink-0">
           <button
             onClick={handleToggleSidebar}
-            className="flex h-9 w-full items-center justify-center rounded-xl border border-[var(--border-color)] hover:border-[#ff6b35]/40 bg-[var(--bg-secondary)] hover:bg-[#ff6b35]/5 text-xs font-mono uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-[0.98] shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)] cursor-pointer"
+            className="flex h-9 w-full items-center justify-center rounded-xl border border-[var(--border-color)] hover:border-[var(--accent)]/40 bg-[var(--bg-secondary)] hover:bg-[var(--accent)]/5 text-xs font-mono uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-[0.98] shadow-sm cursor-pointer"
           >
-            <Zap size={11} className="mr-1.5 text-[#ff6b35] fill-[#ff6b35]" />
+            <Zap size={11} className="mr-1.5 text-[var(--accent)] fill-[var(--accent)]" />
             {sidebarStatus === "open" ? "Close AI Sidebar" : "Open AI Sidebar"}
           </button>
 
@@ -225,7 +225,7 @@ export const App = () => {
             <span>{applications?.length ?? 0} jobs tracked</span>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="text-[#ff6b35] hover:text-[#ff8255] transition-all font-bold cursor-pointer"
+              className="text-[var(--accent)] hover:text-[var(--accent-strong)] transition-all font-bold cursor-pointer"
             >
               {showSettings ? "Show Dashboard" : "Setup Keys"}
             </button>

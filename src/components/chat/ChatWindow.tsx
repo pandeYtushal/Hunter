@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { 
   Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock, 
-  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle
+  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle,
+  Plus, MessageSquare, Pin, Trash2, Settings, Compass, Target,
+  Check
 } from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
+import { Button } from "../ui/button";
 import { MessageBubble } from "./MessageBubble";
 import { AttachmentPreview } from "./AttachmentPreview";
 import { PromptSuggestions, getDynamicSuggestions } from "./PromptSuggestions";
@@ -29,6 +32,7 @@ const getStepIcon = (name: string, description: string) => {
   if (text.includes("navigate") || text.includes("go to") || text.includes("url") || text.includes("open")) return Globe;
   if (text.includes("wait") || text.includes("sleep") || text.includes("delay")) return Clock;
   if (text.includes("apply")) return Zap;
+  if (text.includes("summarize") || text.includes("analyze") || text.includes("explain")) return Compass;
   return Activity;
 };
 
@@ -98,6 +102,7 @@ export const ChatWindow: React.FC = () => {
   const { value: approvalState } = useChromeStorage("approvalState");
   const { theme, setTheme } = useTheme();
   const [devModeOpen, setDevModeOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
   const { value: activeMode, setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
@@ -266,8 +271,115 @@ export const ChatWindow: React.FC = () => {
 
   return (
     <div className="chat-shell flex h-full w-full text-[var(--text-primary)] font-sans overflow-hidden relative">
+      {/* Drawer Overlay Backdrop */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="absolute inset-0 bg-black/45 z-30 animate-fade-in cursor-pointer"
+        />
+      )}
+
+      {/* Collapsible Sidebar Chat History Drawer */}
+      {sidebarOpen && (
+        <div className="absolute left-0 top-0 h-full w-[200px] border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col shrink-0 animate-slide-right select-none z-40 shadow-xl">
+          {/* Sidebar Header */}
+          <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                void createConversation();
+                setSidebarOpen(false);
+              }}
+              className="flex-1 flex items-center justify-center gap-1.5 h-8 px-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition duration-200 cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>New Chat</span>
+            </Button>
+          </div>
+
+          {/* Conversations Lists */}
+          <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
+            {/* Pinned Section */}
+            <div className="space-y-1">
+              <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Pinned</span>
+              {conversations.slice(0, 1).map((conv) => (
+                <div
+                  key={conv.id}
+                  onClick={() => selectConversation(conv.id)}
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${
+                    conv.id === activeId
+                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Pin size={9} className="text-[var(--accent)] rotate-45 shrink-0" />
+                    <span className="truncate">{conv.title || "Chat Session"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Recents Section */}
+            <div className="space-y-1">
+              <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Recent Chats</span>
+              {conversations.length === 0 ? (
+                <div className="px-2 py-3 text-[11px] text-[var(--text-muted)] italic">No recent chats</div>
+              ) : (
+                conversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    onClick={() => selectConversation(conv.id)}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${
+                      conv.id === activeId
+                        ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <MessageSquare size={10} className="text-[var(--text-muted)] shrink-0" />
+                      <span className="truncate">{conv.title || "Chat Session"}</span>
+                    </div>
+                    {conversations.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deleteConversation(conv.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
+                        aria-label="Delete conversation"
+                        title="Delete conversation"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar Footer */}
+          <div className="p-3 border-t border-[var(--border-color)]">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowProfile(true);
+                setSidebarOpen(false);
+              }}
+              className="w-full flex items-center justify-start gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition cursor-pointer"
+            >
+              <Settings size={14} />
+              <span>Settings</span>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Main Panel Content Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative bg-[var(--bg-primary)]">
         <ChatHeader
           currentUrl={currentUrl || undefined}
           activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : activeConversation && activeConversation.messages.length > 0 ? "Automated browser goal" : null}
@@ -281,38 +393,42 @@ export const ChatWindow: React.FC = () => {
           onClearChat={clearCurrentConversation}
           onToggleProfile={() => setShowProfile(true)}
           onToggleExpand={handleToggleExpand}
+          activeMode={activeMode || undefined}
+          setActiveMode={setActiveMode}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
         {/* Switcher tabs: Chat vs Tasks vs Workspace vs Workflows */}
-        <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[9.5px] shrink-0 font-semibold text-center select-none uppercase tracking-wider">
+        <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-secondary)] text-[11px] shrink-0 font-medium text-center select-none font-sans h-11 relative">
           <button
             onClick={() => setActiveView("chat")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "chat" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
+              activeView === "chat" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Chat
           </button>
           <button
             onClick={() => setActiveView("tasks")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "tasks" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
+              activeView === "tasks" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Tasks
           </button>
           <button
             onClick={() => setActiveView("dashboard")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer border-r border-[var(--border-color)] ${
-              activeView === "dashboard" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
+              activeView === "dashboard" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Workspace
           </button>
           <button
             onClick={() => setActiveView("workflows")}
-            className={`flex-1 py-2.5 transition-all cursor-pointer ${
-              activeView === "workflows" ? "bg-[var(--bg-secondary)] text-[var(--accent)] border-b-2 border-b-[var(--accent)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
+              activeView === "workflows" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             Flows
@@ -333,77 +449,71 @@ export const ChatWindow: React.FC = () => {
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Mode Selector dropdown */}
-            <div className="px-3 py-2 border-b border-[var(--border-color)] bg-[var(--bg-secondary)] flex items-center justify-between gap-2 shrink-0">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Workspace Mode:</span>
-              <select
-                value={activeMode || "general"}
-                onChange={(e) => setActiveMode(e.target.value)}
-                className="bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] text-[11px] rounded-md px-2 py-1 outline-none cursor-pointer hover:border-[var(--accent)] transition-colors"
-              >
-                <option value="general">General Assistant</option>
-                <option value="research">Research Assistant</option>
-                <option value="shopping">Shopping Assistant</option>
-                <option value="learning">Learning Assistant</option>
-                <option value="email">Email Assistant</option>
-                <option value="job_search">Job Search Assistant</option>
-                <option value="travel">Travel Assistant</option>
-                <option value="documents">Document Assistant</option>
-              </select>
-            </div>
-
             <DragDropZone onDropFile={attachFile}>
               {/* Messages Thread Log */}
-              <div className="chat-thread flex-1 overflow-y-auto px-1 py-2 space-y-1 custom-scrollbar bg-transparent">
+              <div className="chat-thread flex-1 overflow-y-auto px-4 py-4 space-y-8 custom-scrollbar bg-transparent">
                 {!activeConversation || activeConversation.messages.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-5 max-w-sm mx-auto h-full justify-self-center">
+                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-6 max-w-sm mx-auto h-full justify-self-center py-10">
                     
                     {/* Brand Greeting */}
-                    <div className="space-y-1.5">
-                      <h2 className="text-[15px] font-bold tracking-normal text-[var(--text-primary)]">
-                        Hunter
+                    <div className="space-y-2 flex flex-col items-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-faint)] border border-[var(--accent-dim)] text-[var(--accent)] shadow-md mb-2">
+                        <Compass size={24} className="animate-spin-slow" style={{ animationDuration: "20s" }} />
+                      </div>
+                      <h2 className="text-xl font-bold tracking-normal text-[var(--text-primary)]">
+                        Hi 👋
                       </h2>
-                      <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed">
-                        Ask about the current page.
+                      <p className="text-[13px] text-[var(--text-secondary)] font-normal leading-relaxed">
+                        What would you like help with today?
                       </p>
                     </div>
 
-                    {/* Page Awareness Card */}
-                    <div className="w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-2.5 text-left space-y-2 select-none">
-                      <div className="flex items-center justify-between text-[11px] text-[var(--text-muted)] font-normal">
-                        <span>Current page</span>
-                        <span className="text-[var(--text-muted)] flex items-center gap-1.5 font-normal">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-                          Connected
-                        </span>
-                      </div>
-                      <div className="text-[12px] font-normal text-[var(--text-primary)] truncate">
-                        {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "Page analyzed"}
-                      </div>
-                    </div>
-
-                    {/* Quick actions wrapper */}
-                    <div className="w-full space-y-2 text-left">
-                      <span className="text-[11px] font-bold text-[var(--text-muted)] block mb-1 select-none">
-                        Suggestions
+                    {/* Quick actions grid */}
+                    <div className="w-full space-y-2.5 text-left">
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
+                        Suggested Prompts
                       </span>
-                      <div className="flex flex-col gap-1.5 w-full">
-                        {getDynamicSuggestions(currentUrl).map((act, i) => {
-                          const Icon = act.icon;
-                          return (
-                            <button
-                              key={i}
-                              onClick={() => handleSendFromSuggestion(act.prompt)}
-                              className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] text-[12px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors duration-150 cursor-pointer group"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Icon size={12} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                                <span className="truncate">{act.label}</span>
-                              </div>
-                              <span className="text-[10px] text-[var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity font-mono">-&gt;</span>
-                            </button>
-                          );
-                        })}
+                      <div className="grid grid-cols-1 gap-2 w-full">
+                        <button
+                          onClick={() => handleSendFromSuggestion("Explain this page in detail")}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
+                        >
+                          <Sparkles size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                          <span className="truncate">Analyze this page</span>
+                        </button>
+                        <button
+                          onClick={() => handleSendFromSuggestion("Compare this page with my resume")}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
+                        >
+                          <Target size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                          <span className="truncate">Review my resume</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            captureScreen();
+                            setTimeout(() => {
+                              handleSendFromSuggestion("Explain this screenshot");
+                            }, 500);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
+                        >
+                          <Globe size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                          <span className="truncate">Explain this screenshot</span>
+                        </button>
+                        <button
+                          onClick={() => handleSendFromSuggestion("Research this company")}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
+                        >
+                          <Clock size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                          <span className="truncate">Research company</span>
+                        </button>
+                        <button
+                          onClick={() => handleSendFromSuggestion("Apply to this job")}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
+                        >
+                          <Zap size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                          <span className="truncate">Help me apply</span>
+                        </button>
                       </div>
                     </div>
 
@@ -417,6 +527,7 @@ export const ChatWindow: React.FC = () => {
                       onRegenerate={regenerateResponse}
                       onEditAndRetry={editPromptAndRetry}
                       isGenerating={isGenerating || isCopilotRunning}
+                      devModeOpen={devModeOpen}
                     />
                   ))
                 )}
@@ -441,12 +552,15 @@ export const ChatWindow: React.FC = () => {
           <div className="mx-4 my-2 px-3 py-2 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-2 text-xs font-medium text-rose-500 select-none animate-scale-up">
             <AlertTriangle size={14} className="shrink-0" />
             <span className="flex-1 truncate">{error}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setError("")}
-              className="p-1 rounded hover:bg-rose-900/20 text-rose-500 hover:text-white transition cursor-pointer"
+              className="p-1 h-6 w-6 rounded hover:bg-rose-900/20 text-rose-500 hover:text-white transition cursor-pointer"
+              aria-label="Dismiss error"
             >
-              <X size={10} />
-            </button>
+              <X size={14} />
+            </Button>
           </div>
         )}
 
@@ -454,59 +568,60 @@ export const ChatWindow: React.FC = () => {
         {copilot.machineState !== "idle" && (
           <div className="mx-4 my-2.5 p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-lg space-y-4 animate-scale-up select-none">
             <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-ping" />
-                <h3 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                  Autonomous Copilot Mode: {copilot.machineState}
-                </h3>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider text-left">Current Goal</span>
+                <span className="text-[13px] font-bold text-[var(--text-primary)] mt-0.5 text-left">"{copilot.currentGoal}"</span>
               </div>
-              <span className="text-[10.5px] text-[var(--text-muted)] font-mono">
-                Est. completion: {copilot.estimatedCompletionTimeSeconds}s
+              <span className="text-[10.5px] text-[var(--text-muted)] font-mono shrink-0">
+                Est: {copilot.estimatedCompletionTimeSeconds}s
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-[13px] font-bold text-[var(--text-primary)] block">"{copilot.currentGoal}"</span>
+              <div className="flex items-center justify-between text-[10.5px] font-mono text-[var(--text-secondary)]">
+                <span>Progress Checklist</span>
+                <span className="font-bold text-[var(--accent)]">{copilot.progress}%</span>
+              </div>
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                   <div
-                    className="h-full transition-all duration-300"
+                    className="h-full transition-all duration-300 bg-[var(--accent)]"
                     style={{
                       width: `${copilot.progress}%`,
-                      background: "linear-gradient(90deg, var(--accent), var(--accent-strong))"
                     }}
                   />
                 </div>
-                <span className="text-[11px] font-bold font-mono text-[var(--accent)]">{copilot.progress}%</span>
               </div>
             </div>
 
-            {/* Timeline Steps - Redesigned premium vertical timeline */}
-            <div className="relative pl-5 border-l border-[var(--border-color)] ml-3 space-y-3.5 max-h-40 overflow-y-auto pr-1 custom-scrollbar text-[11.5px] font-mono leading-relaxed">
+            {/* Timeline Steps - Redesigned premium vertical timeline checklist */}
+            <div className="relative pl-5 border-l border-[var(--border-color)] ml-3 space-y-3.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar text-[11px] font-mono leading-relaxed">
               {copilot.timeline.map((step) => {
-                const StepIcon = getStepIcon(step.name, step.description);
                 const isRunning = step.status === "running" || step.status === "waiting_confirmation";
                 const isCompleted = step.status === "completed";
                 const isFailed = step.status === "failed";
+                const StepIcon = getStepIcon(step.name, step.description);
                 
                 return (
                   <div key={step.id} className="relative flex items-start justify-between gap-3 group">
-                    {/* Bullet marker node with icon */}
-                    <div className={`absolute -left-[27.5px] top-0.5 flex h-[15px] w-[15px] items-center justify-center rounded-full border bg-[var(--bg-secondary)] transition-all duration-300 z-10 ${
+                    {/* Checkbox bullet marker */}
+                    <div className={`absolute -left-[29px] top-[2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--bg-secondary)] border transition-all duration-300 z-10 ${
                       isCompleted 
-                        ? "border-emerald-500/50 text-emerald-500 shadow-sm" 
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-500" 
                         : isFailed 
-                        ? "border-rose-500/50 text-rose-500 animate-pulse" 
+                        ? "border-rose-500 bg-rose-500/10 text-rose-500" 
                         : isRunning 
-                        ? "border-[var(--accent)] text-[var(--accent)] shadow-md scale-110" 
-                        : "border-[var(--border-color)] text-[var(--text-muted)]"
+                        ? "border-[var(--accent)] bg-[var(--accent-faint)] text-[var(--accent)]" 
+                        : "border-[var(--border-color)] text-[var(--text-muted)] bg-[var(--bg-tertiary)]"
                     }`}>
                       {isCompleted ? (
-                        <CheckCircle2 size={10} className="stroke-[2.5]" />
+                        <Check className="h-3 w-3 text-emerald-500 stroke-[3]" />
                       ) : isFailed ? (
-                        <XCircle size={10} className="stroke-[2.5]" />
+                        <X className="h-3 w-3 text-rose-500 stroke-[3]" />
                       ) : (
-                        <StepIcon size={9} className={`${isRunning ? "animate-pulse" : ""}`} />
+                        <StepIcon className={`h-3 w-3 ${
+                          isRunning ? "text-[var(--accent)] animate-pulse" : "text-[var(--text-muted)]"
+                        }`} />
                       )}
                     </div>
 
@@ -514,20 +629,20 @@ export const ChatWindow: React.FC = () => {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`font-semibold transition-all duration-200 ${
                           isCompleted 
-                            ? "text-[var(--text-muted)] line-through opacity-75" 
+                            ? "text-[var(--text-muted)] line-through opacity-75 text-left" 
                             : isRunning 
-                            ? "text-[var(--text-primary)] font-bold" 
-                            : "text-[var(--text-secondary)]"
+                            ? "text-[var(--text-primary)] font-bold text-left" 
+                            : "text-[var(--text-secondary)] text-left"
                         }`}>
                           {step.name}
                         </span>
                         {isRunning && (
-                          <span className="inline-flex items-center rounded bg-[var(--accent-faint)] px-1 py-0.25 text-[8.5px] font-bold text-[var(--accent)] uppercase tracking-wider animate-pulse">
+                          <span className="inline-flex items-center rounded bg-[var(--accent-faint)] px-1 py-0.25 text-[8px] font-bold text-[var(--accent)] uppercase tracking-wider animate-pulse">
                             Active
                           </span>
                         )}
                       </div>
-                      <p className={`text-[10px] leading-relaxed mt-0.5 ${
+                      <p className={`text-[10px] leading-relaxed mt-0.5 text-left ${
                         isCompleted ? "text-[var(--text-muted)] opacity-60" : "text-[var(--text-muted)]"
                       }`}>
                         {step.description}
@@ -540,7 +655,7 @@ export const ChatWindow: React.FC = () => {
 
             {/* Safety Confirmation alert bar */}
             {((copilot.machineState === "waiting_confirmation") || (approvalState && approvalState.status === "pending")) && (
-              <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5">
+              <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5 text-left">
                 <p className="text-[11px] font-bold text-[var(--accent)] flex items-center gap-1">
                   <AlertTriangle size={12} />
                   Safety Approval Required
@@ -559,7 +674,7 @@ export const ChatWindow: React.FC = () => {
                         await storage.set("approvalState", { ...approvalState, status: "approved" });
                       }
                     }}
-                    className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10.5px] font-bold uppercase tracking-wider transition cursor-pointer"
+                    className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10.5px] font-bold uppercase tracking-wider transition cursor-pointer border-0"
                   >
                     Confirm Action
                   </button>
@@ -571,7 +686,7 @@ export const ChatWindow: React.FC = () => {
                         await storage.set("approvalState", { ...approvalState, status: "declined" });
                       }
                     }}
-                    className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10.5px] font-mono uppercase transition cursor-pointer"
+                    className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10.5px] font-mono uppercase transition cursor-pointer bg-transparent"
                   >
                     Skip / Decline
                   </button>
@@ -591,7 +706,7 @@ export const ChatWindow: React.FC = () => {
               ) : copilot.machineState === "paused" ? (
                 <button
                   onClick={() => CopilotEngine.getInstance().resume()}
-                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer"
+                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
                 >
                   Resume Loop
                 </button>
@@ -600,7 +715,7 @@ export const ChatWindow: React.FC = () => {
               {copilot.machineState === "failed" && (
                 <button
                   onClick={() => CopilotEngine.getInstance().retry()}
-                  className="flex-1 h-8 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[11px] font-bold uppercase transition cursor-pointer"
+                  className="flex-1 h-8 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
                 >
                   Retry Failed Step
                 </button>
@@ -609,7 +724,7 @@ export const ChatWindow: React.FC = () => {
               {copilot.machineState === "completed" ? (
                 <button
                   onClick={() => CopilotEngine.getInstance().cancel()}
-                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer"
+                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
                 >
                   Done
                 </button>
@@ -634,6 +749,44 @@ export const ChatWindow: React.FC = () => {
 
         {/* Upload Thumbnails Row */}
         <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
+
+        {/* Context Bar */}
+        {activeView === "chat" && !showTaskManager && (
+          <div className="px-4 py-2 flex flex-wrap gap-1.5 items-center bg-transparent border-t border-[var(--border-color)]/30 shrink-0 select-none">
+            {/* 📍 Site Context */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
+              <span className="text-[10.5px]">📍</span>
+              <span className="truncate max-w-[120px] font-mono">
+                {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "no active page"}
+              </span>
+            </span>
+            
+            {/* 🧠 Memory Context */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
+              <span>🧠</span>
+              <span className="font-mono">Memory</span>
+            </span>
+
+            {/* Attachments mapped to chips */}
+            {attachments.map(att => (
+              <span key={att.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
+                <span>{att.type === "image" || att.type === "screenshot" ? "🖼" : "📄"}</span>
+                <span className="truncate max-w-[80px] font-mono">{att.name}</span>
+              </span>
+            ))}
+
+            {/* ➕ Add Context Button */}
+            <button
+              onClick={() => {
+                captureScreen();
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[10px] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)] transition shadow-sm cursor-pointer"
+            >
+              <span>➕</span>
+              <span className="font-mono">Add Context</span>
+            </button>
+          </div>
+        )}
 
         {/* Standard input footer area */}
         {activeView === "chat" && !showTaskManager && (
@@ -664,12 +817,15 @@ export const ChatWindow: React.FC = () => {
                 <Terminal size={12} />
                 Developer Console Metrics
               </h3>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setDevModeOpen(false)}
-                className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                className="p-1 h-6 w-6 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition cursor-pointer animate-none"
+                aria-label="Close Developer Console"
               >
-                <X size={12} />
-              </button>
+                <X size={14} />
+              </Button>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3 text-[var(--text-secondary)]">

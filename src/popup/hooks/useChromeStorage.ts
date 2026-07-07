@@ -23,11 +23,16 @@ export const useChromeStorage = <K extends keyof StorageSchema>(key: K) => {
       }
     };
 
-    chrome.storage.onChanged.addListener(listener);
+    const hasStorage = typeof chrome !== "undefined" && chrome.storage?.onChanged;
+    if (hasStorage) {
+      chrome.storage.onChanged.addListener(listener);
+    }
 
     return () => {
       active = false;
-      chrome.storage.onChanged.removeListener(listener);
+      if (hasStorage) {
+        chrome.storage.onChanged.removeListener(listener);
+      }
     };
   }, [key]);
 

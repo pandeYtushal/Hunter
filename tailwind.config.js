@@ -11,6 +11,39 @@ export default {
         serif: ["Instrument Serif", "serif"]
       },
       colors: {
+        border: "var(--border-color)",
+        input: "var(--border-color)",
+        ring: "var(--accent)",
+        background: "var(--bg-primary)",
+        foreground: "var(--text-primary)",
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--bg-primary)",
+        },
+        secondary: {
+          DEFAULT: "var(--bg-secondary)",
+          foreground: "var(--text-primary)",
+        },
+        destructive: {
+          DEFAULT: "var(--danger)",
+          foreground: "var(--text-primary)",
+        },
+        muted: {
+          DEFAULT: "var(--bg-tertiary)",
+          foreground: "var(--text-muted)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--text-primary)",
+        },
+        popover: {
+          DEFAULT: "var(--bg-secondary)",
+          foreground: "var(--text-primary)",
+        },
+        card: {
+          DEFAULT: "var(--cards)",
+          foreground: "var(--text-primary)",
+        },
         ink: {
           50: "#fafaf9",
           100: "#f4f4f5",
@@ -27,14 +60,19 @@ export default {
         amber: {
           50: "#fff7ed",
           100: "#ffedd5",
-          500: "#f97316",
-          600: "#ea6c0a",
-          700: "#c2530a"
+          500: "#ea4f1e",
+          600: "#c83f12",
+          700: "#a52f0b"
         },
         cream: {
           100: "#fde8d8",
           200: "#fbd0b4"
         }
+      },
+      borderRadius: {
+        lg: "var(--radius-lg)",
+        md: "var(--radius-md)",
+        sm: "var(--radius-sm)"
       },
       boxShadow: {
         panel: "0 18px 48px rgba(0, 0, 0, 0.12)"

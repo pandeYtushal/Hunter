@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Play, Pause, Trash2, RotateCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Button } from "../ui/button";
 import { ConcurrentScheduler, type ConcurrentTask } from "../../ai/concurrency/ConcurrentScheduler";
 
 export const TaskManager: React.FC = () => {
@@ -31,30 +32,30 @@ export const TaskManager: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "running": return "#ff6b35";
-      case "paused": return "#eab308";
-      case "completed": return "#10b981";
-      case "failed": return "#ef4444";
-      case "cancelled": return "#71717a";
-      default: return "#a1a1aa";
+      case "running": return "var(--accent)";
+      case "paused": return "var(--warning)";
+      case "completed": return "var(--success)";
+      case "failed": return "var(--danger)";
+      case "cancelled": return "var(--text-muted)";
+      default: return "var(--text-secondary)";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "rgba(239, 68, 68, 0.15)";
-      case "medium": return "rgba(234, 179, 8, 0.15)";
-      case "low": return "rgba(16, 185, 129, 0.15)";
-      default: return "rgba(113, 113, 122, 0.15)";
+      case "high": return "rgba(var(--danger-rgb), 0.15)";
+      case "medium": return "rgba(var(--warning-rgb), 0.15)";
+      case "low": return "rgba(var(--success-rgb), 0.15)";
+      default: return "var(--border-color)";
     }
   };
 
   const getPriorityTextColor = (priority: string) => {
     switch (priority) {
-      case "high": return "#f87171";
-      case "medium": return "#facc15";
-      case "low": return "#34d399";
-      default: return "#a1a1aa";
+      case "high": return "var(--danger)";
+      case "medium": return "var(--warning)";
+      case "low": return "var(--success)";
+      default: return "var(--text-muted)";
     }
   };
 
@@ -63,22 +64,22 @@ export const TaskManager: React.FC = () => {
       display: "flex",
       flexDirection: "column",
       height: "100%",
-      background: "#18181b",
-      color: "#f4f4f5",
-      fontFamily: "system-ui, -apple-system, sans-serif"
+      background: "var(--bg-primary)",
+      color: "var(--text-primary)",
+      fontFamily: "var(--font-sans)"
     }}>
       {/* Header */}
       <div style={{
         padding: "16px",
-        borderBottom: "1px solid #27272a",
+        borderBottom: "1px solid var(--border-color)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between"
       }}>
-        <h2 style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "#ff6b35", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+        <h2 style={{ fontSize: "14px", fontWeight: "bold", margin: 0, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
           Task Manager Dashboard
         </h2>
-        <span style={{ fontSize: "10px", background: "#27272a", padding: "2px 8px", borderRadius: "10px", color: "#a1a1aa" }}>
+        <span style={{ fontSize: "10px", background: "var(--bg-tertiary)", padding: "2px 8px", borderRadius: "10px", color: "var(--text-secondary)" }}>
           {tasks.length} Active Tasks
         </span>
       </div>
@@ -86,7 +87,7 @@ export const TaskManager: React.FC = () => {
       {/* Task List container */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
         {tasks.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60%", color: "#71717a" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60%", color: "var(--text-muted)" }}>
             <AlertCircle size={24} style={{ marginBottom: "8px" }} />
             <p style={{ fontSize: "12px", margin: 0 }}>No active or scheduled tasks.</p>
           </div>
@@ -95,9 +96,9 @@ export const TaskManager: React.FC = () => {
             const isExpanded = expandedTaskId === task.id;
             return (
               <div key={task.id} style={{
-                background: "#27272a",
+                background: "var(--bg-secondary)",
                 borderRadius: "8px",
-                border: "1px solid #3f3f46",
+                border: "1px solid var(--border-color)",
                 overflow: "hidden",
                 transition: "all 0.2s ease"
               }}>
@@ -105,7 +106,7 @@ export const TaskManager: React.FC = () => {
                 <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
                     <div style={{ minWidth: 0 }}>
-                      <h4 style={{ fontSize: "12px", fontWeight: "600", margin: "0 0 4px 0", color: "#f4f4f5", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <h4 style={{ fontSize: "12px", fontWeight: "600", margin: "0 0 4px 0", color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {task.goal}
                       </h4>
                       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
@@ -140,10 +141,11 @@ export const TaskManager: React.FC = () => {
                         {task.progress}%
                       </span>
                     </div>
+
                   </div>
 
                   {/* Progress Bar */}
-                  <div style={{ height: "4px", width: "100%", background: "#18181b", borderRadius: "2px", overflow: "hidden" }}>
+                  <div style={{ height: "4px", width: "100%", background: "var(--bg-primary)", borderRadius: "2px", overflow: "hidden" }}>
                     <div style={{
                       height: "100%",
                       width: `${task.progress}%`,
@@ -154,56 +156,59 @@ export const TaskManager: React.FC = () => {
 
                   {/* Control Actions bar */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#a1a1aa",
-                        fontSize: "10px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "2px",
-                        cursor: "pointer",
-                        padding: 0
-                      }}
+                      className="text-[var(--text-muted)] text-[10px] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/50 px-2 py-1 h-auto flex items-center gap-1 cursor-pointer"
                     >
-                      {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       {isExpanded ? "Hide activity log" : "View activity log"}
-                    </button>
+                    </Button>
 
                     <div style={{ display: "flex", gap: "6px" }}>
                       {task.status === "running" && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => ConcurrentScheduler.pauseTask(task.id)}
-                          style={{ background: "#3f3f46", border: "none", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center", color: "#f4f4f5" }}
+                          className="h-7 w-7 rounded bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 text-[var(--text-primary)] cursor-pointer"
+                          aria-label="Pause task"
                         >
-                          <Pause size={10} />
-                        </button>
+                          <Pause size={14} />
+                        </Button>
                       )}
                       {task.status === "paused" && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => ConcurrentScheduler.resumeTask(task.id)}
-                          style={{ background: "#ff6b35", border: "none", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center", color: "#18181b" }}
+                          className="h-7 w-7 rounded bg-[var(--accent)] hover:opacity-90 text-[var(--bg-primary)] cursor-pointer"
+                          aria-label="Resume task"
                         >
-                          <Play size={10} />
-                        </button>
+                          <Play size={14} />
+                        </Button>
                       )}
                       {(task.status === "running" || task.status === "paused" || task.status === "pending") && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => ConcurrentScheduler.cancelTask(task.id)}
-                          style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center", color: "#ef4444" }}
+                          className="h-7 w-7 rounded bg-[var(--danger-faint)] hover:bg-[var(--danger)]/20 border border-[var(--danger)]/25 text-[var(--danger)] cursor-pointer"
+                          aria-label="Cancel task"
                         >
-                          <Trash2 size={10} />
-                        </button>
+                          <Trash2 size={14} />
+                        </Button>
                       )}
                       {(task.status === "failed" || task.status === "cancelled") && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => ConcurrentScheduler.retryTask(task.id)}
-                          style={{ background: "#ff6b35", border: "none", borderRadius: "4px", padding: "4px 8px", cursor: "pointer", display: "flex", alignItems: "center", color: "#18181b" }}
+                          className="h-7 w-7 rounded bg-[var(--accent)] hover:opacity-90 text-[var(--bg-primary)] cursor-pointer"
+                          aria-label="Retry task"
                         >
-                          <RotateCw size={10} />
-                        </button>
+                          <RotateCw size={14} />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -212,12 +217,12 @@ export const TaskManager: React.FC = () => {
                 {/* Expanded Logs console */}
                 {isExpanded && (
                   <div style={{
-                    background: "#18181b",
+                    background: "var(--bg-primary)",
                     padding: "10px 12px",
-                    borderTop: "1px solid #3f3f46",
-                    fontFamily: "monospace",
+                    borderTop: "1px solid var(--border-color)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "9.5px",
-                    color: "#a1a1aa",
+                    color: "var(--text-secondary)",
                     maxHeight: "120px",
                     overflowY: "auto"
                   }}>
@@ -225,7 +230,7 @@ export const TaskManager: React.FC = () => {
                       <div>No log entries recorded.</div>
                     ) : (
                       task.logs.map((log, idx) => (
-                        <div key={idx} style={{ marginBottom: "4px", borderBottom: "1px solid #27272a", paddingBottom: "2px", color: log.toLowerCase().includes("fail") ? "#f87171" : "#a1a1aa" }}>
+                        <div key={idx} style={{ marginBottom: "4px", borderBottom: "1px solid var(--border-color)", paddingBottom: "2px", color: log.toLowerCase().includes("fail") ? "var(--danger)" : "var(--text-secondary)" }}>
                           &gt; {log}
                         </div>
                       ))

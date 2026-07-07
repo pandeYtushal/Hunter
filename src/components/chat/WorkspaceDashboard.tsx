@@ -94,14 +94,14 @@ export const WorkspaceDashboard: React.FC = () => {
       display: "flex",
       flexDirection: "column",
       gap: "16px",
-      background: "#18181b",
-      color: "#f4f4f5",
-      fontFamily: "system-ui, -apple-system, sans-serif",
+      background: "var(--bg-primary)",
+      color: "var(--text-primary)",
+      fontFamily: "var(--font-sans)",
       fontSize: "12px"
     }}>
       {/* Pinned Workflows */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
           <Pin size={12} /> Pinned Automation Workflows
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -111,12 +111,12 @@ export const WorkspaceDashboard: React.FC = () => {
               onClick={() => handlePinTrigger(flow.goal)}
               style={{
                 textAlign: "left",
-                background: "#18181b",
-                border: "1px solid #3f3f46",
+                background: "var(--bg-primary)",
+                border: "1px solid var(--border-color)",
                 borderRadius: "6px",
                 padding: "8px 10px",
                 cursor: "pointer",
-                color: "#f4f4f5",
+                color: "var(--text-primary)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -124,7 +124,7 @@ export const WorkspaceDashboard: React.FC = () => {
               }}
             >
               <span>{flow.title}</span>
-              <ArrowRight size={10} style={{ color: "#ff6b35" }} />
+              <ArrowRight size={10} style={{ color: "var(--accent)" }} />
             </button>
           ))}
         </div>
@@ -133,8 +133,8 @@ export const WorkspaceDashboard: React.FC = () => {
       {/* Grid: Bookmarks and History Insights */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
         {/* Bookmarks */}
-        <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-          <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+        <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+          <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
             <Bookmark size={12} /> Bookmarks
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -144,7 +144,7 @@ export const WorkspaceDashboard: React.FC = () => {
                 href={b.url}
                 target="_blank"
                 rel="noreferrer"
-                style={{ color: "#a1a1aa", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                style={{ color: "var(--text-secondary)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
               >
                 {b.label}
               </a>
@@ -153,18 +153,18 @@ export const WorkspaceDashboard: React.FC = () => {
         </div>
 
         {/* History Insights */}
-        <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-          <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+        <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+          <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
             <Globe size={12} /> Host Insights
           </h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {visitedSites.length === 0 ? (
-              <div style={{ color: "#71717a", fontSize: "10px" }}>No visits recorded yet.</div>
+              <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>No visits recorded yet.</div>
             ) : (
               visitedSites.map((site, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", color: "#a1a1aa" }}>
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", color: "var(--text-secondary)" }}>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "90px" }}>{site.domain}</span>
-                  <span style={{ fontSize: "10px", fontWeight: "bold", color: "#ff6b35" }}>{site.visits} visits</span>
+                  <span style={{ fontSize: "10px", fontWeight: "bold", color: "var(--accent)" }}>{site.visits} visits</span>
                 </div>
               ))
             )}
@@ -173,45 +173,45 @@ export const WorkspaceDashboard: React.FC = () => {
       </div>
 
       {/* Telemetry Dashboard Stats */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
           <BarChart3 size={12} /> Telemetry & Benchmarks
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #3f3f46", paddingBottom: "4px" }}>
-            <span style={{ color: "#a1a1aa" }}>Avg Plan Latency</span>
-            <span style={{ fontWeight: "bold", color: "#10b981" }}>310 ms</span>
+          <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-color)", paddingBottom: "4px" }}>
+            <span style={{ color: "var(--text-secondary)" }}>Avg Plan Latency</span>
+            <span style={{ fontWeight: "bold", color: "var(--success)" }}>310 ms</span>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #3f3f46", paddingBottom: "4px" }}>
-            <span style={{ color: "#a1a1aa" }}>Self-Healing Success</span>
-            <span style={{ fontWeight: "bold", color: "#10b981" }}>94.2 %</span>
+          <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--border-color)", paddingBottom: "4px" }}>
+            <span style={{ color: "var(--text-secondary)" }}>Self-Healing Success</span>
+            <span style={{ fontWeight: "bold", color: "var(--success)" }}>94.2 %</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "#a1a1aa" }}>Benchmark vs Others</span>
-            <span style={{ fontWeight: "bold", color: "#ff6b35" }}>+68% Faster</span>
+            <span style={{ color: "var(--text-secondary)" }}>Benchmark vs Others</span>
+            <span style={{ fontWeight: "bold", color: "var(--accent)" }}>+68% Faster</span>
           </div>
         </div>
       </div>
 
       {/* Session Replay & Playwright Exporter */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
           <Clock size={12} /> Session Replay & Code Exporter
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {replays.length === 0 ? (
-            <div style={{ color: "#71717a", fontSize: "10px" }}>No recent recordings. Run goals to log replays.</div>
+            <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>No recent recordings. Run goals to log replays.</div>
           ) : (
             replays.map((rep) => (
-              <div key={rep.sessionId} style={{ background: "#18181b", padding: "10px", borderRadius: "6px", border: "1px solid #3f3f46" }}>
+              <div key={rep.sessionId} style={{ background: "var(--bg-primary)", padding: "10px", borderRadius: "6px", border: "1px solid var(--border-color)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <span style={{ fontWeight: "bold", color: "#f4f4f5" }}>{rep.goal.slice(0, 30)}...</span>
+                  <span style={{ fontWeight: "bold", color: "var(--text-primary)" }}>{rep.goal.slice(0, 30)}...</span>
                   <button
                     onClick={() => handleExportPlaywright(rep)}
                     style={{
-                      background: copiedId === rep.sessionId ? "#10b981" : "#ff6b35",
+                      background: copiedId === rep.sessionId ? "var(--success)" : "var(--accent)",
                       border: "none",
-                      color: "#18181b",
+                      color: "var(--bg-primary)",
                       borderRadius: "4px",
                       padding: "2px 6px",
                       cursor: "pointer",
@@ -228,14 +228,14 @@ export const WorkspaceDashboard: React.FC = () => {
                 </div>
                 
                 {/* Timeline display */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderTop: "1px solid #27272a", paddingTop: "6px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", borderTop: "1px solid var(--border-color)", paddingTop: "6px" }}>
                   {rep.steps.map((st, sidx) => (
-                    <div key={sidx} style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#a1a1aa" }}>
+                    <div key={sidx} style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "var(--text-secondary)" }}>
                       <span>&gt; {st.action}</span>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <span>{st.durationMs}ms</span>
                         <span style={{
-                          color: st.confidence > 0.8 ? "#10b981" : st.confidence > 0.5 ? "#f59e0b" : "#ef4444",
+                          color: st.confidence > 0.8 ? "var(--success)" : st.confidence > 0.5 ? "var(--warning)" : "var(--danger)",
                           fontWeight: "bold"
                         }}>{Math.round(st.confidence * 100)}% conf</span>
                       </div>
@@ -249,20 +249,20 @@ export const WorkspaceDashboard: React.FC = () => {
       </div>
 
       {/* Recent Tasks */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
           <Clock size={12} /> Recent Runs
         </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {tasks.length === 0 ? (
-            <div style={{ color: "#71717a", fontSize: "10px" }}>No execution history available.</div>
+            <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>No execution history available.</div>
           ) : (
             tasks.map((t) => (
-              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", background: "#18181b", padding: "6px 8px", borderRadius: "4px", border: "1px solid #3f3f46" }}>
+              <div key={t.id} style={{ display: "flex", justifyContent: "space-between", background: "var(--bg-primary)", padding: "6px 8px", borderRadius: "4px", border: "1px solid var(--border-color)" }}>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "160px" }}>{t.goal}</span>
                 <span style={{
                   fontSize: "9px",
-                  color: t.status === "completed" ? "#10b981" : t.status === "failed" ? "#ef4444" : "#ff6b35",
+                  color: t.status === "completed" ? "var(--success)" : t.status === "failed" ? "var(--danger)" : "var(--accent)",
                   fontWeight: "bold"
                 }}>{t.status.toUpperCase()}</span>
               </div>
@@ -272,8 +272,8 @@ export const WorkspaceDashboard: React.FC = () => {
       </div>
 
       {/* AI Notepad */}
-      <div style={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: "8px", padding: "12px" }}>
-        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ff6b35", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
+      <div style={{ background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "8px", padding: "12px" }}>
+        <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 10px 0", display: "flex", alignItems: "center", gap: "4px" }}>
           <FileText size={12} /> AI Workspace Notepad
         </h3>
         <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
@@ -283,11 +283,11 @@ export const WorkspaceDashboard: React.FC = () => {
             placeholder="Write brief workspace note..."
             style={{
               flex: 1,
-              background: "#18181b",
-              border: "1px solid #3f3f46",
+              background: "var(--bg-primary)",
+              border: "1px solid var(--border-color)",
               borderRadius: "4px",
               padding: "4px 8px",
-              color: "#f4f4f5",
+              color: "var(--text-primary)",
               fontSize: "11px",
               outline: "none"
             }}
@@ -295,10 +295,10 @@ export const WorkspaceDashboard: React.FC = () => {
           <button
             onClick={handleAddNote}
             style={{
-              background: "#ff6b35",
+              background: "var(--accent)",
               border: "none",
               borderRadius: "4px",
-              color: "#18181b",
+              color: "var(--bg-primary)",
               padding: "4px 8px",
               cursor: "pointer",
               display: "flex",
@@ -315,15 +315,15 @@ export const WorkspaceDashboard: React.FC = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "#18181b",
+              background: "var(--bg-primary)",
               padding: "4px 8px",
               borderRadius: "4px",
-              border: "1px solid #3f3f46"
+              border: "1px solid var(--border-color)"
             }}>
-              <span style={{ fontSize: "10.5px", color: "#a1a1aa" }}>{note}</span>
+              <span style={{ fontSize: "10.5px", color: "var(--text-secondary)" }}>{note}</span>
               <button
                 onClick={() => handleDeleteNote(idx)}
-                style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: 0 }}
+                style={{ background: "none", border: "none", color: "var(--danger)", cursor: "pointer", padding: 0 }}
               >
                 <Trash2 size={10} />
               </button>

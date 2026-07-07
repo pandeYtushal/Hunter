@@ -59,11 +59,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="bg-transparent px-3 py-3 select-none shrink-0">
-      <div className="chat-composer relative flex items-end gap-1.5 rounded-xl p-1.5 transition duration-150">
+    <div className="bg-transparent px-4 pb-4 select-none shrink-0">
+      <div className="chat-composer relative flex items-center gap-2 rounded-2xl p-2 transition duration-150 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-1 focus-within:ring-[var(--accent)]/30 min-h-[54px] shadow-sm">
         
         {/* Attachment & Screenshot Controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0 self-end mb-0.5">
           {/* File attachment picker */}
           <ImageUploader onUpload={onAttachFile} disabled={isGenerating || disabled} />
 
@@ -72,10 +72,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             onClick={() => onCaptureScreenshot()}
             disabled={isGenerating || disabled}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors duration-150 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition duration-150 cursor-pointer border-0 bg-transparent"
             title="Capture Browser Tab Screenshot"
           >
-            <Camera size={13} />
+            <Camera size={14} />
           </button>
 
           {/* Voice Speech-to-Text Input Button */}
@@ -96,33 +96,35 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder="Message Hunter"
+          placeholder="Ask Hunter anything..."
           rows={1}
           disabled={disabled}
-          className="flex-1 resize-none bg-transparent py-1.5 px-2 text-[13px] font-normal text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-muted)] leading-relaxed max-h-[28vh] min-h-8 custom-scrollbar font-sans"
+          className="flex-1 resize-none bg-transparent py-2 px-1 text-[13.5px] font-normal text-[var(--text-primary)] focus:outline-none placeholder:text-[var(--text-muted)] leading-relaxed max-h-[25vh] min-h-8 custom-scrollbar font-sans border-0"
         />
 
         {/* Send / Stop Action Trigger */}
-        {isGenerating ? (
-          <button
-            type="button"
-            onClick={() => onStop()}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer"
-            title="Stop generation"
-          >
-            <Square size={10} fill="currentColor" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onSend()}
-            disabled={(!value.trim() && !isGenerating) || disabled}
-            className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-30 transition cursor-pointer"
-            title="Send query"
-          >
-            <ArrowUp size={13} strokeWidth={2.5} />
-          </button>
-        )}
+        <div className="shrink-0 self-end mb-0.5">
+          {isGenerating ? (
+            <button
+              type="button"
+              onClick={() => onStop()}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer border-0"
+              title="Stop generation"
+            >
+              <Square size={10} fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSend()}
+              disabled={(!value.trim() && !isGenerating) || disabled}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-30 disabled:bg-[var(--border-color)] disabled:text-[var(--text-muted)] transition cursor-pointer border-0"
+              title="Send query"
+            >
+              <ArrowUp size={13} strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

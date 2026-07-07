@@ -207,12 +207,12 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     <div className="flex h-full flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
       <header className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-4 py-3.5 shrink-0 shadow-sm">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-white dark:bg-zinc-900 dark:border dark:border-zinc-800 shrink-0 shadow-sm">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] dark:bg-[var(--bg-tertiary)] dark:border dark:border-[var(--border-color)] shrink-0 shadow-sm">
             <User size={14} className="stroke-[2.5]" />
           </div>
           <div className="min-w-0 flex flex-col">
-            <h1 className="truncate text-xs font-black uppercase tracking-wider text-zinc-900 dark:text-white font-display">Resume & Profile</h1>
-            <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 leading-none">Settings & Tailoring</span>
+            <h1 className="truncate text-xs font-black uppercase tracking-wider text-[var(--text-primary)] font-display">Resume & Profile</h1>
+            <span className="text-[9px] font-bold text-[var(--text-muted)] leading-none">Settings & Tailoring</span>
           </div>
         </div>
         <button
@@ -247,8 +247,8 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={`group flex flex-col items-center justify-center rounded-xl border border-dashed p-5 text-center cursor-pointer transition-all duration-300 ${isParsing
-              ? "border-zinc-300 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-950/20 pointer-events-none"
-              : "border-zinc-200 bg-white/30 dark:border-zinc-800/40 hover:border-[#f97316]/50 hover:bg-white/80 dark:bg-zinc-950/20 dark:hover:bg-zinc-950/50 shadow-sm"
+              ? "border-[var(--border-hover)] bg-[var(--bg-tertiary)]/50 pointer-events-none"
+              : "border-[var(--border-color)] bg-[var(--bg-secondary)]/30 hover:border-[var(--accent)] hover:bg-[var(--bg-secondary)]/80 dark:bg-[var(--bg-primary)]/20 dark:hover:bg-[var(--bg-primary)]/50 shadow-sm"
               }`}
           >
             <input
@@ -260,8 +260,8 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
             />
             {isParsing ? (
               <div className="space-y-2.5">
-                <Loader2 className="mx-auto animate-spin text-[#f97316]" size={22} />
-                <p className="text-xs font-bold text-[#f97316]">
+                <Loader2 className="mx-auto animate-spin text-[var(--accent)]" size={22} />
+                <p className="text-xs font-bold text-[var(--accent)]">
                   Parsing resume.....
                 </p>
               </div>
@@ -270,23 +270,23 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-900/20 group-hover:scale-110 transition duration-300">
                   <FileText size={20} className="stroke-[2]" />
                 </div>
-                <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate max-w-[220px] mx-auto">
+                <p className="text-xs font-bold text-[var(--text-primary)] truncate max-w-[220px] mx-auto">
                   {profile.resumeFileName}
                 </p>
-                <p className="text-[10px] text-zinc-500 leading-none">
+                <p className="text-[10px] text-[var(--text-muted)] leading-none">
                   Click or drag here to upload a different resume
                 </p>
               </div>
             ) : (
               <div className="space-y-2.5">
-                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-500 group-hover:scale-110 group-hover:text-[#f97316] transition duration-300">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[var(--bg-tertiary)] text-[var(--text-muted)] group-hover:scale-110 group-hover:text-[var(--accent)] transition duration-300">
                   <Upload size={18} />
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  <p className="text-xs font-bold text-[var(--text-secondary)]">
                     Upload your resume
                   </p>
-                  <p className="text-[10px] text-zinc-500">
+                  <p className="text-[10px] text-[var(--text-muted)]">
                     Drag and drop or click to browse (PDF only)
                   </p>
                 </div>
@@ -431,13 +431,13 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               />
               <button
                 type="submit"
-                className="h-10 rounded-xl bg-zinc-900 hover:bg-zinc-800 px-4 text-xs font-bold text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-all shadow-md active:scale-95 uppercase tracking-wider font-sans shrink-0"
+                className="h-10 rounded-xl bg-[var(--text-primary)] hover:opacity-90 px-4 text-xs font-bold text-[var(--bg-primary)] transition-all shadow-md active:scale-95 uppercase tracking-wider font-sans shrink-0"
               >
                 Add
               </button>
             </form>
             {profile.skills && profile.skills.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1.5 border border-zinc-200/40 bg-white/20 dark:bg-zinc-950/20 p-2.5 rounded-xl backdrop-blur-sm dark:border-zinc-800/50">
+              <div className="mt-2.5 flex flex-wrap gap-1.5 border border-[var(--border-color)]/40 bg-[var(--bg-secondary)]/20 dark:bg-[var(--bg-primary)]/20 p-2.5 rounded-xl backdrop-blur-sm dark:border-[var(--border-color)]/50">
                 {profile.skills.map((skill) => (
                   <span
                     key={skill}
@@ -459,7 +459,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] font-mono">
               Work Experience Summary
             </label>
             <textarea
@@ -474,9 +474,9 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
 
         {/* Saved Cover Letters Card */}
         <div className="premium-card p-4 rounded-2xl space-y-4">
-          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center justify-between">
-            <h2 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono flex items-center gap-1.5">
-              <FileText size={13} className="text-[#f97316]" />
+          <div className="border-b border-[var(--border-color)]/40 pb-2 dark:border-[var(--border-color)]/40 mb-1 flex items-center justify-between">
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] font-mono flex items-center gap-1.5">
+              <FileText size={13} className="text-[var(--accent)]" />
               Tailored Cover Letters ({coverLetters.length})
             </h2>
           </div>
@@ -487,39 +487,39 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 return (
                   <div
                     key={letter.id}
-                    className="rounded-xl border border-zinc-200 bg-white/40 dark:border-zinc-800 dark:bg-zinc-950/20 shadow-sm overflow-hidden hover:border-[#f97316]/30 transition duration-200"
+                    className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/40 dark:bg-[var(--bg-primary)]/20 shadow-sm overflow-hidden hover:border-[var(--accent)]/30 transition duration-200"
                   >
                     <div
                       onClick={() => setExpandedLetterId(isExpanded ? null : letter.id)}
-                      className="flex cursor-pointer items-center justify-between gap-3 p-3 bg-zinc-50/20 dark:bg-zinc-900/20"
+                      className="flex cursor-pointer items-center justify-between gap-3 p-3 bg-[var(--bg-tertiary)]/20 dark:bg-[var(--bg-secondary)]/20"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-extrabold text-zinc-900 dark:text-white">
+                        <p className="truncate text-xs font-extrabold text-[var(--text-primary)]">
                           {letter.company}
                         </p>
-                        <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        <p className="truncate text-[10px] text-[var(--text-muted)] mt-0.5">
                           {letter.role} · {new Date(letter.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 shrink-0">
+                      <div className="flex items-center gap-2 text-[var(--text-muted)] shrink-0">
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="border-t border-zinc-200/60 p-3 dark:border-zinc-800/60 bg-white dark:bg-zinc-950/40 space-y-3">
-                        <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 p-2.5 dark:bg-black/30 text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono whitespace-pre-wrap select-text custom-scrollbar">
+                      <div className="border-t border-[var(--border-color)]/60 p-3 dark:border-[var(--border-color)]/60 bg-[var(--bg-secondary)] dark:bg-[var(--bg-primary)]/40 space-y-3">
+                        <div className="max-h-48 overflow-y-auto rounded-lg border border-[var(--border-color)]/80 dark:border-[var(--border-color)] bg-[var(--bg-tertiary)]/50 p-2.5 dark:bg-black/30 text-[11px] leading-relaxed text-[var(--text-secondary)] font-mono whitespace-pre-wrap select-text custom-scrollbar">
                           {letter.content}
                         </div>
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleCopyLetter(letter.id, letter.content)}
                             title="Copy to clipboard"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[10px] font-extrabold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:text-zinc-350 dark:hover:bg-zinc-950 transition duration-150 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--bg-tertiary)] transition duration-150 shadow-sm active:scale-95"
                           >
                             {copiedLetterId === letter.id ? (
                               <>
-                                <Check size={11} className="text-[#f97316] stroke-[3]" />
+                                <Check size={11} className="text-[var(--accent)] stroke-[3]" />
                                 Copied
                               </>
                             ) : (
@@ -532,7 +532,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           <button
                             onClick={() => handleDownloadLetter(letter.company, letter.content)}
                             title="Download letter as text file"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[10px] font-extrabold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-black dark:text-zinc-350 dark:hover:bg-zinc-950 transition duration-150 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--bg-tertiary)] transition duration-150 shadow-sm active:scale-95"
                           >
                             <Download size={11} />
                             Download
@@ -540,7 +540,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           <button
                             onClick={() => handleDeleteLetter(letter.id)}
                             title="Delete cover letter draft"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[10px] font-extrabold text-rose-600 hover:bg-rose-50 dark:border-zinc-800 dark:bg-black dark:text-rose-400 dark:hover:bg-rose-900/20 transition duration-155 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--danger)] hover:bg-[var(--danger-faint)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--danger)] dark:hover:bg-[var(--danger)]/20 transition duration-155 shadow-sm active:scale-95"
                           >
                             <Trash2 size={11} />
                             Delete
@@ -553,7 +553,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               })}
             </div>
           ) : (
-            <p className="text-xs text-zinc-500 italic">No tailored cover letters generated yet.</p>
+            <p className="text-xs text-[var(--text-muted)] italic">No tailored cover letters generated yet.</p>
           )}
         </div>
       </div>
@@ -563,11 +563,11 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           onClick={handleSaveProfile}
           disabled={isSaving || isParsing}
           className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${saveSuccess
-            ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/10"
-            : "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 disabled:opacity-60"
+            ? "bg-[var(--success)] text-[var(--bg-primary)]"
+            : "bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-60"
             }`}
         >
-          {isSaving && <Loader2 size={14} className="animate-spin text-[#f97316]" />}
+          {isSaving && <Loader2 size={14} className="animate-spin text-[var(--accent)]" />}
           {saveSuccess ? (
             <>
               <Check size={14} className="animate-scale-up text-white stroke-[3]" />

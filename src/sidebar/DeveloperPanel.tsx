@@ -95,7 +95,7 @@ export const DeveloperPanel = ({
       {/* Title Header */}
       <div className="flex items-center justify-between font-bold uppercase tracking-wider text-[var(--text-muted)] font-mono border-b border-[var(--border-color)] pb-2">
         <div className="flex items-center gap-1.5">
-          <Activity size={12} className="text-[#ff6b35]" />
+          <Activity size={12} className="text-[var(--accent)]" />
           Developer Operations Console
         </div>
         <div className="flex gap-1.5">
@@ -104,7 +104,7 @@ export const DeveloperPanel = ({
             onClick={() => setActiveTab("diagnostics")}
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all border ${
               activeTab === "diagnostics"
-                ? "bg-[#ff6b35]/10 border-[#ff6b35]/50 text-[#ff6b35]"
+                ? "bg-[var(--accent)]/10 border-[var(--accent)]/50 text-[var(--accent)]"
                 : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             }`}
           >
@@ -115,7 +115,7 @@ export const DeveloperPanel = ({
             onClick={() => setActiveTab("vision")}
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all border ${
               activeTab === "vision"
-                ? "bg-[#ff6b35]/10 border-[#ff6b35]/50 text-[#ff6b35]"
+                ? "bg-[var(--accent)]/10 border-[var(--accent)]/50 text-[var(--accent)]"
                 : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             }`}
           >
@@ -126,7 +126,7 @@ export const DeveloperPanel = ({
             onClick={() => setActiveTab("ai")}
             className={`px-1.5 py-0.5 rounded text-[8px] font-bold transition-all border ${
               activeTab === "ai"
-                ? "bg-[#ff6b35]/10 border-[#ff6b35]/50 text-[#ff6b35]"
+                ? "bg-[var(--accent)]/10 border-[var(--accent)]/50 text-[var(--accent)]"
                 : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             }`}
           >
@@ -153,14 +153,14 @@ export const DeveloperPanel = ({
 
           {/* Cognitive Reasoning */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
-            <div className="font-bold text-[#ff6b35] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
-              Cognitive Reasoning Output
+            <div className="font-bold text-[var(--accent)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+               Cognitive Reasoning Output
             </div>
             <div className="text-[10px] text-[var(--text-secondary)] space-y-1.5">
               <div className="leading-relaxed"><b>Reasoning:</b> {agentState?.reasoning || "—"}</div>
               <div className="flex items-center justify-between text-[9px] border-t border-[var(--border-color)] pt-1.5 mt-1.5">
                 <span>Tool: <code className="bg-[var(--bg-primary)] px-1 py-0.5 rounded text-[8px] border border-[var(--border-color)] text-[var(--text-primary)] font-mono">{agentState?.selectedTool || "—"}</code></span>
-                <span>Confidence: <strong className="text-[#ff6b35]">{agentState?.confidence !== undefined ? (agentState.confidence <= 1 ? `${Math.round(agentState.confidence * 100)}%` : `${Math.round(agentState.confidence)}%`) : "—"}</strong></span>
+                <span>Confidence: <strong className="text-[var(--accent)]">{agentState?.confidence !== undefined ? (agentState.confidence <= 1 ? `${Math.round(agentState.confidence * 100)}%` : `${Math.round(agentState.confidence)}%`) : "—"}</strong></span>
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ export const DeveloperPanel = ({
                 <div key={idx} className="border-b border-[var(--border-color)]/60 pb-1.5 mb-1.5 last:border-0 last:mb-0">
                   <div className="flex justify-between font-bold text-[var(--text-secondary)]">
                     <span className="text-[var(--text-primary)]">{entry.action}</span>
-                    <span className="text-[#ff6b35]">{entry.confidence <= 1 ? `${Math.round(entry.confidence * 100)}%` : `${Math.round(entry.confidence)}%`}</span>
+                    <span className="text-[var(--accent)]">{entry.confidence <= 1 ? `${Math.round(entry.confidence * 100)}%` : `${Math.round(entry.confidence)}%`}</span>
                   </div>
                   <p className="italic text-[var(--text-muted)] mt-0.5 leading-snug">{entry.reasoning}</p>
                   <div className="text-[8px] text-[var(--text-muted)] mt-0.5 truncate">Result: {entry.observation}</div>
@@ -190,14 +190,14 @@ export const DeveloperPanel = ({
           {/* Reflection & Replanning Dashboard */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
             <div className="flex items-center gap-1 font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
-              <TrendingUp size={10} className="text-[#ff6b35]" />
+              <TrendingUp size={10} className="text-[var(--accent)]" />
               Reflection & Replanning
             </div>
             <div className="grid grid-cols-2 gap-1 text-[10px] text-[var(--text-secondary)]">
               <span className="truncate">Goal: <span className="font-semibold text-[var(--text-primary)]">{agentState?.goalProgress?.goal ?? agentState?.goal ?? "—"}</span></span>
               <span>Progress: <span className="font-bold text-emerald-500">{agentState?.goalProgress?.completionPercentage ?? 0}%</span></span>
               <span>Failures: <span className="font-medium text-rose-500">{agentState?.failureCount ?? 0}</span></span>
-              <span>Replans: <span className="font-medium text-[#ff6b35]">{agentState?.replanCount ?? 0}</span></span>
+              <span>Replans: <span className="font-medium text-[var(--accent)]">{agentState?.replanCount ?? 0}</span></span>
               <span>Recoveries: <span className="font-medium text-blue-500">{agentState?.recoveryCount ?? 0}</span></span>
               <span>Blocked: <span className={`font-medium ${agentState?.goalProgress?.isBlocked ? "text-rose-500" : "text-emerald-500"}`}>{agentState?.goalProgress?.isBlocked ? "Yes" : "No"}</span></span>
             </div>
@@ -209,7 +209,7 @@ export const DeveloperPanel = ({
                   <div key={sg.id} className="flex items-center gap-1.5 text-[var(--text-muted)] text-[9px]">
                     {sg.status === "completed" && <CheckCircle2 size={9} className="text-emerald-500 shrink-0" />}
                     {sg.status === "failed" && <AlertTriangle size={9} className="text-rose-500 shrink-0" />}
-                    {sg.status === "running" && <RefreshCw size={9} className="text-[#ff6b35] shrink-0 animate-spin" />}
+                    {sg.status === "running" && <RefreshCw size={9} className="text-[var(--accent)] shrink-0 animate-spin" />}
                     {sg.status === "pending" && <span className="h-1.5 w-1.5 rounded-full border border-[var(--border-color)] inline-block shrink-0" />}
                     <span className="truncate">{sg.description}</span>
                   </div>
@@ -285,11 +285,11 @@ export const DeveloperPanel = ({
           {/* Screenshot Bounding box preview */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
             <div className="font-bold text-[var(--text-secondary)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1.5 mb-2 flex items-center gap-1">
-              <Eye size={10} className="text-[#ff6b35]" />
+              <Eye size={10} className="text-[var(--accent)]" />
               Viewport Vision Analysis
             </div>
             
-            <div className="relative w-full overflow-hidden border border-[var(--border-color)] bg-zinc-950 rounded-lg aspect-video flex items-center justify-center">
+            <div className="relative w-full overflow-hidden border border-[var(--border-color)] bg-[var(--bg-primary)] rounded-lg aspect-video flex items-center justify-center">
               {visionData.screenshot ? (
                 <div className="relative w-full h-full">
                   <img
@@ -315,7 +315,7 @@ export const DeveloperPanel = ({
                   ))}
                 </div>
               ) : (
-                <div className="text-zinc-500 italic text-[9px] flex items-center gap-1.5">
+                <div className="text-[var(--text-muted)] italic text-[9px] flex items-center gap-1.5">
                   No screenshot analyzed yet. Trigger a visual action to capture.
                 </div>
               )}
@@ -328,7 +328,7 @@ export const DeveloperPanel = ({
                   Targeted Element: <strong className="text-[var(--text-primary)]">{visionData.target || "None"}</strong>
                 </div>
                 <div>
-                  Vision Confidence: <strong className="text-[#ff6b35]">{Math.round(visionData.confidence * 100)}%</strong>
+                  Vision Confidence: <strong className="text-[var(--accent)]">{Math.round(visionData.confidence * 100)}%</strong>
                 </div>
               </div>
             )}
@@ -345,11 +345,11 @@ export const DeveloperPanel = ({
                   <span className="text-[var(--text-primary)] font-semibold truncate max-w-[120px]" title={el.text}>
                     [{el.type.toUpperCase()}] {el.text || "Unnamed Element"}
                   </span>
-                  <span className="text-[#ff6b35]">{Math.round(el.confidence * 100)}%</span>
+                  <span className="text-[var(--accent)]">{Math.round(el.confidence * 100)}%</span>
                 </div>
               ))}
               {visionData.elements.length === 0 && (
-                <span className="text-zinc-500 italic">No controls detected on page.</span>
+                <span className="text-[var(--text-muted)] italic">No controls detected on page.</span>
               )}
             </div>
           </div>
@@ -401,7 +401,7 @@ export const DeveloperPanel = ({
 
           {/* Performance & Metrics table */}
           <div className="rounded border border-[var(--border-color)] bg-[var(--bg-secondary)] p-2.5 font-mono">
-            <div className="font-bold text-[#ff6b35] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
+            <div className="font-bold text-[var(--accent)] uppercase text-[9px] tracking-wide border-b border-[var(--border-color)] pb-1 mb-1.5">
               Provider Metrics Monitoring
             </div>
             <div className="max-h-24 overflow-y-auto space-y-1.5 text-[9px] text-[var(--text-secondary)] pr-1 custom-scrollbar">

@@ -17,7 +17,7 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({
   return (
     <div className="flex flex-col gap-2.5">
       {isConnected ? (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 flex flex-col gap-1 shadow-sm transition hover:border-[#ff6b35]/20">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 flex flex-col gap-1 shadow-sm transition hover:border-[var(--accent)]/20">
           <div className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <p className="font-mono text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-bold">
@@ -41,7 +41,7 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({
       )}
 
       {!hasApiKey && (
-        <p className="font-mono text-[8.5px] text-[#ff6b35] leading-normal bg-[#ff6b35]/5 py-1.5 px-2 rounded border border-[#ff6b35]/10 flex items-center gap-1.5 animate-pulse-glow">
+        <p className="font-mono text-[8.5px] text-[var(--accent)] leading-normal bg-[var(--accent)]/5 py-1.5 px-2 rounded border border-[var(--accent)]/10 flex items-center gap-1.5 animate-pulse-glow">
           Configure your API credentials to enable autonomous AI goals.
         </p>
       )}

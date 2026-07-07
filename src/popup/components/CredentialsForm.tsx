@@ -32,10 +32,10 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
   setShowSettings
 }) => {
   return (
-    <div className="border border-[var(--border-color)] bg-[var(--bg-secondary)]/90 backdrop-blur-md rounded-xl p-3 animate-slide-down space-y-2.5 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+    <div className="border border-[var(--border-color)] bg-[var(--bg-secondary)]/90 backdrop-blur-md rounded-xl p-3 animate-slide-down space-y-2.5 shadow-[var(--shadow-premium)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Key size={11} className="text-[#ff6b35]" />
+          <Key size={11} className="text-[var(--accent)]" />
           <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--text-secondary)] font-bold">
             AI Credentials Setup
           </span>
@@ -54,7 +54,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
           <select
             value={settings.provider || "gemini"}
             onChange={(e) => setSettings({ ...settings, provider: e.target.value as any })}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition cursor-pointer"
           >
             <option value="gemini">Google Gemini</option>
             <option value="openai">OpenAI (ChatGPT)</option>
@@ -83,7 +83,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.apiKey}
               onChange={(e) => handleKeyChange("apiKey", e.target.value)}
               placeholder="AI Studio API Key"
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -105,7 +105,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.openaiApiKey}
               onChange={(e) => handleKeyChange("openaiApiKey", e.target.value)}
               placeholder="sk-..."
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -127,7 +127,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.anthropicApiKey}
               onChange={(e) => handleKeyChange("anthropicApiKey", e.target.value)}
               placeholder="sk-ant-..."
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -149,7 +149,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.groqApiKey}
               onChange={(e) => handleKeyChange("groqApiKey", e.target.value)}
               placeholder="gsk_..."
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -171,7 +171,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.openrouterApiKey}
               onChange={(e) => handleKeyChange("openrouterApiKey", e.target.value)}
               placeholder="sk-or-..."
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -193,7 +193,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={decryptedKeys.deepseekApiKey}
               onChange={(e) => handleKeyChange("deepseekApiKey", e.target.value)}
               placeholder="sk-..."
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -206,7 +206,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               value={settings.ollamaUrl || ""}
               onChange={(e) => setSettings({ ...settings, ollamaUrl: e.target.value })}
               placeholder="http://localhost:11434"
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
             />
           </div>
         )}
@@ -218,7 +218,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
             value={settings.model || ""}
             onChange={(e) => setSettings({ ...settings, model: e.target.value })}
             placeholder="Default Model"
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
           />
         </div>
 
@@ -232,7 +232,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               step="0.1"
               value={settings.temperature !== undefined ? settings.temperature : 0.6}
               onChange={(e) => setSettings({ ...settings, temperature: parseFloat(e.target.value) })}
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition"
             />
           </div>
           <div className="w-1/2 space-y-0.5">
@@ -243,7 +243,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
               max="8192"
               value={settings.maxTokens !== undefined ? settings.maxTokens : 1024}
               onChange={(e) => setSettings({ ...settings, maxTokens: parseInt(e.target.value, 10) })}
-              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition"
             />
           </div>
         </div>
@@ -253,7 +253,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
           <select
             value={settings.fallbackProvider || "none"}
             onChange={(e) => setSettings({ ...settings, fallbackProvider: e.target.value as any })}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition cursor-pointer"
           >
             <option value="none">None</option>
             <option value="gemini">Google Gemini</option>
@@ -271,7 +271,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
           <select
             value={settings.visionProvider || "none"}
             onChange={(e) => setSettings({ ...settings, visionProvider: e.target.value as any })}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition cursor-pointer"
           >
             <option value="none">Use Chat Provider</option>
             <option value="gemini">Google Gemini</option>
@@ -287,7 +287,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
           <select
             value={settings.embeddingProvider || "none"}
             onChange={(e) => setSettings({ ...settings, embeddingProvider: e.target.value as any })}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition cursor-pointer"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition cursor-pointer"
           >
             <option value="none">Use Chat Provider</option>
             <option value="gemini">Google Gemini</option>
@@ -306,7 +306,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
             step="5000"
             value={settings.maxSessionTokens !== undefined ? settings.maxSessionTokens : 50000}
             onChange={(e) => setSettings({ ...settings, maxSessionTokens: parseInt(e.target.value, 10) || 50000 })}
-            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[#ff6b35] transition font-mono"
+            className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded px-2 py-1 text-[10.5px] text-[var(--text-primary)] outline-none focus:border-[var(--accent)] transition font-mono"
           />
         </div>
 
@@ -316,7 +316,7 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
             type="checkbox"
             checked={settings.streaming || false}
             onChange={(e) => setSettings({ ...settings, streaming: e.target.checked })}
-            className="accent-[#ff6b35] cursor-pointer"
+            className="accent-[var(--accent)] cursor-pointer"
           />
         </div>
 
@@ -327,8 +327,8 @@ export const CredentialsForm: React.FC<CredentialsFormProps> = ({
             onClick={() => setSettings({ ...settings, sidebarPinned: !settings.sidebarPinned })}
             className={`font-mono px-2 py-0.5 rounded border transition-all uppercase cursor-pointer ${
               settings.sidebarPinned
-                ? "border-[#ff6b35] bg-[#ff6b35]/5 text-[#ff6b35]"
-                : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[#ff6b35] hover:text-[var(--text-primary)]"
+                ? "border-[var(--accent)] bg-[var(--accent)]/5 text-[var(--accent)]"
+                : "border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
             }`}
           >
             {settings.sidebarPinned ? "Pinned" : "Floating"}
