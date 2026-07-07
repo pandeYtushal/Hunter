@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { 
-  Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock, 
+import {
+  Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock,
   Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle,
   Plus, MessageSquare, Pin, Trash2, Settings, Compass, Target,
-  Check
+  Check, History
 } from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
@@ -14,6 +14,7 @@ import { PromptSuggestions, getDynamicSuggestions } from "./PromptSuggestions";
 import { ChatInput } from "./ChatInput";
 import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
+import { ContextBar } from "./ContextBar";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
 import { ProfileSettings } from "../../sidebar/ProfileSettings";
 import { TaskManager } from "./TaskManager";
@@ -107,6 +108,7 @@ export const ChatWindow: React.FC = () => {
   const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
   const { value: activeMode, setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
   const [showTaskManager, setShowTaskManager] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [copilot, setCopilot] = useState<CopilotState>({
@@ -196,9 +198,14 @@ export const ChatWindow: React.FC = () => {
         addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
       }
       CopilotEngine.getInstance().cancel();
+    } else if (copilot.machineState === "failed" && prevMachineStateRef.current !== "failed") {
+      addMessageToHistory(
+        "error",
+        copilot.blockReason || copilot.lastResult || "Hunter could not continue this autonomous goal."
+      );
     }
     prevMachineStateRef.current = copilot.machineState;
-  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal]);
+  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal, copilot.blockReason]);
 
   const handleCopyMessage = useCallback((text: string) => {
     console.log("Message copied");
@@ -222,7 +229,13 @@ export const ChatWindow: React.FC = () => {
     if (isGoalMode) {
       setInput("");
       await addMessageToHistory("user", query);
-      await CopilotEngine.getInstance().startGoal(query);
+      try {
+        await CopilotEngine.getInstance().startGoal(query);
+      } catch (err: any) {
+        const message = err?.message || "Hunter could not start autonomous mode.";
+        setError(message);
+        await addMessageToHistory("error", message);
+      }
     } else {
       await sendMessage();
     }
@@ -244,7 +257,13 @@ export const ChatWindow: React.FC = () => {
     if (isGoalMode) {
       setInput("");
       await addMessageToHistory("user", prompt);
-      await CopilotEngine.getInstance().startGoal(prompt);
+      try {
+        await CopilotEngine.getInstance().startGoal(prompt);
+      } catch (err: any) {
+        const message = err?.message || "Hunter could not start autonomous mode.";
+        setError(message);
+        await addMessageToHistory("error", message);
+      }
     } else {
       await sendMessage(prompt);
       setInput("");
@@ -306,11 +325,10 @@ export const ChatWindow: React.FC = () => {
                 <div
                   key={conv.id}
                   onClick={() => selectConversation(conv.id)}
-                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${
-                    conv.id === activeId
-                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
-                  }`}
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
+                    ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
+                    }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Pin size={9} className="text-[var(--accent)] rotate-45 shrink-0" />
@@ -330,11 +348,10 @@ export const ChatWindow: React.FC = () => {
                   <div
                     key={conv.id}
                     onClick={() => selectConversation(conv.id)}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${
-                      conv.id === activeId
-                        ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
-                    }`}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
+                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
+                      }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <MessageSquare size={10} className="text-[var(--text-muted)] shrink-0" />
@@ -399,37 +416,107 @@ export const ChatWindow: React.FC = () => {
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        {/* Switcher tabs: Chat vs Tasks vs Workspace vs Workflows */}
-        <div className="flex border-b border-[var(--border-color)] bg-[var(--bg-secondary)] text-[11px] shrink-0 font-medium text-center select-none font-sans h-11 relative">
+        {activeView === "chat" && (
+          <div className="mx-3 mb-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHistory((value) => !value)}
+              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition ${showHistory
+                ? "border-[rgba(255,107,53,0.35)] bg-[rgba(255,107,53,0.1)] text-[var(--text-primary)]"
+                : "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
+              aria-expanded={showHistory}
+              aria-label="Open chat history"
+            >
+              <History size={13} />
+              Chats
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await createConversation();
+                setShowHistory(false);
+              }}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
+              aria-label="Start new chat"
+            >
+              <Plus size={13} />
+              New
+            </button>
+          </div>
+        )}
+
+        {activeView === "chat" && showHistory && (
+          <div className="mx-3 mb-2 max-h-52 overflow-y-auto rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1.5 shadow-[var(--shadow-product)] custom-scrollbar">
+            {conversations.length === 0 ? (
+              <div className="px-3 py-4 text-center text-[12px] text-[var(--text-muted)]">No chats yet.</div>
+            ) : (
+              conversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={`group flex items-center gap-2 rounded-xl px-2 py-2 transition ${conversation.id === activeId ? "bg-[var(--cards)]" : "hover:bg-[var(--bg-tertiary)]"
+                    }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectConversation(conversation.id);
+                      setShowHistory(false);
+                    }}
+                    className="min-w-0 flex-1 text-left"
+                    aria-current={conversation.id === activeId ? "true" : undefined}
+                  >
+                    <div className="truncate text-[12px] font-medium text-[var(--text-primary)]">
+                      {conversation.title || "New Conversation"}
+                    </div>
+                    <div className="mt-0.5 truncate text-[10.5px] text-[var(--text-muted)]">
+                      {conversation.messages.length} messages
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async (event) => {
+                      event.stopPropagation();
+                      await deleteConversation(conversation.id);
+                    }}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-70 hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
+                    aria-label={`Delete ${conversation.title || "chat"}`}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Workspace switcher */}
+        <div className="mx-3 mb-1 grid grid-cols-4 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1 text-[11px] shrink-0 font-medium text-center select-none font-sans">
           <button
             onClick={() => setActiveView("chat")}
-            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
-              activeView === "chat" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "chat" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
           >
             Chat
           </button>
           <button
             onClick={() => setActiveView("tasks")}
-            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
-              activeView === "tasks" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "tasks" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
           >
             Tasks
           </button>
           <button
             onClick={() => setActiveView("dashboard")}
-            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
-              activeView === "dashboard" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "dashboard" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
           >
             Workspace
           </button>
           <button
             onClick={() => setActiveView("workflows")}
-            className={`nav-tab flex-grow py-3 transition-all cursor-pointer ${
-              activeView === "workflows" ? "active text-[var(--accent)] font-semibold" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            }`}
+            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "workflows" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+              }`}
           >
             Flows
           </button>
@@ -454,14 +541,14 @@ export const ChatWindow: React.FC = () => {
               <div className="chat-thread flex-1 overflow-y-auto px-4 py-4 space-y-8 custom-scrollbar bg-transparent">
                 {!activeConversation || activeConversation.messages.length === 0 ? (
                   <div className="flex-grow flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-6 max-w-sm mx-auto h-full justify-self-center py-10">
-                    
+
                     {/* Brand Greeting */}
                     <div className="space-y-2 flex flex-col items-center">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-faint)] border border-[var(--accent-dim)] text-[var(--accent)] shadow-md mb-2">
                         <Compass size={24} className="animate-spin-slow" style={{ animationDuration: "20s" }} />
                       </div>
                       <h2 className="text-xl font-bold tracking-normal text-[var(--text-primary)]">
-                        Hi 👋
+                        Hi
                       </h2>
                       <p className="text-[13px] text-[var(--text-secondary)] font-normal leading-relaxed">
                         What would you like help with today?
@@ -601,39 +688,36 @@ export const ChatWindow: React.FC = () => {
                 const isCompleted = step.status === "completed";
                 const isFailed = step.status === "failed";
                 const StepIcon = getStepIcon(step.name, step.description);
-                
+
                 return (
                   <div key={step.id} className="relative flex items-start justify-between gap-3 group">
                     {/* Checkbox bullet marker */}
-                    <div className={`absolute -left-[29px] top-[2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--bg-secondary)] border transition-all duration-300 z-10 ${
-                      isCompleted 
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-500" 
-                        : isFailed 
-                        ? "border-rose-500 bg-rose-500/10 text-rose-500" 
-                        : isRunning 
-                        ? "border-[var(--accent)] bg-[var(--accent-faint)] text-[var(--accent)]" 
-                        : "border-[var(--border-color)] text-[var(--text-muted)] bg-[var(--bg-tertiary)]"
-                    }`}>
+                    <div className={`absolute -left-[29px] top-[2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--bg-secondary)] border transition-all duration-300 z-10 ${isCompleted
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
+                      : isFailed
+                        ? "border-rose-500 bg-rose-500/10 text-rose-500"
+                        : isRunning
+                          ? "border-[var(--accent)] bg-[var(--accent-faint)] text-[var(--accent)]"
+                          : "border-[var(--border-color)] text-[var(--text-muted)] bg-[var(--bg-tertiary)]"
+                      }`}>
                       {isCompleted ? (
                         <Check className="h-3 w-3 text-emerald-500 stroke-[3]" />
                       ) : isFailed ? (
                         <X className="h-3 w-3 text-rose-500 stroke-[3]" />
                       ) : (
-                        <StepIcon className={`h-3 w-3 ${
-                          isRunning ? "text-[var(--accent)] animate-pulse" : "text-[var(--text-muted)]"
-                        }`} />
+                        <StepIcon className={`h-3 w-3 ${isRunning ? "text-[var(--accent)] animate-pulse" : "text-[var(--text-muted)]"
+                          }`} />
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`font-semibold transition-all duration-200 ${
-                          isCompleted 
-                            ? "text-[var(--text-muted)] line-through opacity-75 text-left" 
-                            : isRunning 
-                            ? "text-[var(--text-primary)] font-bold text-left" 
+                        <span className={`font-semibold transition-all duration-200 ${isCompleted
+                          ? "text-[var(--text-muted)] line-through opacity-75 text-left"
+                          : isRunning
+                            ? "text-[var(--text-primary)] font-bold text-left"
                             : "text-[var(--text-secondary)] text-left"
-                        }`}>
+                          }`}>
                           {step.name}
                         </span>
                         {isRunning && (
@@ -642,9 +726,8 @@ export const ChatWindow: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className={`text-[10px] leading-relaxed mt-0.5 text-left ${
-                        isCompleted ? "text-[var(--text-muted)] opacity-60" : "text-[var(--text-muted)]"
-                      }`}>
+                      <p className={`text-[10px] leading-relaxed mt-0.5 text-left ${isCompleted ? "text-[var(--text-muted)] opacity-60" : "text-[var(--text-muted)]"
+                        }`}>
                         {step.description}
                       </p>
                     </div>
@@ -662,7 +745,7 @@ export const ChatWindow: React.FC = () => {
                 </p>
                 <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
                   {copilot.machineState === "waiting_confirmation"
-                    ? "Hunter has paused before performing a critical operation (Submit, Purchase, Delete, Upload). Do you confirm?"
+                    ? copilot.pendingConfirmationMessage || "Hunter has paused before a protected action. Do you approve?"
                     : approvalState?.message}
                 </p>
                 <div className="flex gap-2">
@@ -753,17 +836,17 @@ export const ChatWindow: React.FC = () => {
         {/* Context Bar */}
         {activeView === "chat" && !showTaskManager && (
           <div className="px-4 py-2 flex flex-wrap gap-1.5 items-center bg-transparent border-t border-[var(--border-color)]/30 shrink-0 select-none">
-            {/* 📍 Site Context */}
+            {/*Site Context */}
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
-              <span className="text-[10.5px]">📍</span>
+              <span className="text-[10.5px]"></span>
               <span className="truncate max-w-[120px] font-mono">
                 {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "no active page"}
               </span>
             </span>
-            
-            {/* 🧠 Memory Context */}
+
+            {/*Memory Context */}
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
-              <span>🧠</span>
+
               <span className="font-mono">Memory</span>
             </span>
 
@@ -775,14 +858,14 @@ export const ChatWindow: React.FC = () => {
               </span>
             ))}
 
-            {/* ➕ Add Context Button */}
+            {/*Add Context Button */}
             <button
               onClick={() => {
                 captureScreen();
               }}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[10px] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)] transition shadow-sm cursor-pointer"
             >
-              <span>➕</span>
+
               <span className="font-mono">Add Context</span>
             </button>
           </div>
@@ -790,23 +873,32 @@ export const ChatWindow: React.FC = () => {
 
         {/* Standard input footer area */}
         {activeView === "chat" && !showTaskManager && (
-          <ChatInput
-            value={input}
-            isGenerating={isGenerating || isCopilotRunning}
-            onChange={setInput}
-            onSend={handleSend}
-            onStop={handleStop}
-            onCaptureScreenshot={captureScreen}
-            onAttachFile={attachFile}
-            onAttachImageObject={(att) => {
-              try {
-                const blob = base64ToBlob(att.base64Data, att.mimeType);
-                attachFile(new File([blob], att.name, { type: att.mimeType }));
-              } catch (err) {
-                console.error("Failed to reconstruct image from pasted attachment:", err);
-              }
-            }}
-          />
+          <>
+            <ContextBar
+              currentUrl={currentUrl}
+              hasAttachments={attachments.length > 0}
+              hasMemory={Boolean(activeConversation?.messages.length)}
+              browserControlEnabled={Boolean(currentUrl)}
+              activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : undefined}
+            />
+            <ChatInput
+              value={input}
+              isGenerating={isGenerating || isCopilotRunning}
+              onChange={setInput}
+              onSend={handleSend}
+              onStop={handleStop}
+              onCaptureScreenshot={captureScreen}
+              onAttachFile={attachFile}
+              onAttachImageObject={(att) => {
+                try {
+                  const blob = base64ToBlob(att.base64Data, att.mimeType);
+                  attachFile(new File([blob], att.name, { type: att.mimeType }));
+                } catch (err) {
+                  console.error("Failed to reconstruct image from pasted attachment:", err);
+                }
+              }}
+            />
+          </>
         )}
 
         {/* Developer Mode Drawer panel */}
@@ -827,7 +919,7 @@ export const ChatWindow: React.FC = () => {
                 <X size={14} />
               </Button>
             </div>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3 text-[var(--text-secondary)]">
               <div>
                 <span className="text-[var(--text-muted)] font-bold">ACTIVE CHAT PROVIDER:</span>{" "}
@@ -839,13 +931,12 @@ export const ChatWindow: React.FC = () => {
               </div>
               <div>
                 <span className="text-[var(--text-muted)] font-bold">STREAM STATUS:</span>{" "}
-                <span className={`font-bold uppercase ${
-                  devMetrics.streamingStatus === "streaming"
-                    ? "text-[var(--accent)]"
-                    : devMetrics.streamingStatus === "completed"
+                <span className={`font-bold uppercase ${devMetrics.streamingStatus === "streaming"
+                  ? "text-[var(--accent)]"
+                  : devMetrics.streamingStatus === "completed"
                     ? "text-emerald-500"
                     : "text-[var(--text-muted)]"
-                }`}>
+                  }`}>
                   {devMetrics.streamingStatus}
                 </span>
               </div>

@@ -5,7 +5,7 @@ interface ChatHeaderProps {
   currentUrl?: string;
   activeGoal?: string | null;
   activeAgent?: string | null;
-  provider: string;
+  provider?: string;
   theme: "light" | "dark";
   isExpanded?: boolean;
   onToggleTheme: () => void;
@@ -22,7 +22,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   currentUrl,
   activeGoal,
   activeAgent,
-  provider,
   theme,
   isExpanded = false,
   onToggleTheme,
@@ -125,9 +124,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
       {/* Right side: Page capsule and system control icons */}
       <div className="flex items-center gap-2">
+        {activeGoal && (
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--accent-faint)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)] animate-pulse" />
+            {activeGoal.length > 18 ? activeGoal.substring(0, 16) + "..." : activeGoal}
+          </div>
+        )}
         {shortUrl && (
           <div className="hidden md:flex items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-2.5 py-1 text-[10px] font-mono text-[var(--text-secondary)] shadow-sm max-w-[150px]">
-            <span>📍</span>
             <span className="truncate" title={currentUrl}>{shortUrl}</span>
           </div>
         )}
@@ -187,6 +191,3 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     </header>
   );
 };
-
-
-

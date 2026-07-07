@@ -7,6 +7,7 @@ import type { ActionType } from "../shared/types/agent";
 
 export class WorkflowExecutor {
   private currentTabId?: number;
+  private mediumApprovalGranted = false;
 
   /**
    * Find tab matching URL substring.
@@ -41,19 +42,12 @@ export class WorkflowExecutor {
     }
   }
 
-  /**
-   * Evaluates if a button target click matches safety restricted operations (Submit, Purchase, Delete, Upload).
-   */
-  private isSafetyRestricted(task: CopilotTask): boolean {
-    const text = (task.name + " " + (task.description || "")).toLowerCase();
-    
-    // Safety boundaries
-    const isSubmit = text.includes("submit") || text.includes("apply") || text.includes("confirm");
-    const isPurchase = text.includes("purchase") || text.includes("pay") || text.includes("buy");
-    const isDelete = text.includes("delete") || text.includes("remove") || text.includes("destroy");
-    const isUpload = task.action === "upload_resume" || text.includes("upload font") || text.includes("attach");
-    
-    return isSubmit || isPurchase || isDelete || isUpload;
+  private async waitForRenderedPage(tabId: number): Promise<void> {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: "WAIT_FOR_PAGE_READY" });
+    } catch {
+      // Restricted pages and pages without a content script are handled by the snapshot fallback below.
+    }
   }
 
   /**
@@ -79,6 +73,7 @@ export class WorkflowExecutor {
     }
 
     this.currentTabId = activeTab.id;
+    await this.waitForRenderedPage(activeTab.id);
 
     let pageContext = null;
     try {
@@ -86,6 +81,24 @@ export class WorkflowExecutor {
       pageContext = response?.snapshot;
     } catch {
       // Content script not loaded or restricted page
+    }
+
+    if (!pageContext && activeTab.url) {
+      let host = "";
+      try {
+        host = new URL(activeTab.url).host;
+      } catch {
+        host = "";
+      }
+
+      pageContext = {
+        title: activeTab.title || "",
+        url: activeTab.url,
+        host,
+        selectedText: "",
+        description: "",
+        content: ""
+      };
     }
 
     const profile = await storage.get("profile").catch(() => null);
@@ -96,19 +109,25 @@ export class WorkflowExecutor {
       profile
     };
 
-    // 3. Safety Permission Checks (never submit, purchase, delete or upload without user confirm)
-    const guard = PermissionGuard.verifyAction(task.action, pageContext);
-    const requiresSafetyConfirm = guard.requiresConfirmation || this.isSafetyRestricted(task);
+    // 3. Safety Permission Checks
+    const taskText = `${task.name} ${task.description || ""}`;
+    const guard = PermissionGuard.verifyAction(task.action, pageContext, taskText, this.mediumApprovalGranted);
+    if (!guard.allowed) {
+      return { success: false, result: guard.reason || "This page cannot be automated." };
+    }
 
-    if (requiresSafetyConfirm) {
+    if (guard.requiresConfirmation) {
       task.status = "waiting_confirmation";
-      const confirmMsg = `Safety Confirmation Required: Hunter wants to perform "${task.name}" (${task.description}). Approve?`;
+      const confirmMsg = PermissionGuard.createConfirmationMessage(task.action, guard.level, task.name);
       
       return new Promise((resolve) => {
         onConfirmationRequired(
           confirmMsg,
           async () => {
             // User Approved: execute
+            if (guard.level === "MEDIUM") {
+              this.mediumApprovalGranted = true;
+            }
             task.status = "running";
             const outcome = await this.runTool(task, runtime, executionContext);
             resolve(outcome);

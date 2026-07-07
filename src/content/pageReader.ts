@@ -1,3 +1,5 @@
+import { extractWebsiteSkillData } from "./websiteSkills";
+
 export function extractTitle(): string {
   return document.title || "";
 }
@@ -90,4 +92,8 @@ export function extractPageContent(): string {
   // Truncate to a reasonable limit (15,000 chars is ~3,500 tokens) 
   // to avoid hitting API token quotas on extremely large pages.
   return finalContent.length > 15000 ? finalContent.substring(0, 15000) + "\n...[Content truncated for length]..." : finalContent;
+}
+
+export function extractStructuredPageData() {
+  return extractWebsiteSkillData();
 }

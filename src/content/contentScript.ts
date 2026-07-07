@@ -1,7 +1,8 @@
 import { sidebarStyles } from "./sidebarStyles";
 import { defaultStorage, type StorageSchema } from "../shared/types/storage";
 import type { PageSnapshot, RuntimeMessage, SidebarStatus, ThemeMode } from "../shared/types/messages";
-import { extractTitle, extractMetadata, extractPageContent } from "./pageReader";
+import { extractTitle, extractMetadata, extractPageContent, extractStructuredPageData } from "./pageReader";
+import { startPageReadinessObserver, waitForPageReady } from "./pageReadiness";
 import { autofillPageForm, scanPageForm, executeAutofill, cancelAutofill } from "./formMapper";
 import { clickElement } from "../actions/clickElement";
 import { fillInput } from "../actions/fillInput";
@@ -38,7 +39,10 @@ const icons = {
     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-close"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
 };
 
-const getPageSnapshot = (): PageSnapshot => {
+startPageReadinessObserver();
+
+const getPageSnapshot = async (): Promise<PageSnapshot> => {
+  const readiness = await waitForPageReady();
   const meta = extractMetadata();
   const description =
     meta.description ||
@@ -53,7 +57,13 @@ const getPageSnapshot = (): PageSnapshot => {
     selectedText: window.getSelection()?.toString() ?? "",
     description,
     content: extractPageContent(),
-    metadata: meta
+    metadata: meta,
+    readiness: {
+      ready: readiness.ready,
+      reason: readiness.reason,
+      observedMutationCount: readiness.observedMutationCount
+    },
+    structuredData: extractStructuredPageData()
   };
 };
 
@@ -686,7 +696,15 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
   const respond = async () => {
     switch (message.type) {
       case "GET_PAGE_SNAPSHOT":
-        return { snapshot: getPageSnapshot() };
+        return { snapshot: await getPageSnapshot() };
+      case "WAIT_FOR_PAGE_READY": {
+        const readiness = await waitForPageReady();
+        return {
+          ready: readiness.ready,
+          reason: readiness.reason,
+          observedMutationCount: readiness.observedMutationCount
+        };
+      }
       case "AUTOFILL_FORM": {
         const state = await getStorageState();
         const profile = state.profile;

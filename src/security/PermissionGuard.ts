@@ -2,18 +2,26 @@ import type { ActionType } from "../types/Action";
 import type { PageSnapshot } from "../shared/types/messages";
 
 const restrictedSchemes = ["chrome:", "chrome-extension:", "edge:", "about:", "file:"];
-const sensitiveActions = new Set<ActionType>(["upload_resume", "fill_form", "navigate_page", "vision_click", "vision_fill", "vision_analyze"]);
+
+export type PermissionLevel = "SAFE" | "MEDIUM" | "HIGH";
+
+const mediumActions = new Set<ActionType>(["fill_form", "fill_input", "upload_resume", "vision_fill", "handle_dynamic_form"]);
+const highActions = new Set<ActionType>(["click_element", "vision_click"]);
 
 export interface PermissionCheck {
   allowed: boolean;
   reason?: string;
   requiresConfirmation: boolean;
+  level: PermissionLevel;
 }
+
+const highRiskText = /\b(submit|send|delete|remove|purchase|pay|buy|post|publish|confirm order|place order|apply now|final submit)\b/i;
+const mediumRiskText = /\b(edit|fill|autofill|upload|attach|type|write|replace)\b/i;
 
 export const PermissionGuard = {
   verifyDomainAccess(pageContext?: PageSnapshot): PermissionCheck {
     if (!pageContext?.url) {
-      return { allowed: false, reason: "No active page context is available.", requiresConfirmation: false };
+      return { allowed: false, reason: "No active page context is available.", requiresConfirmation: false, level: "SAFE" };
     }
 
     try {
@@ -22,42 +30,47 @@ export const PermissionGuard = {
         return {
           allowed: false,
           reason: `Hunter cannot automate restricted ${url.protocol} pages.`,
-          requiresConfirmation: false
+          requiresConfirmation: false,
+          level: "SAFE"
         };
       }
-      return { allowed: true, requiresConfirmation: false };
+      return { allowed: true, requiresConfirmation: false, level: "SAFE" };
     } catch {
-      return { allowed: false, reason: "The active page URL is invalid.", requiresConfirmation: false };
+      return { allowed: false, reason: "The active page URL is invalid.", requiresConfirmation: false, level: "SAFE" };
     }
   },
 
-  verifyAction(action: ActionType, pageContext?: PageSnapshot): PermissionCheck {
+  classifyAction(action: ActionType, taskText = ""): PermissionLevel {
+    if (highActions.has(action) && highRiskText.test(taskText)) return "HIGH";
+    if (highRiskText.test(taskText)) return "HIGH";
+    if (mediumActions.has(action) || mediumRiskText.test(taskText)) return "MEDIUM";
+    return "SAFE";
+  },
+
+  verifyAction(action: ActionType, pageContext?: PageSnapshot, taskText = "", mediumApproved = false): PermissionCheck {
     const domainCheck = PermissionGuard.verifyDomainAccess(pageContext);
     if (!domainCheck.allowed) return domainCheck;
 
+    const level = PermissionGuard.classifyAction(action, taskText);
+    const requiresConfirmation = level === "HIGH" || (level === "MEDIUM" && !mediumApproved);
+
     return {
       allowed: true,
-      requiresConfirmation: sensitiveActions.has(action)
+      requiresConfirmation,
+      level
     };
   },
 
-  createConfirmationMessage(action: ActionType): string {
-    switch (action) {
-      case "upload_resume":
-        return "Resume upload requires your manual confirmation before any file picker action.";
-      case "navigate_page":
-        return "External navigation requires confirmation before moving away from the current page.";
-      case "fill_form":
-        return "Form fill proposals require confirmation before values are written.";
-      case "vision_click":
-        return "Vision Click: Hunter detected this button via image analysis and will click it upon confirmation.";
-      case "vision_fill":
-        return "Vision Fill: Hunter will input details into this field located via visual layout matching.";
-      case "vision_analyze":
-        return "Vision Scan: Hunter will capture a screenshot and analyze page visual components.";
-      default:
-        return "This action is ready to run.";
+  createConfirmationMessage(action: ActionType, level: PermissionLevel = PermissionGuard.classifyAction(action), taskName?: string): string {
+    if (level === "HIGH") {
+      return `Hunter is paused before a high-impact action${taskName ? `: ${taskName}` : ""}. Review and approve before it submits, sends, deletes, purchases, or posts anything.`;
     }
+
+    if (level === "MEDIUM") {
+      return `Hunter needs one-time approval to edit page content${taskName ? ` for: ${taskName}` : ""}. This covers filling fields, uploads, and autofill during the current task.`;
+    }
+
+    return "This safe browsing action can run automatically.";
   },
 
   async awaitConfirmation(action: ActionType, message: string): Promise<boolean> {
