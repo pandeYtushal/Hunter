@@ -166,5 +166,22 @@ export const ConversationManager = {
         }
       });
     });
+  },
+
+  async togglePinConversation(id: string): Promise<ChatConversation[]> {
+    return globalQueue.enqueue(async () => {
+      try {
+        const list = await ConversationManager.getConversations();
+        const idx = list.findIndex((c) => c.id === id);
+        if (idx !== -1) {
+          list[idx].pinned = !list[idx].pinned;
+          await ConversationManager.saveConversations(list);
+        }
+        return list;
+      } catch (err) {
+        console.error(`Failed to toggle pin for ID ${id}:`, err);
+        throw err;
+      }
+    });
   }
 };

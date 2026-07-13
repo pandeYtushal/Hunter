@@ -59,6 +59,8 @@ export class WorkflowExecutor {
     onConfirmationRequired: (msg: string, onConfirm: () => void, onSkip: () => void) => void
   ): Promise<{ success: boolean; result: string; recoveryTask?: CopilotTask }> {
     
+    executionContext.currentTask = task;
+
     // 1. Switch tabs intelligently if necessary
     await this.switchTabIntelligently(task.action);
 

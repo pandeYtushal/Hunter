@@ -1,5 +1,6 @@
 import { User, Trash2, Sun, Moon, Maximize2, Minimize2, PanelLeft, Compass, Settings } from "lucide-react";
 import { Button } from "../ui/button";
+import PlugConnectedIcon from "../ui/icons/plug-connected-icon";
 
 interface ChatHeaderProps {
   currentUrl?: string;
@@ -12,8 +13,6 @@ interface ChatHeaderProps {
   onClearChat: () => void;
   onToggleProfile: () => void;
   onToggleExpand?: () => void;
-  activeMode?: string;
-  setActiveMode?: (val: string) => void;
   sidebarOpen?: boolean;
   onToggleSidebar?: () => void;
 }
@@ -28,8 +27,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onClearChat,
   onToggleProfile,
   onToggleExpand,
-  activeMode = "general",
-  setActiveMode,
   sidebarOpen = false,
   onToggleSidebar
 }) => {
@@ -77,7 +74,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-faint)] border border-[var(--accent-dim)] text-[var(--accent)] shadow-sm">
-            <Compass size={16} className="animate-spin-slow" style={{ animationDuration: "12s" }} />
+            {shortUrl ? (
+              <PlugConnectedIcon size={16} />
+            ) : (
+              <Compass size={16} className="animate-spin-slow" style={{ animationDuration: "12s" }} />
+            )}
           </div>
           <div className="flex flex-col min-w-0">
             <h1 className="text-[12.5px] font-bold tracking-wider text-[var(--text-primary)] font-mono leading-none">
@@ -91,35 +92,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Vertical divider */}
-        <div className="h-6 w-px bg-[var(--border-color)]" />
-
-        {/* Workspace selector */}
-        {setActiveMode && (
-          <div className="flex flex-col select-none relative min-w-[125px]">
-            <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-wider leading-none">Workspace</span>
-            <select
-              value={activeMode}
-              onChange={(e) => setActiveMode(e.target.value)}
-              className="bg-transparent border-0 text-[11px] font-bold text-[var(--text-primary)] outline-none cursor-pointer p-0 pr-4 mt-0.5 font-sans appearance-none"
-              style={{
-                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='${encodeURIComponent(theme === 'dark' ? '#cbd5e1' : '#334155')}' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right center"
-              }}
-            >
-              <option value="general" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">General Assistant</option>
-              <option value="research" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Research Assistant</option>
-              <option value="shopping" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Shopping Assistant</option>
-              <option value="learning" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Learning Assistant</option>
-              <option value="email" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Email Assistant</option>
-              <option value="job_search" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Job Search Assistant</option>
-              <option value="travel" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Travel Assistant</option>
-              <option value="documents" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">Document Assistant</option>
-            </select>
-          </div>
-        )}
       </div>
 
       {/* Right side: Page capsule and system control icons */}

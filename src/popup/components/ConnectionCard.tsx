@@ -1,5 +1,6 @@
 import React from "react";
 import type { PageSnapshot } from "../../shared/types/messages";
+import PlugConnectedIcon from "../../components/ui/icons/plug-connected-icon";
 
 interface ConnectionCardProps {
   isConnected: boolean;
@@ -19,7 +20,7 @@ export const ConnectionCard: React.FC<ConnectionCardProps> = ({
       {isConnected ? (
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-3 flex flex-col gap-1 shadow-sm transition hover:border-[var(--accent)]/20">
           <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <PlugConnectedIcon size={14} className="text-emerald-500" />
             <p className="font-mono text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-bold">
               Connected Active Tab
             </p>

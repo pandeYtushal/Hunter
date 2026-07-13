@@ -25,30 +25,57 @@ export const ContextBar: React.FC<ContextBarProps> = ({
   browserControlEnabled,
   activeGoal
 }) => {
-  const chips = [
-    { icon: Globe2, label: shortHost(currentUrl), active: Boolean(currentUrl), title: "Current website" },
-    { icon: Image, label: hasAttachments ? "Screenshot attached" : "No image", active: hasAttachments, title: "Visual context" },
-    { icon: FileText, label: "Resume", active: hasMemory, title: "Profile and resume context" },
-    { icon: Brain, label: hasMemory ? "Memory on" : "Memory ready", active: hasMemory, title: "Long term memory" },
-    { icon: MousePointer2, label: browserControlEnabled ? "Browser control" : "Chat only", active: browserControlEnabled, title: "Automation mode" },
-    { icon: ShieldCheck, label: activeGoal ? "Goal active" : "Safe actions", active: Boolean(activeGoal), title: "Permission guard" }
-  ];
+  const activeChips = [];
+
+  if (currentUrl) {
+    activeChips.push({
+      icon: Globe2,
+      label: shortHost(currentUrl),
+      title: "Current website context",
+      className: "border-[rgba(255,107,53,0.18)] bg-[rgba(255,107,53,0.06)] text-[var(--accent)]"
+    });
+  }
+
+  if (browserControlEnabled) {
+    activeChips.push({
+      icon: MousePointer2,
+      label: "Browser control",
+      title: "Automation mode enabled",
+      className: "border-[rgba(255,107,53,0.18)] bg-[rgba(255,107,53,0.06)] text-[var(--accent)]"
+    });
+  }
+
+  if (hasMemory) {
+    activeChips.push({
+      icon: Brain,
+      label: "Memory active",
+      title: "Long-term memory context enabled",
+      className: "border-emerald-500/20 bg-emerald-500/5 text-emerald-500"
+    });
+  }
+
+  if (activeGoal) {
+    activeChips.push({
+      icon: ShieldCheck,
+      label: `Goal: ${activeGoal}`,
+      title: "Active safety / automation goal running",
+      className: "border-indigo-500/20 bg-indigo-500/5 text-indigo-400"
+    });
+  }
+
+  if (activeChips.length === 0) return null;
 
   return (
-    <div className="px-3 pb-2 pt-1.5 bg-[var(--bg-primary)]">
-      <div className="flex gap-1.5 overflow-x-auto hide-scrollbar" aria-label="Hunter context">
-        {chips.map(({ icon: Icon, label, active, title }) => (
+    <div className="px-4 pb-2.5 pt-1 bg-transparent select-none shrink-0">
+      <div className="flex flex-wrap gap-1.5 overflow-x-auto hide-scrollbar animate-fade-in" aria-label="Hunter context">
+        {activeChips.map(({ icon: Icon, label, title, className }) => (
           <span
-            key={`${title}-${label}`}
+            key={label}
             title={title}
-            className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors ${
-              active
-                ? "border-[rgba(255,107,53,0.28)] bg-[rgba(255,107,53,0.1)] text-[var(--text-primary)]"
-                : "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-muted)]"
-            }`}
+            className={`inline-flex h-6.5 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10.5px] font-semibold transition-all duration-200 shadow-sm ${className}`}
           >
-            <Icon size={12} className={active ? "text-[var(--primary)]" : "text-[var(--text-muted)]"} />
-            <span className="max-w-[140px] truncate">{label}</span>
+            <Icon size={11} className="shrink-0" />
+            <span className="max-w-[160px] truncate">{label}</span>
           </span>
         ))}
       </div>

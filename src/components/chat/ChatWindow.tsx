@@ -25,6 +25,24 @@ import { resolveTheme } from "../../shared/theme";
 import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
 import { useTheme } from "../../popup/hooks/useTheme";
 
+const ALLOWED_PARENT_ORIGINS = [
+  "https://linkedin.com",
+  "https://www.linkedin.com",
+  "https://indeed.com",
+  "https://www.indeed.com",
+  "https://github.com",
+  "https://www.github.com",
+  "https://mail.google.com",
+  "https://leetcode.com",
+  "https://www.leetcode.com",
+  "https://stackoverflow.com",
+  "https://www.stackoverflow.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:3000"
+];
+
 const getStepIcon = (name: string, description: string) => {
   const text = (name + " " + description).toLowerCase();
   if (text.includes("click")) return MousePointer;
@@ -74,6 +92,133 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   return new Blob([byteArray], { type: mimeType });
 }
 
+const detectWorkspaceMode = (prompt: string): string | null => {
+  const lower = prompt.toLowerCase();
+  
+  if (
+    lower.includes("apply") ||
+    lower.includes("resume") ||
+    lower.includes("cover letter") ||
+    lower.includes("job match") ||
+    lower.includes("missing skills") ||
+    lower.includes("profile match") ||
+    lower.includes("job search")
+  ) {
+    return "job_search";
+  }
+  
+  if (
+    lower.includes("research") ||
+    lower.includes("competitor") ||
+    lower.includes("financials") ||
+    lower.includes("revenue") ||
+    lower.includes("leadership") ||
+    lower.includes("company stats")
+  ) {
+    return "research";
+  }
+  
+  if (
+    lower.includes("buy") ||
+    lower.includes("price") ||
+    lower.includes("checkout") ||
+    lower.includes("discount") ||
+    lower.includes("deal") ||
+    lower.includes("coupon") ||
+    lower.includes("shop")
+  ) {
+    return "shopping";
+  }
+  
+  if (
+    lower.includes("learn") ||
+    lower.includes("study") ||
+    lower.includes("explain") ||
+    lower.includes("concept") ||
+    lower.includes("definition") ||
+    lower.includes("syllabus")
+  ) {
+    return "learning";
+  }
+  
+  if (
+    lower.includes("email") ||
+    lower.includes("draft email") ||
+    lower.includes("send to") ||
+    lower.includes("meeting schedule") ||
+    lower.includes("formal mail")
+  ) {
+    return "email";
+  }
+  
+  if (
+    lower.includes("travel") ||
+    lower.includes("flight") ||
+    lower.includes("hotel") ||
+    lower.includes("itinerary") ||
+    lower.includes("reservation") ||
+    lower.includes("trip")
+  ) {
+    return "travel";
+  }
+  
+  if (
+    lower.includes("contract") ||
+    lower.includes("summarize document") ||
+    lower.includes("pdf summary") ||
+    lower.includes("invoice") ||
+    lower.includes("document context") ||
+    lower.includes("clause")
+  ) {
+    return "documents";
+  }
+  
+  return null;
+};
+
+/**
+ * Heuristic to detect if a query is a goal-mode query (requires autonomous Copilot browser control).
+ * TODO: Replace this heuristic with a proper intent classification step.
+ */
+const isGoalModeQuery = (query: string): boolean => {
+  const normalized = query.trim().toLowerCase();
+  
+  // List of keywords that trigger autonomous goal mode
+  const triggers = [
+    "apply",
+    "research",
+    "prepare",
+    "fill",
+    "find",
+    "save",
+    "summarize",
+    "help me",
+    "click",
+    "type",
+    "press",
+    "navigate",
+    "go to",
+    "open",
+    "select",
+    "scroll"
+  ];
+  
+  // For each trigger, check if it matches as a whole word near the start
+  return triggers.some((trigger) => {
+    const escapedTrigger = trigger.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedTrigger}\\b`, "i");
+    const match = normalized.match(regex);
+    if (match && match.index !== undefined && match.index < 10) {
+      // Exclude learning/explain intent under "help me" (e.g. "help me understand/explain/learn")
+      if (trigger === "help me" && /\b(understand|explain|learn|study|read)\b/.test(normalized)) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  });
+};
+
 export const ChatWindow: React.FC = () => {
   const {
     conversations,
@@ -97,7 +242,8 @@ export const ChatWindow: React.FC = () => {
     createConversation,
     deleteConversation,
     clearCurrentConversation,
-    addMessageToHistory
+    addMessageToHistory,
+    togglePinConversation
   } = useChatController();
 
   const { value: approvalState } = useChromeStorage("approvalState");
@@ -106,8 +252,7 @@ export const ChatWindow: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
-  const { value: activeMode, setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
-  const [showTaskManager, setShowTaskManager] = useState(false);
+  const { setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
   const [showHistory, setShowHistory] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
@@ -124,13 +269,32 @@ export const ChatWindow: React.FC = () => {
   const handleToggleExpand = () => {
     const nextExpanded = !isExpanded;
     setIsExpanded(nextExpanded);
+    
+    let targetOrigin = "*";
+    if (currentUrl) {
+      try {
+        const origin = new URL(currentUrl).origin;
+        if (ALLOWED_PARENT_ORIGINS.includes(origin)) {
+          targetOrigin = origin;
+        } else {
+          console.warn("Parent origin not in allowlist:", origin);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse parent origin:", e);
+        return;
+      }
+    } else {
+      return;
+    }
+
     window.parent.postMessage(
       {
         source: "ai-job-agent-sidebar",
         type: "SET_EXPANDED",
         expanded: nextExpanded
       },
-      "*"
+      targetOrigin
     );
   };
 
@@ -197,7 +361,6 @@ export const ChatWindow: React.FC = () => {
       } else {
         addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
       }
-      CopilotEngine.getInstance().cancel();
     } else if (copilot.machineState === "failed" && prevMachineStateRef.current !== "failed") {
       addMessageToHistory(
         "error",
@@ -208,66 +371,51 @@ export const ChatWindow: React.FC = () => {
   }, [copilot.machineState, copilot.lastResult, copilot.currentGoal, copilot.blockReason]);
 
   const handleCopyMessage = useCallback((text: string) => {
-    console.log("Message copied");
+    // MessageBubble already handles navigator.clipboard.writeText internally
+    console.log("Message copied to clipboard:", text.slice(0, 30) + "...");
   }, []);
 
-  const handleSend = async () => {
-    const query = input.trim();
-    if (!query && attachments.length === 0) return;
+  const processQuery = async (query: string, opts: { isFromSuggestion: boolean }) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery && attachments.length === 0) return;
 
-    const lower = query.toLowerCase();
-    const isGoalMode =
-      lower.includes("apply") ||
-      lower.includes("research") ||
-      lower.includes("prepare") ||
-      lower.includes("fill") ||
-      lower.includes("find") ||
-      lower.includes("save") ||
-      lower.includes("summarize") ||
-      lower.includes("help me");
+    setActiveView("chat");
 
-    if (isGoalMode) {
+    if (opts.isFromSuggestion) {
+      setInput(query);
+    }
+
+    const detected = detectWorkspaceMode(trimmedQuery);
+    if (detected && setActiveMode) {
+      await setActiveMode(detected);
+    }
+
+    if (isGoalModeQuery(trimmedQuery)) {
       setInput("");
-      await addMessageToHistory("user", query);
+      await addMessageToHistory("user", trimmedQuery);
       try {
-        await CopilotEngine.getInstance().startGoal(query);
+        await CopilotEngine.getInstance().startGoal(trimmedQuery);
       } catch (err: any) {
         const message = err?.message || "Hunter could not start autonomous mode.";
         setError(message);
         await addMessageToHistory("error", message);
       }
     } else {
-      await sendMessage();
+      if (opts.isFromSuggestion) {
+        await sendMessage(trimmedQuery);
+        setInput("");
+      } else {
+        await sendMessage();
+      }
     }
   };
 
-  const handleSendFromSuggestion = async (prompt: string) => {
-    setInput(prompt);
-    const lower = prompt.toLowerCase();
-    const isGoalMode =
-      lower.includes("apply") ||
-      lower.includes("research") ||
-      lower.includes("prepare") ||
-      lower.includes("fill") ||
-      lower.includes("find") ||
-      lower.includes("save") ||
-      lower.includes("summarize") ||
-      lower.includes("help me");
+  const handleSend = async () => {
+    await processQuery(input, { isFromSuggestion: false });
+  };
 
-    if (isGoalMode) {
-      setInput("");
-      await addMessageToHistory("user", prompt);
-      try {
-        await CopilotEngine.getInstance().startGoal(prompt);
-      } catch (err: any) {
-        const message = err?.message || "Hunter could not start autonomous mode.";
-        setError(message);
-        await addMessageToHistory("error", message);
-      }
-    } else {
-      await sendMessage(prompt);
-      setInput("");
-    }
+  const handleSendFromSuggestion = async (prompt: string) => {
+    await processQuery(prompt, { isFromSuggestion: true });
   };
 
   const handleStop = () => {
@@ -319,32 +467,64 @@ export const ChatWindow: React.FC = () => {
           {/* Conversations Lists */}
           <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
             {/* Pinned Section */}
-            <div className="space-y-1">
-              <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Pinned</span>
-              {conversations.slice(0, 1).map((conv) => (
-                <div
-                  key={conv.id}
-                  onClick={() => selectConversation(conv.id)}
-                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
-                    ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
-                    }`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Pin size={9} className="text-[var(--accent)] rotate-45 shrink-0" />
-                    <span className="truncate">{conv.title || "Chat Session"}</span>
+            {conversations.some((c) => c.pinned) && (
+              <div className="space-y-1">
+                <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Pinned</span>
+                {conversations.filter((c) => c.pinned).map((conv) => (
+                  <div
+                    key={conv.id}
+                    onClick={() => selectConversation(conv.id)}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
+                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
+                      }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Pin size={9} className="text-[var(--accent)] rotate-45 shrink-0" />
+                      <span className="truncate">{conv.title || "Chat Session"}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void togglePinConversation(conv.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                        aria-label="Unpin conversation"
+                        title="Unpin conversation"
+                      >
+                        <Pin size={12} className="rotate-45" />
+                      </Button>
+                      {conversations.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void deleteConversation(conv.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
+                          aria-label="Delete conversation"
+                          title="Delete conversation"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Recents Section */}
             <div className="space-y-1">
               <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Recent Chats</span>
-              {conversations.length === 0 ? (
+              {conversations.filter((c) => !c.pinned).length === 0 ? (
                 <div className="px-2 py-3 text-[11px] text-[var(--text-muted)] italic">No recent chats</div>
               ) : (
-                conversations.map((conv) => (
+                conversations.filter((c) => !c.pinned).map((conv) => (
                   <div
                     key={conv.id}
                     onClick={() => selectConversation(conv.id)}
@@ -357,21 +537,36 @@ export const ChatWindow: React.FC = () => {
                       <MessageSquare size={10} className="text-[var(--text-muted)] shrink-0" />
                       <span className="truncate">{conv.title || "Chat Session"}</span>
                     </div>
-                    {conversations.length > 1 && (
+                    <div className="flex items-center gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={(e) => {
                           e.stopPropagation();
-                          void deleteConversation(conv.id);
+                          void togglePinConversation(conv.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
-                        aria-label="Delete conversation"
-                        title="Delete conversation"
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
+                        aria-label="Pin conversation"
+                        title="Pin conversation"
                       >
-                        <Trash2 size={14} />
+                        <Pin size={12} />
                       </Button>
-                    )}
+                      {conversations.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void deleteConversation(conv.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
+                          aria-label="Delete conversation"
+                          title="Delete conversation"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -410,8 +605,6 @@ export const ChatWindow: React.FC = () => {
           onClearChat={clearCurrentConversation}
           onToggleProfile={() => setShowProfile(true)}
           onToggleExpand={handleToggleExpand}
-          activeMode={activeMode || undefined}
-          setActiveMode={setActiveMode}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         />
@@ -833,46 +1026,8 @@ export const ChatWindow: React.FC = () => {
         {/* Upload Thumbnails Row */}
         <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
 
-        {/* Context Bar */}
-        {activeView === "chat" && !showTaskManager && (
-          <div className="px-4 py-2 flex flex-wrap gap-1.5 items-center bg-transparent border-t border-[var(--border-color)]/30 shrink-0 select-none">
-            {/*Site Context */}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
-              <span className="text-[10.5px]"></span>
-              <span className="truncate max-w-[120px] font-mono">
-                {currentUrl ? currentUrl.replace(/https?:\/\/(www\.)?/, "").split("/")[0] : "no active page"}
-              </span>
-            </span>
-
-            {/*Memory Context */}
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
-
-              <span className="font-mono">Memory</span>
-            </span>
-
-            {/* Attachments mapped to chips */}
-            {attachments.map(att => (
-              <span key={att.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[10px] font-medium text-[var(--text-secondary)] shadow-sm">
-                <span>{att.type === "image" || att.type === "screenshot" ? "🖼" : "📄"}</span>
-                <span className="truncate max-w-[80px] font-mono">{att.name}</span>
-              </span>
-            ))}
-
-            {/*Add Context Button */}
-            <button
-              onClick={() => {
-                captureScreen();
-              }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[10px] font-bold text-[var(--accent)] hover:text-[var(--accent-strong)] transition shadow-sm cursor-pointer"
-            >
-
-              <span className="font-mono">Add Context</span>
-            </button>
-          </div>
-        )}
-
         {/* Standard input footer area */}
-        {activeView === "chat" && !showTaskManager && (
+        {activeView === "chat" && (
           <>
             <ContextBar
               currentUrl={currentUrl}
@@ -893,8 +1048,10 @@ export const ChatWindow: React.FC = () => {
                 try {
                   const blob = base64ToBlob(att.base64Data, att.mimeType);
                   attachFile(new File([blob], att.name, { type: att.mimeType }));
-                } catch (err) {
-                  console.error("Failed to reconstruct image from pasted attachment:", err);
+                } catch (err: any) {
+                  const msg = "Failed to reconstruct image from pasted attachment.";
+                  console.error(msg, err);
+                  setError(msg);
                 }
               }}
             />

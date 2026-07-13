@@ -279,7 +279,8 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       requiresProfile: false,
       handler: async ({ tab, pageContext }, context) => {
         const tabId = requireTabId(tab);
-        const { selector, source } = await VisionEngine.locate(tabId, "button", context.plan.goal, pageContext);
+        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || context.plan.goal;
+        const { selector, source } = await VisionEngine.locate(tabId, "button", taskName, pageContext);
         await NavigationAgent.click(tabId, selector);
         return { result: `Clicked element matching "${selector}" (resolved via ${source}).` };
       }
@@ -292,7 +293,8 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       handler: async ({ tab, pageContext, profile }, context) => {
         const tabId = requireTabId(tab);
         const target = await resolveFillTarget(context.plan.goal, pageContext).catch(() => ({ selector: "input", value: profile?.name || "" }));
-        const { selector, source } = await VisionEngine.locate(tabId, "input", target.selector || context.plan.goal, pageContext);
+        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || target.selector || context.plan.goal;
+        const { selector, source } = await VisionEngine.locate(tabId, "input", taskName, pageContext);
         await NavigationAgent.fill(tabId, selector, target.value);
         return { result: `Filled input matching "${selector}" (resolved via ${source}).` };
       }

@@ -51,6 +51,7 @@ export interface ChatConversation {
   messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
+  pinned?: boolean;
 }
 
 export interface ChatContextInfo {

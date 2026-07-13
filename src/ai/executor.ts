@@ -98,6 +98,7 @@ export async function executePlan(
     const tool = ToolRegistry.get(action);
     step.status = "running";
     step.attempts = 0;
+    (context as any).currentTask = step;
 
     goalProgress = GoalTracker.updateProgress(goalProgress, action, "running");
 

@@ -1,16 +1,53 @@
 import React, { useState, useEffect } from "react";
-import { Play, Pause, Trash2, RotateCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Play, Pause, Trash2, RotateCw, ChevronDown, ChevronUp, AlertCircle, CheckCircle2, Loader2,
+  AlertTriangle, Check, X, MousePointer, Keyboard, Search, Globe, Clock, Zap, Compass, Activity
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { ConcurrentScheduler, type ConcurrentTask } from "../../ai/concurrency/ConcurrentScheduler";
+import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
+import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
+import { storage } from "../../shared/storage";
+
+const getStepIcon = (name: string, description: string) => {
+  const text = (name + " " + description).toLowerCase();
+  if (text.includes("click")) return MousePointer;
+  if (text.includes("type") || text.includes("fill") || text.includes("input")) return Keyboard;
+  if (text.includes("search") || text.includes("find") || text.includes("extract") || text.includes("scan")) return Search;
+  if (text.includes("navigate") || text.includes("go to") || text.includes("url") || text.includes("open")) return Globe;
+  if (text.includes("wait") || text.includes("sleep") || text.includes("delay")) return Clock;
+  if (text.includes("apply")) return Zap;
+  if (text.includes("summarize") || text.includes("analyze") || text.includes("explain")) return Compass;
+  return Activity;
+};
 
 export const TaskManager: React.FC = () => {
   const [tasks, setTasks] = useState<ConcurrentTask[]>([]);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const { value: approvalState } = useChromeStorage("approvalState");
+  const [copilot, setCopilot] = useState<CopilotState>({
+    machineState: "idle",
+    currentGoal: "",
+    tasks: [],
+    progress: 0,
+    timeline: [],
+    isBlocked: false,
+    estimatedCompletionTimeSeconds: 0
+  });
 
   const fetchTasks = async () => {
     const list = await ConcurrentScheduler.getTasks();
     setTasks(list);
   };
+
+  useEffect(() => {
+    const unsubscribe = CopilotEngine.getInstance().subscribe((state) => {
+      setCopilot(state);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     fetchTasks();

@@ -560,6 +560,15 @@ export function useChatController() {
     }
   };
 
+  const togglePinConversation = async (id: string) => {
+    try {
+      const updated = await ConversationManager.togglePinConversation(id);
+      setConversations(updated);
+    } catch (err: any) {
+      setError(err.message || "Failed to toggle pin.");
+    }
+  };
+
   return {
     conversations,
     activeId,
@@ -582,6 +591,7 @@ export function useChatController() {
     createConversation,
     deleteConversation,
     clearCurrentConversation,
-    addMessageToHistory
+    addMessageToHistory,
+    togglePinConversation
   };
 }

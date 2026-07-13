@@ -23,6 +23,7 @@
     "extension_pages": "script-src 'self'; object-src 'none'"
   },
   "host_permissions": [
+    "<all_urls>",
     "http://*/*",
     "https://*/*",
     "https://generativelanguage.googleapis.com/*",

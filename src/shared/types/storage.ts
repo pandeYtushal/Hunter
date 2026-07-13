@@ -88,7 +88,7 @@ export const defaultStorage: StorageSchema = {
   applications: [],
   chatHistory: [],
   settings: {
-    theme: "system",
+    theme: "light",
     sidebarPinned: false,
     userName: "",
     developerMode: false,
