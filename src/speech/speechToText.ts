@@ -84,6 +84,7 @@ export const requestMicrophonePermission = async (): Promise<boolean> => {
 export class SpeechToTextSession {
   private recognition: SpeechRecognitionInstance | null = null;
   private finalTranscript = "";
+  private silenceTimeoutId: any = null;
 
   constructor(private readonly callbacks: SpeechToTextCallbacks) {}
 
@@ -118,7 +119,21 @@ export class SpeechToTextSession {
         }
       }
 
-      this.callbacks.onInterimTranscript(interimTranscript || this.finalTranscript);
+      const fullText = `${this.finalTranscript} ${interimTranscript}`.trim();
+      this.callbacks.onInterimTranscript(fullText);
+
+      // Silence detection for continuous voice input
+      if (this.silenceTimeoutId) {
+        clearTimeout(this.silenceTimeoutId);
+      }
+
+      this.silenceTimeoutId = setTimeout(() => {
+        const queryText = `${this.finalTranscript} ${interimTranscript}`.trim();
+        if (queryText) {
+          this.callbacks.onFinalTranscript(queryText);
+          this.finalTranscript = ""; // Reset for the next spoken command
+        }
+      }, 1500) as any;
     };
 
     recognition.onerror = (event) => {
@@ -129,7 +144,7 @@ export class SpeechToTextSession {
     recognition.onend = () => {
       this.callbacks.onListeningChange(false);
 
-      if (this.finalTranscript) {
+      if (this.recognition && this.finalTranscript) {
         this.callbacks.onFinalTranscript(this.finalTranscript);
       }
     };
@@ -140,11 +155,17 @@ export class SpeechToTextSession {
   }
 
   stop() {
+    if (this.silenceTimeoutId) {
+      clearTimeout(this.silenceTimeoutId);
+      this.silenceTimeoutId = null;
+    }
+
     if (!this.recognition) {
       return;
     }
 
-    this.recognition.stop();
+    const rec = this.recognition;
     this.recognition = null;
+    rec.stop();
   }
 }

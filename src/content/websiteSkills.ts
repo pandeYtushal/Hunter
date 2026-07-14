@@ -1,4 +1,4 @@
-export type WebsiteSkillName = "LinkedInSkill" | "GmailSkill" | "GitHubSkill" | "IndeedSkill" | "LeetCodeSkill" | "StackOverflowSkill";
+export type WebsiteSkillName = "LinkedInSkill" | "GmailSkill" | "GitHubSkill" | "IndeedSkill" | "LeetCodeSkill" | "StackOverflowSkill" | "NotionSkill";
 
 export interface WebsiteSkillResult {
   skill: WebsiteSkillName;
@@ -26,17 +26,76 @@ const LinkedInSkill: WebsiteSkill = {
   name: "LinkedInSkill",
   matches: (host) => host.includes("linkedin.com"),
   extract: () => {
+    const path = window.location.pathname;
+    
+    // 1. Profile Extraction
+    const isProfile = path.startsWith("/in/") || path.includes("/profile/");
     const profileName = text("h1");
-    const headline = text(".text-body-medium, .pv-text-details__left-panel .text-body-medium");
-    const jobTitle = text(".jobs-unified-top-card__job-title, .job-details-jobs-unified-top-card__job-title");
-    const company = text(".jobs-unified-top-card__company-name, .job-details-jobs-unified-top-card__company-name");
-    const posts = listText(".feed-shared-update-v2, .update-components-text", 3);
+    const headline = text(".text-body-medium, .pv-text-details__left-panel .text-body-medium, [data-generated-suggestion-target='headline']");
+    const about = text("#about ~ div .display-flex, #about ~ div .pv-shared-text-with-see-more");
+    
+    const experienceContainers = Array.from(document.querySelectorAll("#experience ~ div ul.pvs-list > li"));
+    const experience = experienceContainers.map(container => (container as HTMLElement).innerText?.replace(/\s+/g, " ").trim()).filter(Boolean);
+
+    // 2. Job details
+    const isJobPage = path.startsWith("/jobs/");
+    const jobTitle = text(".jobs-unified-top-card__job-title, .job-details-jobs-unified-top-card__job-title, h1.t-24");
+    const company = text(".jobs-unified-top-card__company-name, .job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__primary-description a");
+    const location = text(".jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span:nth-of-type(1)");
+    const jobDescription = text("#job-details, .jobs-description__content, .jobs-box__html-content");
+
+    // 3. Messaging details
+    const isMessaging = path.startsWith("/messaging/");
+    const activeChatPartner = text(".msg-entity-lockup__entity-title, .msg-thread__link .truncate");
+    const visibleMessages = listText(".msg-s-message-list__event, .msg-s-message-group-body", 15);
+
+    // 4. Notifications details
+    const isNotifications = path.startsWith("/notifications/");
+    const notificationList = listText(".nt-card, .nt-card__title", 10);
+
+    // 5. Feed details (Posts)
+    const posts = listText(".feed-shared-update-v2, .update-components-text, .feed-shared-update-v2__description", 5);
 
     return {
       skill: "LinkedInSkill",
-      confidence: jobTitle || profileName ? 0.86 : 0.58,
-      summary: jobTitle ? `LinkedIn job: ${jobTitle}${company ? ` at ${company}` : ""}` : `LinkedIn profile or feed: ${profileName || "active page"}`,
-      data: { profileName, headline, jobTitle, company, posts }
+      confidence: jobTitle || profileName || activeChatPartner ? 0.92 : 0.6,
+      summary: isProfile
+        ? `LinkedIn profile: "${profileName}" - ${headline.slice(0, 50)}`
+        : isJobPage
+        ? `LinkedIn Job page: "${jobTitle}" at ${company}`
+        : isMessaging
+        ? `LinkedIn Messages with: ${activeChatPartner}`
+        : isNotifications
+        ? `LinkedIn Notifications Page`
+        : `LinkedIn Feed / Page`,
+      data: {
+        isProfile,
+        isJobPage,
+        isMessaging,
+        isNotifications,
+        profile: {
+          name: profileName,
+          headline,
+          about,
+          experience
+        },
+        job: {
+          title: jobTitle,
+          company,
+          location,
+          description: jobDescription.slice(0, 5000)
+        },
+        messaging: {
+          chatPartner: activeChatPartner,
+          messages: visibleMessages
+        },
+        notifications: {
+          items: notificationList
+        },
+        feed: {
+          posts
+        }
+      }
     };
   }
 };
@@ -45,15 +104,53 @@ const GmailSkill: WebsiteSkill = {
   name: "GmailSkill",
   matches: (host) => host.includes("mail.google.com"),
   extract: () => {
-    const subject = text("h2.hP, [data-legacy-message-id] h2");
-    const sender = text(".gD, [email][name]");
-    const visibleMessages = listText(".a3s.aiL, .ii.gt", 5);
+    const isInbox = window.location.hash.includes("#inbox") || window.location.hash === "" || window.location.hash === "#all";
+    const subject = text("h2.hP, [data-legacy-message-id] h2, .ha h2");
+    
+    const messageContainers = Array.from(document.querySelectorAll(".adn.iv, .adn"));
+    const messages = messageContainers.map((container) => {
+      const senderName = container.querySelector(".gD")?.getAttribute("name") || container.querySelector(".gD")?.textContent?.trim() || "";
+      const senderEmail = container.querySelector(".gD")?.getAttribute("email") || "";
+      
+      const recipientElems = Array.from(container.querySelectorAll(".hb [email], .iv [email], .g2 [email]"));
+      const recipients = recipientElems.map(el => ({
+        name: el.getAttribute("name") || el.textContent?.trim() || "",
+        email: el.getAttribute("email") || ""
+      })).filter(r => r.email && r.email !== senderEmail);
+      
+      const timestamp = container.querySelector(".g3")?.getAttribute("title") || container.querySelector(".g3")?.textContent?.trim() || "";
+      const body = (container.querySelector(".a3s.aiL, .ii.gt") as HTMLElement | null)?.innerText?.replace(/\s+/g, " ").trim() || "";
+      
+      const attachmentElems = Array.from(container.querySelectorAll(".aoy, .aQJ, [role='listitem'] a[href*='disp=inline']"));
+      const attachments = attachmentElems.map(el => ({
+        name: el.textContent?.trim() || el.getAttribute("title") || "Attachment",
+        url: el.getAttribute("href") || ""
+      }));
+
+      return {
+        sender: { name: senderName, email: senderEmail },
+        recipients,
+        timestamp,
+        body: body.slice(0, 5000),
+        attachments
+      };
+    }).filter(msg => msg.sender.email || msg.body);
+
+    const hasOpenEmail = messages.length > 0;
 
     return {
       skill: "GmailSkill",
-      confidence: subject || visibleMessages.length ? 0.84 : 0.52,
-      summary: subject ? `Gmail conversation: ${subject}` : "Gmail inbox or conversation",
-      data: { subject, sender, visibleMessages }
+      confidence: hasOpenEmail ? 0.95 : (isInbox ? 0.75 : 0.3),
+      summary: hasOpenEmail 
+        ? `Gmail open email thread: "${subject}" (${messages.length} messages)`
+        : `Gmail inbox view`,
+      data: {
+        isInbox,
+        subject,
+        messages,
+        replyChainCount: messages.length,
+        latestEmail: messages[messages.length - 1] || null
+      }
     };
   }
 };
@@ -127,7 +224,27 @@ const StackOverflowSkill: WebsiteSkill = {
   }
 };
 
-const skills: WebsiteSkill[] = [LinkedInSkill, GmailSkill, GitHubSkill, IndeedSkill, LeetCodeSkill, StackOverflowSkill];
+const NotionSkill: WebsiteSkill = {
+  name: "NotionSkill",
+  matches: (host) => host.includes("notion.so"),
+  extract: () => {
+    const pageTitle = text(".notion-page-controls ~ h1, [placeholder='Untitled'], .notion-peek-renderer [contenteditable='true']");
+    const blocks = listText(".notion-selectable, [data-block-id]", 30);
+
+    return {
+      skill: "NotionSkill",
+      confidence: pageTitle || blocks.length ? 0.88 : 0.4,
+      summary: pageTitle ? `Notion Page: "${pageTitle}"` : "Notion page or workspace",
+      data: {
+        pageTitle,
+        contentExcerpt: blocks.join("\n").slice(0, 8000),
+        blocksCount: blocks.length
+      }
+    };
+  }
+};
+
+const skills: WebsiteSkill[] = [LinkedInSkill, GmailSkill, GitHubSkill, IndeedSkill, LeetCodeSkill, StackOverflowSkill, NotionSkill];
 
 export function extractWebsiteSkillData(host = window.location.host): WebsiteSkillResult | undefined {
   const skill = skills.find((candidate) => candidate.matches(host));

@@ -9,11 +9,22 @@ export type PlanGoal =
   | "autofill_form"
   | "save_job"
   | "summarize_page"
-  | "chat_fallback";
+  | "chat_fallback"
+  | "navigate"
+  | "click"
+  | "scroll"
+  | "type"
+  | "edit"
+  | "search"
+  | "upload"
+  | "download"
+  | "read"
+  | "observe";
 
 export interface ExecutionPlan {
   goal: PlanGoal;
   agents: AgentType[];
   actions: ActionType[];
   intent?: IntentClassification;
+  query?: string;
 }

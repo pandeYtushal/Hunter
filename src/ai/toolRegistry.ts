@@ -279,7 +279,7 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       requiresProfile: false,
       handler: async ({ tab, pageContext }, context) => {
         const tabId = requireTabId(tab);
-        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || context.plan.goal;
+        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || context.plan.query || context.plan.goal;
         const { selector, source } = await VisionEngine.locate(tabId, "button", taskName, pageContext);
         await NavigationAgent.click(tabId, selector);
         return { result: `Clicked element matching "${selector}" (resolved via ${source}).` };
@@ -292,8 +292,8 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       requiresProfile: false,
       handler: async ({ tab, pageContext, profile }, context) => {
         const tabId = requireTabId(tab);
-        const target = await resolveFillTarget(context.plan.goal, pageContext).catch(() => ({ selector: "input", value: profile?.name || "" }));
-        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || target.selector || context.plan.goal;
+        const target = await resolveFillTarget(context.plan.query || context.plan.goal, pageContext).catch(() => ({ selector: "input", value: profile?.name || "" }));
+        const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || target.selector || context.plan.query || context.plan.goal;
         const { selector, source } = await VisionEngine.locate(tabId, "input", taskName, pageContext);
         await NavigationAgent.fill(tabId, selector, target.value);
         return { result: `Filled input matching "${selector}" (resolved via ${source}).` };
@@ -314,9 +314,146 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       agent: "NavigationAgent",
       description: "Navigating page sections or URLs",
       requiresProfile: false,
-      handler: async ({ tab }) => {
-        await NavigationAgent.navigate(requireTabId(tab), tab?.url || "");
-        return { result: "Performed browser page navigation." };
+      handler: async ({ tab, profile, pageContext }, context) => {
+        let url = tab?.url || "";
+        let host = "";
+        try {
+          if (url) host = new URL(url).host.toLowerCase();
+        } catch {}
+
+        const goal = (context.plan.query || context.plan.goal || "").toLowerCase();
+
+        // 1. Explicit site keywords check
+        const matchesGmail = goal.includes("gmail") || goal.includes("email") || goal.includes("inbox") || goal.includes("mail.google.com");
+        const matchesGitHub = goal.includes("github");
+        const matchesNotion = goal.includes("notion");
+        const matchesLeetCode = goal.includes("leetcode");
+        const matchesIndeed = goal.includes("indeed");
+        const matchesLinkedIn = goal.includes("linkedin");
+        const matchesPortfolio = goal.includes("portfolio") || goal.includes("personal site") || goal.includes("website");
+        const matchesYouTube = goal.includes("youtube") || goal.includes("yt");
+        const matchesGoogle = goal.includes("google") && !goal.includes("google.com/mail") && !goal.includes("mail.google.com");
+
+        // 2. Explicit URL & Domain check
+        const domainMatch = goal.match(/(?:https?:\/\/)?([a-z0-9-]+\.[a-z]{2,}(?:\/[^\s]*)?)/i);
+        let directUrl = "";
+        if (domainMatch) {
+          const rawUrl = domainMatch[0];
+          const hasExtension = /\.(com|org|net|edu|gov|io|co|in|us|me|info|app|dev|xyz|so|ai|cc|tv)\b/i.test(rawUrl);
+          const hasProtocol = /^https?:\/\//i.test(rawUrl);
+          if (hasProtocol) {
+            directUrl = rawUrl;
+          } else if (hasExtension) {
+            directUrl = "https://" + rawUrl;
+          }
+        }
+
+        if (directUrl) {
+          url = directUrl;
+        } else if (matchesPortfolio && profile?.portfolio) {
+          url = profile.portfolio;
+        } else if (matchesYouTube) {
+          url = "https://www.youtube.com";
+        } else if (matchesGoogle) {
+          url = "https://www.google.com";
+        } else if (matchesLinkedIn) {
+          if ((goal.includes("profile") || goal.includes("bio") || goal.includes("about") || goal.includes("experience")) && profile?.linkedIn) {
+            url = profile.linkedIn;
+          } else if (goal.includes("profile") || goal.includes("bio") || goal.includes("about") || goal.includes("experience")) {
+            url = "https://www.linkedin.com/in/";
+          } else if (goal.includes("home") || goal.includes("feed")) {
+            url = "https://www.linkedin.com/feed/";
+          } else if (goal.includes("message") || goal.includes("messaging") || goal.includes("chat") || goal.includes("send")) {
+            url = "https://www.linkedin.com/messaging/";
+          } else if (goal.includes("job")) {
+            url = "https://www.linkedin.com/jobs/";
+          } else if (goal.includes("notification")) {
+            url = "https://www.linkedin.com/notifications/";
+          } else {
+            url = "https://www.linkedin.com";
+          }
+        } else if (matchesGmail) {
+          if (goal.includes("sent") || goal.includes("send")) {
+            url = "https://mail.google.com/mail/u/0/#sent";
+          } else if (goal.includes("starred")) {
+            url = "https://mail.google.com/mail/u/0/#starred";
+          } else {
+            url = "https://mail.google.com/mail/u/0/#inbox";
+          }
+        } else if (matchesGitHub) {
+          if (goal.includes("profile") && profile?.gitHub) {
+            url = profile.gitHub;
+          } else if (goal.includes("profile")) {
+            url = "https://github.com/settings/profile";
+          } else if (goal.includes("pull") || goal.includes("pr")) {
+            url = "https://github.com/pulls";
+          } else if (goal.includes("issue")) {
+            url = "https://github.com/issues";
+          } else {
+            url = "https://github.com";
+          }
+        } else if (matchesNotion) {
+          url = "https://www.notion.so";
+        } else if (matchesLeetCode) {
+          url = "https://leetcode.com";
+        } else if (matchesIndeed) {
+          url = "https://www.indeed.com";
+        } else {
+          // 3. Fallback to host-based matching if no explicit site is mentioned
+          const isLinkedInHost = host.includes("linkedin.com");
+          const isGmailHost = host.includes("mail.google.com");
+          const isGitHubHost = host.includes("github.com");
+
+          if (isLinkedInHost) {
+            if (goal.includes("profile") || goal.includes("bio") || goal.includes("about") || goal.includes("experience")) {
+              if (url.includes("/in/")) {
+                // Already on profile page, preserve current URL context
+              } else if (profile?.linkedIn) {
+                url = profile.linkedIn;
+              } else {
+                url = "https://www.linkedin.com/in/";
+              }
+            } else if (goal.includes("home") || goal.includes("feed")) {
+              url = "https://www.linkedin.com/feed/";
+            } else if (goal.includes("message") || goal.includes("messaging") || goal.includes("chat") || goal.includes("send")) {
+              url = "https://www.linkedin.com/messaging/";
+            } else if (goal.includes("job")) {
+              url = "https://www.linkedin.com/jobs/";
+            } else if (goal.includes("notification")) {
+              url = "https://www.linkedin.com/notifications/";
+            } else {
+              url = "https://www.linkedin.com";
+            }
+          } else if (isGmailHost) {
+            if (goal.includes("sent") || goal.includes("send")) {
+              url = "https://mail.google.com/mail/u/0/#sent";
+            } else if (goal.includes("starred")) {
+              url = "https://mail.google.com/mail/u/0/#starred";
+            } else {
+              url = "https://mail.google.com/mail/u/0/#inbox";
+            }
+          } else if (isGitHubHost) {
+            if (goal.includes("profile") && profile?.gitHub) {
+              url = profile.gitHub;
+            } else if (goal.includes("profile")) {
+              url = "https://github.com/settings/profile";
+            } else if (goal.includes("pull") || goal.includes("pr")) {
+              url = "https://github.com/pulls";
+            } else if (goal.includes("issue")) {
+              url = "https://github.com/issues";
+            } else {
+              url = "https://github.com";
+            }
+          }
+        }
+
+        // Protocol validation check before navigating
+        if (url && !/^https?:\/\//i.test(url) && !url.startsWith("/") && !url.startsWith("#") && !url.startsWith("?")) {
+          url = "https://" + url;
+        }
+
+        await NavigationAgent.navigate(requireTabId(tab), url);
+        return { result: `Successfully navigated to URL: ${url}` };
       }
     },
     {
@@ -337,9 +474,10 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       handler: async ({ tab, pageContext }, context) => {
         const tabId = requireTabId(tab);
         const url = pageContext?.url || "";
-        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+        const queryText = context.plan.query || context.plan.goal;
+        const analysis = await VisionService.analyzePage(tabId, queryText);
         
-        const targetElement = await resolveVisualClickTarget(context.plan.goal, analysis.elements);
+        const targetElement = await resolveVisualClickTarget(queryText, analysis.elements);
         await chrome.storage.local.set({ lastVisionTarget: targetElement.text }).catch(() => null);
         
         await VisualActionEngine.clickByVision(tabId, targetElement, url);
@@ -355,12 +493,13 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
         const tabId = requireTabId(tab);
         const url = pageContext?.url || "";
         const userProfile = requireProfile(profile);
-        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+        const queryText = context.plan.query || context.plan.goal;
+        const analysis = await VisionService.analyzePage(tabId, queryText);
 
-        const { element, value } = await resolveVisualFillTarget(context.plan.goal, analysis.elements, userProfile);
+        const { element, value } = await resolveVisualFillTarget(queryText, analysis.elements, userProfile);
         await chrome.storage.local.set({ lastVisionTarget: element.text }).catch(() => null);
 
-        await VisionAgent.locateAndFill(tabId, element.text, value, context.plan.goal, url);
+        await VisionAgent.locateAndFill(tabId, element.text, value, queryText, url);
         return { result: `Visually filled input "${element.text}" with value.` };
       }
     },
@@ -371,7 +510,8 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       requiresProfile: false,
       handler: async ({ tab }, context) => {
         const tabId = requireTabId(tab);
-        const analysis = await VisionService.analyzePage(tabId, context.plan.goal);
+        const queryText = context.plan.query || context.plan.goal;
+        const analysis = await VisionService.analyzePage(tabId, queryText);
         return { result: `Visually analyzed page: detected ${analysis.elements.length} elements. Reasoning: ${analysis.reasoning}` };
       }
     },

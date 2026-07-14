@@ -428,3 +428,57 @@ html:not(.dark) .bg-zinc-950 button:hover {
   transition: var(--transition-smooth) !important;
 }
 
+/* Antigravity premium chat layout overrides */
+.chat-shell {
+  font-family: var(--font-sans) !important;
+  background-color: var(--bg-primary) !important;
+}
+
+.chat-thread {
+  background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 40%),
+                    radial-gradient(at 50% 100%, rgba(255, 107, 53, 0.02) 0px, transparent 40%) !important;
+}
+
+.user-message-bubble {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 16px 16px 4px 16px !important;
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.03), 0 2px 6px -2px rgba(0, 0, 0, 0.02) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.assistant-message-bubble {
+  background: rgba(30, 41, 59, 0.45) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 16px 16px 16px 4px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.03) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px var(--accent-dim) !important;
+}
+
+.assistant-avatar {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--accent) !important;
+}
+
+.chat-composer {
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(17, 24, 39, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.chat-composer:focus-within {
+  border-color: var(--accent) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25), 0 0 0 2px var(--accent-dim) !important;
+}
+

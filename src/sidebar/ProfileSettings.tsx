@@ -23,7 +23,10 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     gitHub: ""
   });
 
-
+  const [preferredTone, setPreferredTone] = useState("");
+  const [favoriteTechnologies, setFavoriteTechnologies] = useState("");
+  const [currentProjects, setCurrentProjects] = useState("");
+  const [interviewNotes, setInterviewNotes] = useState("");
 
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,6 +55,15 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           portfolio: storedProfile.portfolio || "",
           gitHub: storedProfile.gitHub || ""
         });
+      }
+    });
+
+    storage.get("longTermMemory").then((memoryVal) => {
+      if (memoryVal) {
+        setPreferredTone(memoryVal.preferredTone || "");
+        setFavoriteTechnologies((memoryVal.favoriteTechnologies || []).join(", "));
+        setCurrentProjects((memoryVal.currentProjects || []).join(", "));
+        setInterviewNotes(memoryVal.interviewNotes || "");
       }
     });
 
@@ -192,6 +204,18 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
 
     try {
       await storage.set("profile", profile);
+
+      const memoryVal = (await storage.get("longTermMemory")) || {};
+      const updatedMemory = {
+        ...memoryVal,
+        preferredTone,
+        favoriteTechnologies: favoriteTechnologies.split(",").map(s => s.trim()).filter(Boolean),
+        currentProjects: currentProjects.split(",").map(s => s.trim()).filter(Boolean),
+        interviewNotes,
+        updatedAt: new Date().toISOString()
+      };
+      await storage.set("longTermMemory", updatedMemory);
+
       setSuccessMsg("Profile saved successfully!");
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
@@ -466,6 +490,67 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
               value={profile.experience}
               onChange={(e) => setProfile((prev) => ({ ...prev, experience: e.target.value }))}
               placeholder="Provide a summary of your career background..."
+              rows={4}
+              className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium leading-relaxed font-sans"
+            />
+          </div>
+        </div>
+
+        {/* Personal AI Memory & Preferences Card */}
+        <div className="premium-card p-4 rounded-2xl space-y-4">
+          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
+              Personal AI Memory & Preferences
+            </h3>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Preferred Tone / Professional Voice
+            </label>
+            <input
+              type="text"
+              value={preferredTone}
+              onChange={(e) => setPreferredTone(e.target.value)}
+              placeholder="E.g. Professional yet conversational, enthusiastic"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Favorite Technologies (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={favoriteTechnologies}
+              onChange={(e) => setFavoriteTechnologies(e.target.value)}
+              placeholder="E.g. React, TypeScript, Python, Node.js"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Current Projects (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={currentProjects}
+              onChange={(e) => setCurrentProjects(e.target.value)}
+              placeholder="E.g. Hunter AI Copilot, Personal Portfolio Website"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Interview Notes & Context
+            </label>
+            <textarea
+              value={interviewNotes}
+              onChange={(e) => setInterviewNotes(e.target.value)}
+              placeholder="E.g. Looking for Senior AI roles, prefer remote working, interested in developer tools..."
               rows={4}
               className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium leading-relaxed font-sans"
             />

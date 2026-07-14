@@ -22,6 +22,10 @@ export interface LongTermMemory {
   savedJobs: string[];
   generatedCoverLetters: StoredCoverLetter[];
   updatedAt: string;
+  preferredTone?: string;
+  favoriteTechnologies?: string[];
+  currentProjects?: string[];
+  interviewNotes?: string;
 }
 
 export interface MemorySnapshot {

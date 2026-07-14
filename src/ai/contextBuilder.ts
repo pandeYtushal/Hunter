@@ -2,6 +2,7 @@ import type { PageSnapshot } from "../shared/types/messages";
 import type { UserProfile } from "../shared/types/storage";
 import { ToolRegistry } from "./toolRegistry";
 import type { ActionType } from "../types";
+import type { LongTermMemory } from "../types/Memory";
 
 export interface DecisionLogEntry {
   action: ActionType;
@@ -18,6 +19,8 @@ export interface ContextBuilderInput {
   profile: UserProfile | null;
   decisionHistory: DecisionLogEntry[];
   consecutiveFailures: number;
+  openTabs?: Array<{ title: string; url: string; active: boolean }>;
+  longTermMemory?: LongTermMemory | null;
 }
 
 export const ContextBuilder = {
@@ -25,7 +28,7 @@ export const ContextBuilder = {
    * Generates a clean, prompt-ready context string.
    */
   build(input: ContextBuilderInput): string {
-    const { goal, pageContext, profile, decisionHistory, consecutiveFailures } = input;
+    const { goal, pageContext, profile, decisionHistory, consecutiveFailures, openTabs, longTermMemory } = input;
 
     // 1. Goal Section
     const goalSection = `### Current Goal
@@ -42,7 +45,14 @@ export const ContextBuilder = {
       : `### Active Webpage Context
 - No active webpage details captured.`;
 
-    // 3. User Candidate Profile Section
+    // 3. Multi-Tab Intelligence Section
+    const tabsSection = openTabs && openTabs.length > 0
+      ? `### Open Browser Tabs
+${openTabs.map((t, idx) => `- Tab ${idx + 1}: "${t.title}" (URL: "${t.url}"${t.active ? ", active" : ""})`).join("\n")}`
+      : `### Open Browser Tabs
+- No other browser tabs available.`;
+
+    // 4. User Candidate Profile Section
     const profileSection = profile && (profile.name || profile.email || profile.skills.length > 0)
       ? `### Candidate Profile
 - Name: ${profile.name || "Unknown"}
@@ -51,7 +61,20 @@ export const ContextBuilder = {
       : `### Candidate Profile
 - Candidate profile is empty/not configured.`;
 
-    // 4. Execution / Decision History Section
+    // 5. Long-Term Memory Section
+    const memorySection = longTermMemory
+      ? `### Long-Term Memory & User Preferences
+- Preferred Tone: ${longTermMemory.preferredTone || "None"}
+- Favorite Technologies: ${(longTermMemory.favoriteTechnologies || []).join(", ") || "None"}
+- Target/Favorite Companies: ${(longTermMemory.favoriteCompanies || []).join(", ") || "None"}
+- Current Projects: ${(longTermMemory.currentProjects || []).join(", ") || "None"}
+- Interview Notes: ${longTermMemory.interviewNotes || "None"}
+- Previous Applications Count: ${(longTermMemory.successfulApplications || []).length || 0}
+- Saved Jobs Count: ${(longTermMemory.savedJobs || []).length || 0}`
+      : `### Long-Term Memory & User Preferences
+- Long-term memory is empty.`;
+
+    // 6. Execution / Decision History Section
     const historyLines = decisionHistory.map((d, index) => {
       return `Step ${index + 1}:
 - Action Selected: ${d.action}
@@ -64,7 +87,7 @@ export const ContextBuilder = {
     const historySection = `### Execution History
 ${historyLines.length > 0 ? historyLines.join("\n\n") : "No actions have been executed yet."}`;
 
-    // 5. Available Tools Section
+    // 7. Available Tools Section
     const tools = ToolRegistry.list();
     const toolLines = tools.map((t) => {
       return `- "${t.action}": ${t.description} (Requires Resume/Profile: ${t.requiresProfile})`;
@@ -77,7 +100,9 @@ ${toolLines.join("\n")}`;
     return [
       goalSection,
       pageSection,
+      tabsSection,
       profileSection,
+      memorySection,
       historySection,
       toolsSection
     ].join("\n\n");

@@ -9,12 +9,14 @@ interface ChatInputProps {
   value: string;
   isGenerating: boolean;
   onChange: (val: string) => void;
-  onSend: () => void;
+  onSend: (val?: string) => void;
   onStop: () => void;
   onCaptureScreenshot: () => void;
   onAttachFile: (file: File) => void;
   onAttachImageObject: (att: ChatAttachment) => void;
   disabled?: boolean;
+  liveAgentActive: boolean;
+  onToggleLiveAgent: () => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -26,7 +28,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onCaptureScreenshot,
   onAttachFile,
   onAttachImageObject,
-  disabled
+  disabled,
+  liveAgentActive,
+  onToggleLiveAgent
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -60,7 +64,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="bg-transparent px-4 pb-4 select-none shrink-0">
-      <div className="chat-composer relative flex items-center gap-2 rounded-2xl p-2 transition duration-150 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-1 focus-within:ring-[var(--accent)]/30 min-h-[54px] shadow-sm">
+      <div className="chat-composer relative flex items-center gap-2 rounded-2xl p-2 transition duration-155 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-1 focus-within:ring-[var(--accent)]/30 min-h-[54px] shadow-sm">
         
         {/* Attachment & Screenshot Controls */}
         <div className="flex items-center gap-1 shrink-0 self-end mb-0.5">
@@ -80,11 +84,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Voice Speech-to-Text Input Button */}
           <VoiceInput
-            disabled={isGenerating || disabled}
+            active={liveAgentActive}
+            onToggle={onToggleLiveAgent}
+            disabled={disabled}
             onError={(msg) => console.warn(msg)}
-            onTranscriptChange={onChange}
-            onTranscriptSubmit={(text) => {
+            onTranscriptChange={(text) => {
+              if (isGenerating) return;
               onChange(text);
+            }}
+            onTranscriptSubmit={(text) => {
+              if (isGenerating) {
+                console.log("Ignoring transcript during active execution:", text);
+                return;
+              }
+              onChange(text);
+              onSend(text); // Trigger immediate submission when a spoken sentence is finished
             }}
           />
         </div>

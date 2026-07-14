@@ -29,8 +29,29 @@ const getActiveRuntime = async () => {
     pageContext = response?.snapshot;
   }
 
+  // Multi-Tab Intelligence: query all tabs in the active window
+  let openTabs: Array<{ title: string; url: string; active: boolean }> = [];
+  if (typeof chrome !== "undefined" && chrome.tabs) {
+    try {
+      const allTabs = await new Promise<chrome.tabs.Tab[]>((resolve) => {
+        chrome.tabs.query({ currentWindow: true }, (tabs) => resolve(tabs || []));
+      });
+      openTabs = allTabs
+        .map((t) => ({
+          title: t.title || "",
+          url: t.url || "",
+          active: !!t.active
+        }))
+        .filter((t) => t.url && (t.url.startsWith("http://") || t.url.startsWith("https://")));
+    } catch (e) {
+      console.warn("Failed to query open tabs:", e);
+    }
+  }
+
   const profile = await storage.get("profile");
-  return { tab, pageContext, profile };
+  const longTermMemory = await storage.get("longTermMemory").catch(() => null);
+
+  return { tab, pageContext, profile, openTabs, longTermMemory };
 };
 
 const buildErrorReport = (action: ActionType, reason: string, attempts: number): ActionErrorReport => ({
@@ -92,7 +113,9 @@ export const AgentLoop = {
         pageContext: runtime.pageContext || null,
         profile: runtime.profile || null,
         decisionHistory,
-        consecutiveFailures
+        consecutiveFailures,
+        openTabs: runtime.openTabs,
+        longTermMemory: runtime.longTermMemory
       });
 
       // 4. Run Reasoning

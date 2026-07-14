@@ -24,6 +24,7 @@ import { storage } from "../../shared/storage";
 import { resolveTheme } from "../../shared/theme";
 import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
 import { useTheme } from "../../popup/hooks/useTheme";
+import { shouldActQuery } from "../../ai/planner";
 
 const ALLOWED_PARENT_ORIGINS = [
   "https://linkedin.com",
@@ -176,48 +177,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   return null;
 };
 
-/**
- * Heuristic to detect if a query is a goal-mode query (requires autonomous Copilot browser control).
- * TODO: Replace this heuristic with a proper intent classification step.
- */
-const isGoalModeQuery = (query: string): boolean => {
-  const normalized = query.trim().toLowerCase();
-  
-  // List of keywords that trigger autonomous goal mode
-  const triggers = [
-    "apply",
-    "research",
-    "prepare",
-    "fill",
-    "find",
-    "save",
-    "summarize",
-    "help me",
-    "click",
-    "type",
-    "press",
-    "navigate",
-    "go to",
-    "open",
-    "select",
-    "scroll"
-  ];
-  
-  // For each trigger, check if it matches as a whole word near the start
-  return triggers.some((trigger) => {
-    const escapedTrigger = trigger.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(`\\b${escapedTrigger}\\b`, "i");
-    const match = normalized.match(regex);
-    if (match && match.index !== undefined && match.index < 10) {
-      // Exclude learning/explain intent under "help me" (e.g. "help me understand/explain/learn")
-      if (trigger === "help me" && /\b(understand|explain|learn|study|read)\b/.test(normalized)) {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  });
-};
+// Intent classification is now delegated to shouldActQuery imported from planner.ts
 
 export const ChatWindow: React.FC = () => {
   const {
@@ -256,6 +216,7 @@ export const ChatWindow: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [liveAgentActive, setLiveAgentActive] = useState(false);
   const [copilot, setCopilot] = useState<CopilotState>({
     machineState: "idle",
     currentGoal: "",
@@ -361,6 +322,14 @@ export const ChatWindow: React.FC = () => {
       } else {
         addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
       }
+      
+      // Auto-done finished goals when in live continuous conversation session
+      if (liveAgentActive) {
+        const timeoutId = setTimeout(() => {
+          CopilotEngine.getInstance().cancel();
+        }, 1500);
+        return () => clearTimeout(timeoutId);
+      }
     } else if (copilot.machineState === "failed" && prevMachineStateRef.current !== "failed") {
       addMessageToHistory(
         "error",
@@ -368,7 +337,7 @@ export const ChatWindow: React.FC = () => {
       );
     }
     prevMachineStateRef.current = copilot.machineState;
-  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal, copilot.blockReason]);
+  }, [copilot.machineState, copilot.lastResult, copilot.currentGoal, copilot.blockReason, liveAgentActive]);
 
   const handleCopyMessage = useCallback((text: string) => {
     // MessageBubble already handles navigator.clipboard.writeText internally
@@ -390,7 +359,7 @@ export const ChatWindow: React.FC = () => {
       await setActiveMode(detected);
     }
 
-    if (isGoalModeQuery(trimmedQuery)) {
+    if (shouldActQuery(trimmedQuery)) {
       setInput("");
       await addMessageToHistory("user", trimmedQuery);
       try {
@@ -410,8 +379,9 @@ export const ChatWindow: React.FC = () => {
     }
   };
 
-  const handleSend = async () => {
-    await processQuery(input, { isFromSuggestion: false });
+  const handleSend = async (val?: string) => {
+    const query = typeof val === "string" ? val : input;
+    await processQuery(query, { isFromSuggestion: false });
   };
 
   const handleSendFromSuggestion = async (prompt: string) => {
@@ -880,26 +850,19 @@ export const ChatWindow: React.FC = () => {
                 const isRunning = step.status === "running" || step.status === "waiting_confirmation";
                 const isCompleted = step.status === "completed";
                 const isFailed = step.status === "failed";
-                const StepIcon = getStepIcon(step.name, step.description);
 
                 return (
                   <div key={step.id} className="relative flex items-start justify-between gap-3 group">
                     {/* Checkbox bullet marker */}
-                    <div className={`absolute -left-[29px] top-[2px] flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[var(--bg-secondary)] border transition-all duration-300 z-10 ${isCompleted
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-500"
-                      : isFailed
-                        ? "border-rose-500 bg-rose-500/10 text-rose-500"
-                        : isRunning
-                          ? "border-[var(--accent)] bg-[var(--accent-faint)] text-[var(--accent)]"
-                          : "border-[var(--border-color)] text-[var(--text-muted)] bg-[var(--bg-tertiary)]"
-                      }`}>
+                    <div className="absolute -left-[20px] top-[4px] flex items-center justify-center z-10 select-none">
                       {isCompleted ? (
-                        <Check className="h-3 w-3 text-emerald-500 stroke-[3]" />
+                        <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
                       ) : isFailed ? (
-                        <X className="h-3 w-3 text-rose-500 stroke-[3]" />
+                        <XCircle size={11} className="text-rose-500 shrink-0" />
+                      ) : isRunning ? (
+                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
                       ) : (
-                        <StepIcon className={`h-3 w-3 ${isRunning ? "text-[var(--accent)] animate-pulse" : "text-[var(--text-muted)]"
-                          }`} />
+                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] shrink-0" />
                       )}
                     </div>
 
@@ -911,7 +874,7 @@ export const ChatWindow: React.FC = () => {
                             ? "text-[var(--text-primary)] font-bold text-left"
                             : "text-[var(--text-secondary)] text-left"
                           }`}>
-                          {step.name}
+                          {isCompleted || !isRunning ? step.name : step.description.replace(/^🧠\s*/, "")}
                         </span>
                         {isRunning && (
                           <span className="inline-flex items-center rounded bg-[var(--accent-faint)] px-1 py-0.25 text-[8px] font-bold text-[var(--accent)] uppercase tracking-wider animate-pulse">
@@ -919,10 +882,11 @@ export const ChatWindow: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className={`text-[10px] leading-relaxed mt-0.5 text-left ${isCompleted ? "text-[var(--text-muted)] opacity-60" : "text-[var(--text-muted)]"
-                        }`}>
-                        {step.description}
-                      </p>
+                      {!isCompleted && !isRunning && (
+                        <p className="text-[10px] leading-relaxed mt-0.5 text-left text-[var(--text-muted)] opacity-60">
+                          {step.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -1054,6 +1018,8 @@ export const ChatWindow: React.FC = () => {
                   setError(msg);
                 }
               }}
+              liveAgentActive={liveAgentActive}
+              onToggleLiveAgent={() => setLiveAgentActive(!liveAgentActive)}
             />
           </>
         )}

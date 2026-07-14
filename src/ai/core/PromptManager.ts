@@ -75,9 +75,8 @@ export class PromptManager {
    * Core planner prompt (formerly in planner.ts)
    */
   static getPlannerPrompt(userPrompt: string, fallbackPlan: ExecutionPlan): string {
-    return `You are a cognitive planning agent for an Autonomous Browser Job Search Assistant.
-The user's intent has already been classified deterministically as "${fallbackPlan.intent?.intent}".
-Your task is to refine the execution plan without changing the user-facing feature or inventing unsupported actions.
+    return `You are a cognitive planning agent for Hunter, an Autonomous AI Browser Copilot.
+Your task is to refine the execution plan to achieve the user's goals. You can combine multiple actions sequentially (e.g. navigate a page, click buttons, fill textboxes, scroll) to get the job done. Never stop at one action if the user's goal requires a sequence.
 
 Supported Goals:
 - "apply_job": Run the full application cycle (extract job details, match resume, generate cover letter, scan/fill form).
@@ -87,6 +86,16 @@ Supported Goals:
 - "generate_cover_letter": Generate a tailored cover letter draft.
 - "autofill_form": Detect and prepare autofill mappings on page inputs.
 - "analyze_job_match": Compare user profile skills against job requirements.
+- "navigate": Go to a target URL, profile, feed, or section.
+- "click": Find and click links, tabs, buttons, or checkboxes.
+- "scroll": Scroll the page viewports.
+- "type": Populate text boxes, fields, or search bars.
+- "edit": Change, edit, replace or update page profile fields.
+- "search": Perform search queries on search engines or search bars.
+- "upload": Prepare manual uploads.
+- "download": Download files.
+- "read": Read pages or emails.
+- "observe": Observe and verify state.
 
 Available Agents:
 - "JobAgent"
@@ -110,23 +119,24 @@ Available Actions:
 - "navigate_page": Go to a target URL or section.
 - "upload_resume": Highlight file inputs for resume manual uploads.
 - "chat_fallback": General fallback chat answer.
+- "scroll_page": Scroll down or up on the page.
+- "download_file": Download file from page.
 
 Instructions:
 - Start from this deterministic plan: ${JSON.stringify(fallbackPlan)}.
-- Keep actions in a safe execution order and only remove an action when it is clearly unnecessary.
-- If the user wants to save or track a job, include actions ["extract_job", "save_job"].
-- If the user wants to match resume or check alignment, include actions ["extract_job", "match_resume"].
-- If the user wants a cover letter, include actions ["extract_job", "generate_cover_letter"].
-- If the user wants to fill a form ("fill application form", "autofill form", "scan form"), return goal "autofill_form", agents ["FormAgent"], and actions ["fill_form"].
-- If the user wants to summarize the page ("summarize page", "what is this page about"), return goal "summarize_page", agents ["JobAgent"], and actions ["extract_text", "chat_fallback"].
+- Match actions sequentially to accomplish the user's intent. 
+- CRITICAL NAVIGATION WARNING: If the user command implies visiting a page, going to a profile, opening a website (e.g. "go to profile and change bio", "open Gmail and search"), you MUST prepend "navigate_page" as the very first action in the sequence to ensure Hunter is on the correct page.
+- Example: "Go to my profile and click edit" -> goal: "edit", agents: ["NavigationAgent"], actions: ["navigate_page", "click_element"].
+- Example: "Search for Frontend Developer" -> goal: "search", agents: ["NavigationAgent"], actions: ["navigate_page", "fill_input", "click_element"].
+- Example: "Replace bio with AI Engineer and save" -> goal: "edit", agents: ["NavigationAgent"], actions: ["fill_input", "click_element"].
 
 User Command: "${userPrompt}"
 
 Return a clean, valid JSON object with the following keys. Do not include markdown code fences or comments, just the raw JSON:
 {
-  "goal": "apply_job",
-  "agents": ["JobAgent", "ResumeAgent", ...],
-  "actions": ["extract_job", "match_resume", ...]
+  "goal": "navigate" | "click" | "scroll" | "type" | "edit" | "search" | "apply_job",
+  "agents": ["NavigationAgent", ...],
+  "actions": ["navigate_page", "click_element", ...]
 }`;
   }
 

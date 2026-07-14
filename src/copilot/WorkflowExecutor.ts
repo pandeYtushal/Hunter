@@ -7,7 +7,7 @@ import type { ActionType } from "../shared/types/agent";
 
 export class WorkflowExecutor {
   private currentTabId?: number;
-  private mediumApprovalGranted = false;
+  private static mediumApprovalGranted = false;
 
   /**
    * Find tab matching URL substring.
@@ -113,7 +113,7 @@ export class WorkflowExecutor {
 
     // 3. Safety Permission Checks
     const taskText = `${task.name} ${task.description || ""}`;
-    const guard = PermissionGuard.verifyAction(task.action, pageContext, taskText, this.mediumApprovalGranted);
+    const guard = PermissionGuard.verifyAction(task.action, pageContext, taskText, WorkflowExecutor.mediumApprovalGranted);
     if (!guard.allowed) {
       return { success: false, result: guard.reason || "This page cannot be automated." };
     }
@@ -128,7 +128,7 @@ export class WorkflowExecutor {
           async () => {
             // User Approved: execute
             if (guard.level === "MEDIUM") {
-              this.mediumApprovalGranted = true;
+              WorkflowExecutor.mediumApprovalGranted = true;
             }
             task.status = "running";
             const outcome = await this.runTool(task, runtime, executionContext);
