@@ -63,11 +63,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <div className="bg-transparent px-4 pb-4 select-none shrink-0">
-      <div className="chat-composer relative flex items-center gap-2 rounded-2xl p-2 transition duration-155 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-1 focus-within:ring-[var(--accent)]/30 min-h-[54px] shadow-sm">
+    <div className="bg-transparent px-4 pb-4 select-none shrink-0 max-w-2xl mx-auto w-full">
+      <div className="chat-composer relative flex items-center gap-2.5 rounded-2xl p-2.5 transition duration-200 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent-dim)] focus-within:shadow-[0_0_20px_rgba(var(--accent-rgb),0.12)] min-h-[58px] shadow-md hover:border-[var(--border-hover)]">
         
         {/* Attachment & Screenshot Controls */}
-        <div className="flex items-center gap-1 shrink-0 self-end mb-0.5">
+        <div className="flex items-center gap-1.5 shrink-0 self-end mb-0.5">
           {/* File attachment picker */}
           <ImageUploader onUpload={onAttachFile} disabled={isGenerating || disabled} />
 
@@ -76,7 +76,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             type="button"
             onClick={() => onCaptureScreenshot()}
             disabled={isGenerating || disabled}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition duration-150 cursor-pointer border-0 bg-transparent"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] border border-transparent hover:border-[var(--border-color)] transition duration-150 cursor-pointer bg-transparent"
             title="Capture Browser Tab Screenshot"
           >
             <Camera size={14} />
@@ -122,7 +122,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <button
               type="button"
               onClick={() => onStop()}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer border-0"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--danger)] hover:opacity-90 text-white transition cursor-pointer border-0 shadow-sm"
               title="Stop generation"
             >
               <Square size={10} fill="currentColor" />
@@ -132,7 +132,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               type="button"
               onClick={() => onSend()}
               disabled={(!value.trim() && !isGenerating) || disabled}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-30 disabled:bg-[var(--border-color)] disabled:text-[var(--text-muted)] transition cursor-pointer border-0"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-20 disabled:bg-[var(--bg-tertiary)] disabled:text-[var(--text-muted)] transition cursor-pointer border-0 shadow-sm"
               title="Send query"
             >
               <ArrowUp size={13} strokeWidth={2.5} />

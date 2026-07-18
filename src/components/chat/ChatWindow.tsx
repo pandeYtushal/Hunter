@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Terminal, X, AlertTriangle, Search, Zap, Globe, Keyboard, Clock,
-  Sparkles, HelpCircle, Activity, MousePointer, CheckCircle2, XCircle,
-  Plus, MessageSquare, Pin, Trash2, Settings, Compass, Target,
-  Check, History
+  Terminal, X, AlertTriangle, CheckCircle2, XCircle,
+  Compass, ChevronDown, ChevronUp, MousePointerClick, MessageSquare
 } from "lucide-react";
 import { useChatController } from "../../chat/ChatController";
 import { ChatHeader } from "./ChatHeader";
@@ -15,11 +13,10 @@ import { ChatInput } from "./ChatInput";
 import { DragDropZone } from "./DragDropZone";
 import { TypingIndicator } from "./TypingIndicator";
 import { ContextBar } from "./ContextBar";
+import { ConversationHistory } from "./ConversationHistory";
 import { CopilotEngine, type CopilotState } from "../../copilot/CopilotEngine";
 import { ProfileSettings } from "../../sidebar/ProfileSettings";
-import { TaskManager } from "./TaskManager";
-import { WorkspaceDashboard } from "./WorkspaceDashboard";
-import { WorkflowBuilder } from "./WorkflowBuilder";
+import { VoiceWave } from "./VoiceWave";
 import { storage } from "../../shared/storage";
 import { resolveTheme } from "../../shared/theme";
 import { useChromeStorage } from "../../popup/hooks/useChromeStorage";
@@ -43,18 +40,6 @@ const ALLOWED_PARENT_ORIGINS = [
   "http://127.0.0.1:5173",
   "http://127.0.0.1:3000"
 ];
-
-const getStepIcon = (name: string, description: string) => {
-  const text = (name + " " + description).toLowerCase();
-  if (text.includes("click")) return MousePointer;
-  if (text.includes("type") || text.includes("fill") || text.includes("input")) return Keyboard;
-  if (text.includes("search") || text.includes("find") || text.includes("extract") || text.includes("scan")) return Search;
-  if (text.includes("navigate") || text.includes("go to") || text.includes("url") || text.includes("open")) return Globe;
-  if (text.includes("wait") || text.includes("sleep") || text.includes("delay")) return Clock;
-  if (text.includes("apply")) return Zap;
-  if (text.includes("summarize") || text.includes("analyze") || text.includes("explain")) return Compass;
-  return Activity;
-};
 
 function formatCopilotResult(result: string): string {
   if (!result) return "";
@@ -95,7 +80,7 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
 
 const detectWorkspaceMode = (prompt: string): string | null => {
   const lower = prompt.toLowerCase();
-  
+
   if (
     lower.includes("apply") ||
     lower.includes("resume") ||
@@ -107,7 +92,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "job_search";
   }
-  
+
   if (
     lower.includes("research") ||
     lower.includes("competitor") ||
@@ -118,7 +103,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "research";
   }
-  
+
   if (
     lower.includes("buy") ||
     lower.includes("price") ||
@@ -130,7 +115,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "shopping";
   }
-  
+
   if (
     lower.includes("learn") ||
     lower.includes("study") ||
@@ -141,7 +126,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "learning";
   }
-  
+
   if (
     lower.includes("email") ||
     lower.includes("draft email") ||
@@ -151,7 +136,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "email";
   }
-  
+
   if (
     lower.includes("travel") ||
     lower.includes("flight") ||
@@ -162,7 +147,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "travel";
   }
-  
+
   if (
     lower.includes("contract") ||
     lower.includes("summarize document") ||
@@ -173,7 +158,7 @@ const detectWorkspaceMode = (prompt: string): string | null => {
   ) {
     return "documents";
   }
-  
+
   return null;
 };
 
@@ -209,11 +194,11 @@ export const ChatWindow: React.FC = () => {
   const { value: approvalState } = useChromeStorage("approvalState");
   const { theme, setTheme } = useTheme();
   const [devModeOpen, setDevModeOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [activeView, setActiveView] = useState<"chat" | "tasks" | "dashboard" | "workflows">("chat");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [copilotExpanded, setCopilotExpanded] = useState(false);
+  const [forceChatMode, setForceChatMode] = useState(false);
   const { setValue: setActiveMode } = useChromeStorage("activeWorkspaceMode");
-  const [showHistory, setShowHistory] = useState(false);
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [liveAgentActive, setLiveAgentActive] = useState(false);
@@ -230,7 +215,7 @@ export const ChatWindow: React.FC = () => {
   const handleToggleExpand = () => {
     const nextExpanded = !isExpanded;
     setIsExpanded(nextExpanded);
-    
+
     let targetOrigin = "*";
     if (currentUrl) {
       try {
@@ -296,11 +281,17 @@ export const ChatWindow: React.FC = () => {
   }, []);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const threadRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef(true);
 
   // Subscribe to Copilot Engine State
   useEffect(() => {
     const unsubscribe = CopilotEngine.getInstance().subscribe((state) => {
       setCopilot(state);
+      // Auto-expand when approval is needed
+      if (state.machineState === "waiting_confirmation") {
+        setCopilotExpanded(true);
+      }
     });
 
     return () => {
@@ -308,10 +299,23 @@ export const ChatWindow: React.FC = () => {
     };
   }, []);
 
-  // Scroll to bottom on new messages
+  const handleThreadScroll = useCallback(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < 80;
+  }, []);
+
+  // Scroll to bottom only when user is already near the bottom
   useEffect(() => {
+    if (!stickToBottomRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeConversation?.messages, isGenerating, copilot.timeline]);
+
+  // Reset force-chat when input cleared
+  useEffect(() => {
+    if (!input.trim()) setForceChatMode(false);
+  }, [input]);
 
   const prevMachineStateRef = useRef<string>("idle");
 
@@ -322,7 +326,7 @@ export const ChatWindow: React.FC = () => {
       } else {
         addMessageToHistory("assistant", `Goal completed successfully: "${copilot.currentGoal}"`);
       }
-      
+
       // Auto-done finished goals when in live continuous conversation session
       if (liveAgentActive) {
         const timeoutId = setTimeout(() => {
@@ -344,11 +348,9 @@ export const ChatWindow: React.FC = () => {
     console.log("Message copied to clipboard:", text.slice(0, 30) + "...");
   }, []);
 
-  const processQuery = async (query: string, opts: { isFromSuggestion: boolean }) => {
+  const processQuery = async (query: string, opts: { isFromSuggestion: boolean; forceChat?: boolean }) => {
     const trimmedQuery = query.trim();
     if (!trimmedQuery && attachments.length === 0) return;
-
-    setActiveView("chat");
 
     if (opts.isFromSuggestion) {
       setInput(query);
@@ -359,8 +361,13 @@ export const ChatWindow: React.FC = () => {
       await setActiveMode(detected);
     }
 
-    if (shouldActQuery(trimmedQuery)) {
+    const useAct = shouldActQuery(trimmedQuery) && !opts.forceChat && !forceChatMode;
+
+    if (useAct) {
       setInput("");
+      setForceChatMode(false);
+      stickToBottomRef.current = true;
+      setCopilotExpanded(false);
       await addMessageToHistory("user", trimmedQuery);
       try {
         await CopilotEngine.getInstance().startGoal(trimmedQuery);
@@ -370,6 +377,8 @@ export const ChatWindow: React.FC = () => {
         await addMessageToHistory("error", message);
       }
     } else {
+      setForceChatMode(false);
+      stickToBottomRef.current = true;
       if (opts.isFromSuggestion) {
         await sendMessage(trimmedQuery);
         setInput("");
@@ -406,165 +415,47 @@ export const ChatWindow: React.FC = () => {
     return <ProfileSettings onBack={() => setShowProfile(false)} />;
   }
 
+  const willAct =
+    Boolean(input.trim()) &&
+    shouldActQuery(input.trim()) &&
+    !forceChatMode &&
+    !isGenerating &&
+    !isCopilotRunning;
+
+  const emptySuggestions = getDynamicSuggestions(currentUrl).slice(0, 3);
+  const lastMessageId =
+    activeConversation && activeConversation.messages.length > 0
+      ? activeConversation.messages[activeConversation.messages.length - 1].id
+      : null;
+
+  const activeTimelineStep = copilot.timeline.find(
+    (s) => s.status === "running" || s.status === "waiting_confirmation"
+  );
+
   return (
     <div className="chat-shell flex h-full w-full text-[var(--text-primary)] font-sans overflow-hidden relative">
-      {/* Drawer Overlay Backdrop */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="absolute inset-0 bg-black/45 z-30 animate-fade-in cursor-pointer"
-        />
-      )}
-
-      {/* Collapsible Sidebar Chat History Drawer */}
-      {sidebarOpen && (
-        <div className="absolute left-0 top-0 h-full w-[200px] border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col shrink-0 animate-slide-right select-none z-40 shadow-xl">
-          {/* Sidebar Header */}
-          <div className="p-3 border-b border-[var(--border-color)] flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                void createConversation();
-                setSidebarOpen(false);
-              }}
-              className="flex-1 flex items-center justify-center gap-1.5 h-8 px-2 rounded-lg border border-[var(--border-color)] bg-transparent hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--accent)] transition duration-200 cursor-pointer"
-            >
-              <Plus size={14} />
-              <span>New Chat</span>
-            </Button>
-          </div>
-
-          {/* Conversations Lists */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-4 custom-scrollbar">
-            {/* Pinned Section */}
-            {conversations.some((c) => c.pinned) && (
-              <div className="space-y-1">
-                <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Pinned</span>
-                {conversations.filter((c) => c.pinned).map((conv) => (
-                  <div
-                    key={conv.id}
-                    onClick={() => selectConversation(conv.id)}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
-                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
-                      }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Pin size={9} className="text-[var(--accent)] rotate-45 shrink-0" />
-                      <span className="truncate">{conv.title || "Chat Session"}</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void togglePinConversation(conv.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
-                        aria-label="Unpin conversation"
-                        title="Unpin conversation"
-                      >
-                        <Pin size={12} className="rotate-45" />
-                      </Button>
-                      {conversations.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void deleteConversation(conv.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
-                          aria-label="Delete conversation"
-                          title="Delete conversation"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Recents Section */}
-            <div className="space-y-1">
-              <span className="px-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">Recent Chats</span>
-              {conversations.filter((c) => !c.pinned).length === 0 ? (
-                <div className="px-2 py-3 text-[11px] text-[var(--text-muted)] italic">No recent chats</div>
-              ) : (
-                conversations.filter((c) => !c.pinned).map((conv) => (
-                  <div
-                    key={conv.id}
-                    onClick={() => selectConversation(conv.id)}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition duration-150 group ${conv.id === activeId
-                      ? "bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-semibold"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]/50 hover:text-[var(--text-primary)]"
-                      }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <MessageSquare size={10} className="text-[var(--text-muted)] shrink-0" />
-                      <span className="truncate">{conv.title || "Chat Session"}</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void togglePinConversation(conv.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition cursor-pointer"
-                        aria-label="Pin conversation"
-                        title="Pin conversation"
-                      >
-                        <Pin size={12} />
-                      </Button>
-                      {conversations.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void deleteConversation(conv.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0.5 rounded hover:bg-rose-500/10 text-[var(--text-muted)] hover:text-rose-500 transition cursor-pointer"
-                          aria-label="Delete conversation"
-                          title="Delete conversation"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar Footer */}
-          <div className="p-3 border-t border-[var(--border-color)]">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setShowProfile(true);
-                setSidebarOpen(false);
-              }}
-              className="w-full flex items-center justify-start gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition cursor-pointer"
-            >
-              <Settings size={14} />
-              <span>Settings</span>
-            </Button>
-          </div>
-        </div>
-      )}
+      <ConversationHistory
+        open={historyOpen}
+        conversations={conversations}
+        activeId={activeId}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={selectConversation}
+        onCreate={() => {
+          void createConversation();
+        }}
+        onDelete={(id) => {
+          void deleteConversation(id);
+        }}
+        onTogglePin={(id) => {
+          void togglePinConversation(id);
+        }}
+      />
 
       {/* Main Panel Content Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative bg-[var(--bg-primary)]">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative bg-[var(--bg-primary)] bg-[radial-gradient(ellipse_80%_85%_at_50%_-20%,rgba(var(--accent-rgb),0.035),transparent)]">
         <ChatHeader
           currentUrl={currentUrl || undefined}
-          activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : activeConversation && activeConversation.messages.length > 0 ? "Automated browser goal" : null}
+          activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : null}
           provider={devMetrics.selectedProvider}
           theme={resolveTheme(theme)}
           isExpanded={isExpanded}
@@ -575,201 +466,81 @@ export const ChatWindow: React.FC = () => {
           onClearChat={clearCurrentConversation}
           onToggleProfile={() => setShowProfile(true)}
           onToggleExpand={handleToggleExpand}
-          sidebarOpen={sidebarOpen}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenHistory={() => setHistoryOpen(true)}
+          onNewChat={() => {
+            void createConversation();
+          }}
         />
 
-        {activeView === "chat" && (
-          <div className="mx-3 mb-2 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setShowHistory((value) => !value)}
-              className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-medium transition ${showHistory
-                ? "border-[rgba(255,107,53,0.35)] bg-[rgba(255,107,53,0.1)] text-[var(--text-primary)]"
-                : "border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                }`}
-              aria-expanded={showHistory}
-              aria-label="Open chat history"
-            >
-              <History size={13} />
-              Chats
-            </button>
-            <button
-              type="button"
-              onClick={async () => {
-                await createConversation();
-                setShowHistory(false);
-              }}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition"
-              aria-label="Start new chat"
-            >
-              <Plus size={13} />
-              New
-            </button>
-          </div>
-        )}
-
-        {activeView === "chat" && showHistory && (
-          <div className="mx-3 mb-2 max-h-52 overflow-y-auto rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1.5 shadow-[var(--shadow-product)] custom-scrollbar">
-            {conversations.length === 0 ? (
-              <div className="px-3 py-4 text-center text-[12px] text-[var(--text-muted)]">No chats yet.</div>
-            ) : (
-              conversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className={`group flex items-center gap-2 rounded-xl px-2 py-2 transition ${conversation.id === activeId ? "bg-[var(--cards)]" : "hover:bg-[var(--bg-tertiary)]"
-                    }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      selectConversation(conversation.id);
-                      setShowHistory(false);
-                    }}
-                    className="min-w-0 flex-1 text-left"
-                    aria-current={conversation.id === activeId ? "true" : undefined}
-                  >
-                    <div className="truncate text-[12px] font-medium text-[var(--text-primary)]">
-                      {conversation.title || "New Conversation"}
-                    </div>
-                    <div className="mt-0.5 truncate text-[10.5px] text-[var(--text-muted)]">
-                      {conversation.messages.length} messages
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async (event) => {
-                      event.stopPropagation();
-                      await deleteConversation(conversation.id);
-                    }}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[var(--text-muted)] opacity-70 hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
-                    aria-label={`Delete ${conversation.title || "chat"}`}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Workspace switcher */}
-        <div className="mx-3 mb-1 grid grid-cols-4 rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] p-1 text-[11px] shrink-0 font-medium text-center select-none font-sans">
-          <button
-            onClick={() => setActiveView("chat")}
-            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "chat" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Chat
-          </button>
-          <button
-            onClick={() => setActiveView("tasks")}
-            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "tasks" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Tasks
-          </button>
-          <button
-            onClick={() => setActiveView("dashboard")}
-            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "dashboard" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Workspace
-          </button>
-          <button
-            onClick={() => setActiveView("workflows")}
-            className={`rounded-full py-1.5 transition-all cursor-pointer ${activeView === "workflows" ? "bg-[var(--cards)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              }`}
-          >
-            Flows
-          </button>
-        </div>
-
-        {activeView === "dashboard" ? (
-          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
-            <WorkspaceDashboard />
-          </div>
-        ) : activeView === "tasks" ? (
-          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
-            <TaskManager />
-          </div>
-        ) : activeView === "workflows" ? (
-          <div className="flex-grow flex-1 min-h-0 overflow-y-auto">
-            <WorkflowBuilder />
-          </div>
-        ) : (
+        <div className="flex-grow flex-1 min-h-0 relative flex flex-col">
+          {/* Live Voice Visualizer Overlay */}
+          {liveAgentActive && (
+            <VoiceWave
+              onClose={() => setLiveAgentActive(false)}
+              transcript={input}
+            />
+          )}
           <div className="flex-1 flex flex-col min-h-0">
             <DragDropZone onDropFile={attachFile}>
               {/* Messages Thread Log */}
-              <div className="chat-thread flex-1 overflow-y-auto px-4 py-4 space-y-8 custom-scrollbar bg-transparent">
+              <div
+                ref={threadRef}
+                onScroll={handleThreadScroll}
+                className="chat-thread flex-1 overflow-y-auto px-4 py-4 space-y-5 custom-scrollbar bg-transparent"
+              >
                 {!activeConversation || activeConversation.messages.length === 0 ? (
                   <div className="flex-grow flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-6 max-w-sm mx-auto h-full justify-self-center py-10">
-
                     {/* Brand Greeting */}
-                    <div className="space-y-2 flex flex-col items-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--accent-faint)] border border-[var(--accent-dim)] text-[var(--accent)] shadow-md mb-2">
-                        <Compass size={24} className="animate-spin-slow" style={{ animationDuration: "20s" }} />
+                    <div className="space-y-3 flex flex-col items-center relative w-full">
+                      <div className="absolute -top-10 h-32 w-32 bg-gradient-to-tr from-[var(--accent)]/10 via-[var(--accent-strong)]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+                      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--accent)] shadow-md mb-1 transition-all duration-300 hover:scale-105 hover:border-[var(--accent-dim)]">
+                        <Compass size={22} className="animate-spin-slow" style={{ animationDuration: "24s" }} />
                       </div>
-                      <h2 className="text-xl font-bold tracking-normal text-[var(--text-primary)]">
-                        Hi
+                      <h2 className="text-xl font-extrabold tracking-tight bg-gradient-to-b from-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent">
+                        How can I assist you?
                       </h2>
-                      <p className="text-[13px] text-[var(--text-secondary)] font-normal leading-relaxed">
-                        What would you like help with today?
+                      <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed max-w-[260px] mx-auto">
+                        Ask about this page, or tell Hunter to act — apply, research, or autofill.
                       </p>
                     </div>
 
-                    {/* Quick actions grid */}
-                    <div className="w-full space-y-2.5 text-left">
-                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                        Suggested Prompts
+                    {/* Page-aware suggestions (top 3) */}
+                    <div className="w-full space-y-2 text-left">
+                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
+                        Suggested
                       </span>
                       <div className="grid grid-cols-1 gap-2 w-full">
-                        <button
-                          onClick={() => handleSendFromSuggestion("Explain this page in detail")}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
-                        >
-                          <Sparkles size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                          <span className="truncate">Analyze this page</span>
-                        </button>
-                        <button
-                          onClick={() => handleSendFromSuggestion("Compare this page with my resume")}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
-                        >
-                          <Target size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                          <span className="truncate">Review my resume</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            captureScreen();
-                            setTimeout(() => {
-                              handleSendFromSuggestion("Explain this screenshot");
-                            }, 500);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
-                        >
-                          <Globe size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                          <span className="truncate">Explain this screenshot</span>
-                        </button>
-                        <button
-                          onClick={() => handleSendFromSuggestion("Research this company")}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
-                        >
-                          <Clock size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                          <span className="truncate">Research company</span>
-                        </button>
-                        <button
-                          onClick={() => handleSendFromSuggestion("Apply to this job")}
-                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm"
-                        >
-                          <Zap size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                          <span className="truncate">Help me apply</span>
-                        </button>
+                        {emptySuggestions.map((s) => {
+                          const Icon = s.icon;
+                          const isAct = shouldActQuery(s.prompt);
+                          return (
+                            <button
+                              key={s.prompt}
+                              onClick={() => handleSendFromSuggestion(s.prompt)}
+                              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm hover:-translate-y-0.5 hover:shadow-md"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <Icon size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
+                                <span className="truncate">{s.label}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0 select-none">
+                                <span className={`text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors ${
+                                  isAct
+                                    ? "text-[var(--accent)] border-[var(--accent-dim)] bg-[var(--accent-faint)]"
+                                    : "text-[var(--text-muted)] border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--accent)]"
+                                }`}>
+                                  {isAct ? "Act" : "Ask"}
+                                </span>
+                                <span className="text-[var(--text-muted)] group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-transform duration-150">{"→"}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-
                   </div>
                 ) : (
-                  activeConversation.messages.map((msg, index) => (
+                  activeConversation.messages.map((msg) => (
                     <MessageBubble
                       key={msg.id}
                       message={msg}
@@ -778,24 +549,24 @@ export const ChatWindow: React.FC = () => {
                       onEditAndRetry={editPromptAndRetry}
                       isGenerating={isGenerating || isCopilotRunning}
                       devModeOpen={devModeOpen}
+                      forceShowActions={msg.id === lastMessageId && !isGenerating && !isCopilotRunning}
                     />
                   ))
                 )}
 
-                {/* Typing thinking dot animation */}
-                {isGenerating && activeConversation && activeConversation.messages.length > 0 && (
+                {/* Fallback thinking indicator before assistant placeholder lands */}
+                {isGenerating &&
+                  activeConversation &&
+                  activeConversation.messages.length > 0 &&
                   activeConversation.messages[activeConversation.messages.length - 1].role === "user" && (
-                    <div className="px-4 py-2">
-                      <TypingIndicator />
-                    </div>
-                  )
-                )}
+                    <TypingIndicator />
+                  )}
 
                 <div ref={messagesEndRef} />
               </div>
             </DragDropZone>
           </div>
-        )}
+        </div>
 
         {/* Error Notification Bar */}
         {error && (
@@ -814,175 +585,204 @@ export const ChatWindow: React.FC = () => {
           </div>
         )}
 
-        {/* Copilot Engine Timeline Progress Card Dashboard Overlay */}
+        {/* Collapsible Copilot status */}
         {copilot.machineState !== "idle" && (
-          <div className="mx-4 my-2.5 p-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-lg space-y-4 animate-scale-up select-none">
-            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-2.5">
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider text-left">Current Goal</span>
-                <span className="text-[13px] font-bold text-[var(--text-primary)] mt-0.5 text-left">"{copilot.currentGoal}"</span>
-              </div>
-              <span className="text-[10.5px] text-[var(--text-muted)] font-mono shrink-0">
-                Est: {copilot.estimatedCompletionTimeSeconds}s
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[10.5px] font-mono text-[var(--text-secondary)]">
-                <span>Progress Checklist</span>
-                <span className="font-bold text-[var(--accent)]">{copilot.progress}%</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                  <div
-                    className="h-full transition-all duration-300 bg-[var(--accent)]"
-                    style={{
-                      width: `${copilot.progress}%`,
-                    }}
-                  />
+          <div className={`mx-4 my-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-md animate-[scale-up_0.2s_ease-out] select-none overflow-hidden ${
+            copilot.machineState === "executing" || copilot.machineState === "planning"
+              ? "animate-accent-pulse"
+              : ""
+          }`}>
+            {/* Compact bar */}
+            <div className="flex items-center gap-2 px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => setCopilotExpanded((v) => !v)}
+                className="flex flex-1 min-w-0 items-center gap-2.5 bg-transparent border-0 p-0 cursor-pointer text-left"
+                aria-expanded={copilotExpanded}
+              >
+                <div className={`h-2 w-2 rounded-full shrink-0 ${
+                  copilot.machineState === "failed"
+                    ? "bg-rose-500"
+                    : copilot.machineState === "completed"
+                      ? "bg-emerald-500"
+                      : "bg-[var(--accent)] animate-pulse"
+                }`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-[var(--text-primary)] truncate">
+                      {copilot.currentGoal || "Running goal"}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-[var(--accent)] shrink-0 tabular-nums">
+                      {copilot.progress}%
+                    </span>
+                  </div>
+                  {!copilotExpanded && activeTimelineStep && (
+                    <p className="text-[10px] text-[var(--text-muted)] truncate mt-0.5 animate-shimmer-soft">
+                      {activeTimelineStep.name || activeTimelineStep.description}
+                    </p>
+                  )}
                 </div>
+                {copilotExpanded ? (
+                  <ChevronUp size={14} className="text-[var(--text-muted)] shrink-0" />
+                ) : (
+                  <ChevronDown size={14} className="text-[var(--text-muted)] shrink-0" />
+                )}
+              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {copilot.machineState === "executing" && (
+                  <button
+                    type="button"
+                    onClick={() => CopilotEngine.getInstance().pause()}
+                    className="h-7 px-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[10px] font-semibold text-[var(--text-secondary)] cursor-pointer"
+                  >
+                    Pause
+                  </button>
+                )}
+                {copilot.machineState === "paused" && (
+                  <button
+                    type="button"
+                    onClick={() => CopilotEngine.getInstance().resume()}
+                    className="h-7 px-2 rounded-lg bg-emerald-600 text-white text-[10px] font-bold border-0 cursor-pointer"
+                  >
+                    Resume
+                  </button>
+                )}
+                {copilot.machineState === "completed" ? (
+                  <button
+                    type="button"
+                    onClick={() => CopilotEngine.getInstance().cancel()}
+                    className="h-7 px-2 rounded-lg bg-emerald-600 text-white text-[10px] font-bold border-0 cursor-pointer"
+                  >
+                    Done
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => CopilotEngine.getInstance().cancel()}
+                    className="h-7 px-2 rounded-lg border border-rose-500/35 text-rose-400 text-[10px] font-semibold bg-transparent cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Timeline Steps - Redesigned premium vertical timeline checklist */}
-            <div className="relative pl-5 border-l border-[var(--border-color)] ml-3 space-y-3.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar text-[11px] font-mono leading-relaxed">
-              {copilot.timeline.map((step) => {
-                const isRunning = step.status === "running" || step.status === "waiting_confirmation";
-                const isCompleted = step.status === "completed";
-                const isFailed = step.status === "failed";
+            {/* Thin progress line + shimmer while running */}
+            <div className="h-1 bg-[var(--bg-tertiary)]">
+              <div
+                className={`h-full transition-all duration-500 ease-out ${
+                  copilot.machineState === "completed"
+                    ? "bg-emerald-500"
+                    : copilot.machineState === "failed"
+                      ? "bg-rose-500"
+                      : "progress-shimmer-bar"
+                }`}
+                style={{ width: `${Math.max(copilot.progress, 4)}%` }}
+              />
+            </div>
 
-                return (
-                  <div key={step.id} className="relative flex items-start justify-between gap-3 group">
-                    {/* Checkbox bullet marker */}
-                    <div className="absolute -left-[20px] top-[4px] flex items-center justify-center z-10 select-none">
-                      {isCompleted ? (
-                        <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-                      ) : isFailed ? (
-                        <XCircle size={11} className="text-rose-500 shrink-0" />
-                      ) : isRunning ? (
-                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--accent)] border-t-transparent animate-spin shrink-0" />
-                      ) : (
-                        <div className="h-2.5 w-2.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] shrink-0" />
-                      )}
-                    </div>
+            {/* Expanded details */}
+            {copilotExpanded && (
+              <div className="p-3 space-y-3 border-t border-[var(--border-color)]">
+                <div className="relative pl-5 border-l border-[var(--border-color)] ml-2 space-y-3 max-h-40 overflow-y-auto pr-1 custom-scrollbar text-[11px] font-mono leading-relaxed">
+                  {copilot.timeline.map((step) => {
+                    const isRunning = step.status === "running" || step.status === "waiting_confirmation";
+                    const isCompleted = step.status === "completed";
+                    const isFailed = step.status === "failed";
 
-                    <div className="flex-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`font-semibold transition-all duration-200 ${isCompleted
-                          ? "text-[var(--text-muted)] line-through opacity-75 text-left"
-                          : isRunning
-                            ? "text-[var(--text-primary)] font-bold text-left"
-                            : "text-[var(--text-secondary)] text-left"
-                          }`}>
+                    return (
+                      <div
+                        key={step.id}
+                        className={`relative flex items-start gap-2 ${isRunning ? "step-row-enter" : ""}`}
+                      >
+                        <div className="absolute -left-[21px] top-[3px] flex items-center justify-center z-10">
+                          {isCompleted ? (
+                            <CheckCircle2 size={12} className="text-emerald-500 step-check-pop" />
+                          ) : isFailed ? (
+                            <XCircle size={12} className="text-rose-500 step-check-pop" />
+                          ) : isRunning ? (
+                            <div className="h-2.5 w-2.5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                          ) : (
+                            <div className="h-2.5 w-2.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)]" />
+                          )}
+                        </div>
+                        <span className={`font-semibold text-left transition-colors duration-200 ${
+                          isCompleted
+                            ? "text-[var(--text-muted)] line-through opacity-75"
+                            : isRunning
+                              ? "text-[var(--text-primary)]"
+                              : "text-[var(--text-secondary)]"
+                        }`}>
                           {isCompleted || !isRunning ? step.name : step.description.replace(/^🧠\s*/, "")}
                         </span>
-                        {isRunning && (
-                          <span className="inline-flex items-center rounded bg-[var(--accent-faint)] px-1 py-0.25 text-[8px] font-bold text-[var(--accent)] uppercase tracking-wider animate-pulse">
-                            Active
-                          </span>
-                        )}
                       </div>
-                      {!isCompleted && !isRunning && (
-                        <p className="text-[10px] leading-relaxed mt-0.5 text-left text-[var(--text-muted)] opacity-60">
-                          {step.description}
-                        </p>
-                      )}
+                    );
+                  })}
+                </div>
+
+                {((copilot.machineState === "waiting_confirmation") || (approvalState && approvalState.status === "pending")) && (
+                  <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5 text-left">
+                    <p className="text-[11px] font-bold text-[var(--accent)] flex items-center gap-1.5">
+                      <AlertTriangle size={13} />
+                      Safety Approval Required
+                    </p>
+                    <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed font-sans">
+                      {copilot.machineState === "waiting_confirmation"
+                        ? copilot.pendingConfirmationMessage || "Hunter has paused before a protected action. Do you approve?"
+                        : approvalState?.message}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (copilot.machineState === "waiting_confirmation") {
+                            CopilotEngine.getInstance().approve();
+                          } else if (approvalState) {
+                            await storage.set("approvalState", { ...approvalState, status: "approved" });
+                          }
+                        }}
+                        className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer border-0"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (copilot.machineState === "waiting_confirmation") {
+                            CopilotEngine.getInstance().skip();
+                          } else if (approvalState) {
+                            await storage.set("approvalState", { ...approvalState, status: "declined" });
+                          }
+                        }}
+                        className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] text-[10px] font-mono uppercase transition cursor-pointer bg-transparent"
+                      >
+                        Skip
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                )}
 
-            {/* Safety Confirmation alert bar */}
-            {((copilot.machineState === "waiting_confirmation") || (approvalState && approvalState.status === "pending")) && (
-              <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5 text-left">
-                <p className="text-[11px] font-bold text-[var(--accent)] flex items-center gap-1">
-                  <AlertTriangle size={12} />
-                  Safety Approval Required
-                </p>
-                <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                  {copilot.machineState === "waiting_confirmation"
-                    ? copilot.pendingConfirmationMessage || "Hunter has paused before a protected action. Do you approve?"
-                    : approvalState?.message}
-                </p>
-                <div className="flex gap-2">
+                {copilot.machineState === "failed" && (
                   <button
-                    onClick={async () => {
-                      if (copilot.machineState === "waiting_confirmation") {
-                        CopilotEngine.getInstance().approve();
-                      } else if (approvalState) {
-                        await storage.set("approvalState", { ...approvalState, status: "approved" });
-                      }
-                    }}
-                    className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10.5px] font-bold uppercase tracking-wider transition cursor-pointer border-0"
+                    type="button"
+                    onClick={() => CopilotEngine.getInstance().retry()}
+                    className="w-full h-8 rounded-lg bg-[var(--accent)] text-white text-[11px] font-bold uppercase cursor-pointer border-0"
                   >
-                    Confirm Action
+                    Retry Failed Step
                   </button>
-                  <button
-                    onClick={async () => {
-                      if (copilot.machineState === "waiting_confirmation") {
-                        CopilotEngine.getInstance().skip();
-                      } else if (approvalState) {
-                        await storage.set("approvalState", { ...approvalState, status: "declined" });
-                      }
-                    }}
-                    className="flex-1 h-7 rounded border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[10.5px] font-mono uppercase transition cursor-pointer bg-transparent"
-                  >
-                    Skip / Decline
-                  </button>
-                </div>
+                )}
               </div>
             )}
-
-            {/* User Control Buttons */}
-            <div className="flex gap-2 border-t border-[var(--border-color)] pt-3.5">
-              {copilot.machineState === "executing" ? (
-                <button
-                  onClick={() => CopilotEngine.getInstance().pause()}
-                  className="flex-1 h-8 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-[11px] font-semibold text-[var(--text-secondary)] transition cursor-pointer"
-                >
-                  Pause Loop
-                </button>
-              ) : copilot.machineState === "paused" ? (
-                <button
-                  onClick={() => CopilotEngine.getInstance().resume()}
-                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
-                >
-                  Resume Loop
-                </button>
-              ) : null}
-
-              {copilot.machineState === "failed" && (
-                <button
-                  onClick={() => CopilotEngine.getInstance().retry()}
-                  className="flex-1 h-8 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
-                >
-                  Retry Failed Step
-                </button>
-              )}
-
-              {copilot.machineState === "completed" ? (
-                <button
-                  onClick={() => CopilotEngine.getInstance().cancel()}
-                  className="flex-1 h-8 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase transition cursor-pointer border-0"
-                >
-                  Done
-                </button>
-              ) : (
-                <button
-                  onClick={() => CopilotEngine.getInstance().cancel()}
-                  className="h-8 px-3 rounded border border-rose-500/35 bg-transparent hover:bg-rose-500/10 text-rose-400 text-[11px] font-semibold transition cursor-pointer"
-                >
-                  Cancel Goal
-                </button>
-              )}
-            </div>
           </div>
         )}
 
-        {/* Suggestion Chips when chatting and not generating */}
-        {activeConversation && activeConversation.messages.length > 0 && !isGenerating && !isCopilotRunning && (
-          <div className="px-4 py-1 shrink-0">
+        {/* Suggestion chips — only when idle input and not generating */}
+        {activeConversation &&
+          activeConversation.messages.length > 0 &&
+          !isGenerating &&
+          !isCopilotRunning &&
+          !input.trim() && (
+          <div className="px-4 py-0.5 shrink-0">
             <PromptSuggestions currentUrl={currentUrl} onSelect={handleSendFromSuggestion} />
           </div>
         )}
@@ -990,39 +790,72 @@ export const ChatWindow: React.FC = () => {
         {/* Upload Thumbnails Row */}
         <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
 
-        {/* Standard input footer area */}
-        {activeView === "chat" && (
-          <>
-            <ContextBar
-              currentUrl={currentUrl}
-              hasAttachments={attachments.length > 0}
-              hasMemory={Boolean(activeConversation?.messages.length)}
-              browserControlEnabled={Boolean(currentUrl)}
-              activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : undefined}
-            />
-            <ChatInput
-              value={input}
-              isGenerating={isGenerating || isCopilotRunning}
-              onChange={setInput}
-              onSend={handleSend}
-              onStop={handleStop}
-              onCaptureScreenshot={captureScreen}
-              onAttachFile={attachFile}
-              onAttachImageObject={(att) => {
-                try {
-                  const blob = base64ToBlob(att.base64Data, att.mimeType);
-                  attachFile(new File([blob], att.name, { type: att.mimeType }));
-                } catch (err: any) {
-                  const msg = "Failed to reconstruct image from pasted attachment.";
-                  console.error(msg, err);
-                  setError(msg);
-                }
-              }}
-              liveAgentActive={liveAgentActive}
-              onToggleLiveAgent={() => setLiveAgentActive(!liveAgentActive)}
-            />
-          </>
+        {/* Act-mode preview banner */}
+        {willAct && (
+          <div className="mx-4 mb-1.5 flex items-center gap-2 rounded-lg border border-[var(--accent-dim)] bg-[var(--accent-faint)] px-3 py-2 text-[11px] animate-fade-in select-none">
+            <MousePointerClick size={13} className="text-[var(--accent)] shrink-0" />
+            <span className="flex-1 text-[var(--text-secondary)] text-left">
+              <strong className="text-[var(--accent)]">Act mode:</strong> Hunter will automate the browser
+            </span>
+            <button
+              type="button"
+              onClick={() => setForceChatMode(true)}
+              className="inline-flex items-center gap-1 shrink-0 rounded-md border border-[var(--border-color)] bg-[var(--bg-secondary)] px-2 py-1 text-[10px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              title="Send as a normal chat reply instead"
+            >
+              <MessageSquare size={11} />
+              Ask instead
+            </button>
+          </div>
         )}
+
+        {forceChatMode && input.trim() && shouldActQuery(input.trim()) && (
+          <div className="mx-4 mb-1.5 flex items-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-[11px] animate-fade-in select-none">
+            <MessageSquare size={13} className="text-[var(--text-muted)] shrink-0" />
+            <span className="flex-1 text-[var(--text-secondary)] text-left">
+              Sending as <strong>chat</strong> (won&apos;t control the browser)
+            </span>
+            <button
+              type="button"
+              onClick={() => setForceChatMode(false)}
+              className="shrink-0 text-[10px] font-semibold text-[var(--accent)] bg-transparent border-0 cursor-pointer"
+            >
+              Use Act
+            </button>
+          </div>
+        )}
+
+        {/* Standard input footer area */}
+        <>
+          <ContextBar
+            currentUrl={currentUrl}
+            hasAttachments={attachments.length > 0}
+            hasMemory={Boolean(activeConversation?.messages.length)}
+            browserControlEnabled={Boolean(currentUrl)}
+            activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : undefined}
+          />
+          <ChatInput
+            value={input}
+            isGenerating={isGenerating || isCopilotRunning}
+            onChange={setInput}
+            onSend={handleSend}
+            onStop={handleStop}
+            onCaptureScreenshot={captureScreen}
+            onAttachFile={attachFile}
+            onAttachImageObject={(att) => {
+              try {
+                const blob = base64ToBlob(att.base64Data, att.mimeType);
+                attachFile(new File([blob], att.name, { type: att.mimeType }));
+              } catch (err: any) {
+                const msg = "Failed to reconstruct image from pasted attachment.";
+                console.error(msg, err);
+                setError(msg);
+              }
+            }}
+            liveAgentActive={liveAgentActive}
+            onToggleLiveAgent={() => setLiveAgentActive(!liveAgentActive)}
+          />
+        </>
 
         {/* Developer Mode Drawer panel */}
         {devModeOpen && (

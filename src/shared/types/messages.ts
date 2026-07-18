@@ -79,7 +79,7 @@ export type RuntimeMessage =
   | { type: "HANDLE_MODAL" }
   | { type: "DOWNLOAD_FILE"; text?: string }
   | { type: "HANDLE_PAGINATION"; direction: "next" | "prev" | number }
-  | { type: "LOCATE_ELEMENT_HYBRID"; query: { selector?: string; role?: string; text?: string } }
+  | { type: "LOCATE_ELEMENT_HYBRID"; query: { selector?: string; role?: string; text?: string }; excludeSelectors?: string[] }
   | { type: "PAUSE_TASK"; taskId: string }
   | { type: "RESUME_TASK"; taskId: string }
   | { type: "CANCEL_TASK"; taskId: string }

@@ -314,6 +314,137 @@ button svg {
   animation-delay: 0.3s;
 }
 
+/* ——— GPT / Claude style thinking dots (wave, not bounce box) ——— */
+.hunter-thinking-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+  min-height: 18px;
+}
+
+.hunter-thinking-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.35;
+  animation: hunterDotWave 1.4s ease-in-out infinite;
+}
+
+.hunter-thinking-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.hunter-thinking-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.hunter-thinking-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes hunterDotWave {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.85);
+    opacity: 0.3;
+  }
+  40% {
+    transform: translateY(-5px) scale(1.1);
+    opacity: 1;
+    background: var(--accent);
+  }
+  70% {
+    transform: translateY(0) scale(0.95);
+    opacity: 0.55;
+  }
+}
+
+/* Avatar live pulse rings while thinking / streaming */
+.hunter-avatar-live {
+  position: relative;
+  z-index: 0;
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.35) !important;
+  animation: hunterAvatarBreathe 2s ease-in-out infinite;
+}
+
+.hunter-avatar-live::before,
+.hunter-avatar-live::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1.5px solid rgba(var(--accent-rgb), 0.45);
+  z-index: -1;
+  pointer-events: none;
+  animation: hunterRingPulse 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.hunter-avatar-live::after {
+  animation-delay: 0.7s;
+}
+
+@keyframes hunterRingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+@keyframes hunterAvatarBreathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.12);
+  }
+  50% {
+    box-shadow: 0 0 12px 2px rgba(var(--accent-rgb), 0.22);
+  }
+}
+
+/* Streaming caret — Claude/GPT blinking block cursor */
+.streaming-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  background: var(--text-primary);
+  animation: streamingCaretBlink 1.05s steps(1, end) infinite;
+}
+
+@keyframes streamingCaretBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Soft text shimmer for status labels */
+.animate-shimmer-soft {
+  background: linear-gradient(
+    90deg,
+    var(--text-muted) 0%,
+    var(--text-primary) 40%,
+    var(--text-muted) 80%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+
 /* Shimmer gradient effect */
 @keyframes shimmer {
   0% {
@@ -339,6 +470,60 @@ button svg {
   animation: shimmer 2.5s linear infinite;
 }
 
+/* Progress bar moving shimmer (automation) */
+.progress-shimmer-bar {
+  position: relative;
+  overflow: hidden;
+  background: var(--accent);
+}
+
+.progress-shimmer-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: progressShimmerMove 1.4s linear infinite;
+}
+
+@keyframes progressShimmerMove {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+/* Timeline step check pop */
+@keyframes stepCheckPop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.step-check-pop {
+  animation: stepCheckPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.step-row-enter {
+  animation: fadeInUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Soft pulse glow for active agent status */
 @keyframes pulseGlow {
 
@@ -354,6 +539,21 @@ button svg {
 
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Accent-tinted pulse for running automation header */
+@keyframes accentPulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.1);
+  }
+  50% {
+    box-shadow: 0 0 14px 2px rgba(var(--accent-rgb), 0.2);
+  }
+}
+
+.animate-accent-pulse {
+  animation: accentPulseGlow 1.8s ease-in-out infinite;
 }
 
 /* Fade in */

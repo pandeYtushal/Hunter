@@ -1,6 +1,6 @@
-# HUNTERR — The Agentic Job Application Assistant
+# HUNTERR — The Agentic Web Assistant
 
-HUNTERR is an open-source, private-by-design Chrome Manifest V3 extension that automates and streamlines your job search process. It injects a floating chat sidebar onto active webpages, enabling you to analyze job descriptions, evaluate skills match against your resume, draft tailored cover letters, and perform automated form autofill actions.
+HUNTERR is an open-source, private-by-design Chrome Manifest V3 extension that automates complex browser workflows. In addition to a comprehensive **Job Application Suite** (autofilling forms, matching resume PDFs, drafting cover letters), Hunter features specialized agents for **Web Research** (competitors, metrics), **Document Analysis** (summarizing invoices and contracts), **e-Commerce Shopping** (discounts, details), **Travel Planning**, and **Email Drafting** — all running fully local via your own API keys.
 
 ---
 
@@ -80,7 +80,7 @@ HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page
 - **Low DOM Confidence Fallback**: When DOM parsing yields low confidence (content matches < 300 characters), the **ReasoningEngine** automatically switches selectors to vision equivalent tools (`vision_click`, `vision_fill`, `vision_analyze`).
 - **Multimodal Visual Capturing**: Compresses screenshots to 80% JPEG quality and applies simple TTL caches to minimize Gemini/OpenAI Vision API calls.
 - **Intersection-over-Union (IoU) Locator**: Matches normalized coordinate maps `[0-1000]` returned by AI Vision to active DOM elements using viewport pixel ratios and center proximity scores.
-- **Visual Actions Overlay**: Highlights the target element with a glowing dashed orange box, displays its name and confidence score, and prompts for confirmation before execution.
+- **Visual Actions Overlay**: Highlights the target element with a glowing dashed border box, displays its name and confidence score, and prompts for confirmation before execution.
 - **Developer mode logs**: Captures active screenshots, elements bounding boxes, chosen targets, and visual memory interactions inside the console.
 
 ---
@@ -89,7 +89,7 @@ HUNTERR incorporates an advanced **Vision Runtime** designed to enable full page
 
 - **Framework**: React 18, TypeScript, Tailwind CSS v3
 - **UI Architecture**: Standardized Shadcn/UI design conventions leveraging CVA (Class Variance Authority) and Radix primitives (Slot, Tooltip, Dialog, Dropdown Menu).
-- **Design System & Theme**: Dynamic CSS variable-based semantic theme system supporting full light/dark modes with a unified warm orange accent (`#ea4f1e` light / `#ff6b35` dark) and high-contrast surface layers.
+- **Design System & Theme**: Dynamic CSS variable-based semantic theme system supporting full light/dark modes with a premium cybernetic gradient accent (electric indigo `#6366f1` to deep violet `#8b5cf6` and pink `#d946ef`) and high-contrast surface layers.
 - **Iconography**: Structured scale icon system using Lucide React (14px inline/action, 16px nav/header, 20px empty states/banners).
 - **Build Tool**: Vite (configured for bundle splitting extension assets and content script bundling)
 - **APIs**: Chrome Extension Manifest V3 (Background Service Workers, Content Script Injection, Chrome Storage API)

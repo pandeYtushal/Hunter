@@ -12,7 +12,8 @@ export class VisionEngine {
     tabId: number,
     role: string,
     goal: string,
-    pageContext?: PageSnapshot
+    pageContext?: PageSnapshot,
+    excludeSelectors: string[] = []
   ): Promise<LocateQueryResult> {
     
     // Tier 1: Vision (VLM Screenshot matching)
@@ -26,7 +27,7 @@ export class VisionEngine {
 
       if (targetElement) {
         const selector = await ElementLocator.findByVision(tabId, targetElement.bounds);
-        if (selector) {
+        if (selector && !excludeSelectors.includes(selector)) {
           return { selector, source: "vision" };
         }
       }
@@ -40,7 +41,8 @@ export class VisionEngine {
     try {
       const response = await chrome.tabs.sendMessage(tabId, {
         type: "LOCATE_ELEMENT_HYBRID",
-        query: { selector: goal }
+        query: { selector: goal },
+        excludeSelectors
       });
       if (response?.ok && response.selector) {
         return { selector: response.selector, source: "dom" };
@@ -53,7 +55,8 @@ export class VisionEngine {
     try {
       const response = await chrome.tabs.sendMessage(tabId, {
         type: "LOCATE_ELEMENT_HYBRID",
-        query: { role, text: goal }
+        query: { role, text: goal },
+        excludeSelectors
       });
       if (response?.ok && response.selector) {
         return { selector: response.selector, source: "accessibility" };
@@ -66,7 +69,8 @@ export class VisionEngine {
     try {
       const response = await chrome.tabs.sendMessage(tabId, {
         type: "LOCATE_ELEMENT_HYBRID",
-        query: { text: goal }
+        query: { text: goal },
+        excludeSelectors
       });
       if (response?.ok && response.selector) {
         return { selector: response.selector, source: "text_search" };

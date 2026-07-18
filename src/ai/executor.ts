@@ -12,6 +12,7 @@ import { SelfHealing } from "./selfHealing";
 import { GoalTracker, type GoalProgress } from "./goalTracker";
 import { ExecutionMemory } from "./executionMemory";
 import type { ActionType } from "../types";
+import { evaluateDomConfidence, DOM_CONFIDENCE_THRESHOLD } from "./domConfidence";
 
 const retryLimit = 3;
 
@@ -95,7 +96,20 @@ export async function executePlan(
       step = newStep;
     }
 
-    const tool = ToolRegistry.get(action);
+    const tempRuntime = await getActiveRuntime();
+    let actionToRun = action;
+    const domConfidence = evaluateDomConfidence(tempRuntime.pageContext);
+    if (domConfidence < DOM_CONFIDENCE_THRESHOLD) {
+      if (action === "click_element") {
+        actionToRun = "vision_click";
+      } else if (action === "fill_input") {
+        actionToRun = "vision_fill";
+      } else if (action === "fill_form") {
+        actionToRun = "vision_fill";
+      }
+    }
+
+    const tool = ToolRegistry.get(actionToRun);
     step.status = "running";
     step.attempts = 0;
     (context as any).currentTask = step;
@@ -129,23 +143,23 @@ export async function executePlan(
       currentAttempt++;
       const startedAt = performance.now();
       step.attempts = currentAttempt;
-      await EventBus.emit("ACTION_STARTED", { action, attempt: currentAttempt });
+      await EventBus.emit("ACTION_STARTED", { action: actionToRun, attempt: currentAttempt });
 
       try {
         const runtime = await getActiveRuntime();
-        const permission = PermissionGuard.verifyAction(action, runtime.pageContext);
+        const permission = PermissionGuard.verifyAction(actionToRun, runtime.pageContext);
         if (!permission.allowed) {
           throw new Error(permission.reason || "Permission check failed.");
         }
 
         if (permission.requiresConfirmation) {
-          const confirmMsg = PermissionGuard.createConfirmationMessage(action);
+          const confirmMsg = PermissionGuard.createConfirmationMessage(actionToRun);
           onProgress({
             machineState: "WAITING_CONFIRMATION",
             currentStep: confirmMsg
           }, runMetrics);
 
-          const approved = await PermissionGuard.awaitConfirmation(action, confirmMsg);
+          const approved = await PermissionGuard.awaitConfirmation(actionToRun, confirmMsg);
           if (!approved) {
             throw new Error("Action declined by user.");
           }
@@ -160,18 +174,24 @@ export async function executePlan(
         lastDurationMs = Math.round(performance.now() - startedAt);
         context.currentResult = result.result;
 
+        // Wait a short moment for page animations/transitions to settle
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Fetch fresh post-action runtime details to observe resulting page state
+        const postRuntime = await getActiveRuntime();
+
         // --- Observation Loop ---
-        const observation = await ObservationEngine.observe(action, result.result, runtime.pageContext);
+        const observation = await ObservationEngine.observe(actionToRun, result.result, postRuntime.pageContext);
         const reflection = ReflectionEngine.reflect(observation, currentAttempt, retryLimit);
 
-        await AgentMetrics.record(tool.agent, action, observation.status !== "FAILURE", lastDurationMs);
+        await AgentMetrics.record(tool.agent, actionToRun, observation.status !== "FAILURE", lastDurationMs);
         await ExecutionLogger.log({
           level: observation.status === "FAILURE" ? "warn" : "info",
-          action,
+          action: actionToRun,
           durationMs: lastDurationMs,
-          message: `Action ${action} observation: ${observation.status}. Reflection: ${reflection.status}`
+          message: `Action ${actionToRun} observation: ${observation.status}. Reflection: ${reflection.status}`
         });
-        await EventBus.emit("ACTION_COMPLETED", { action, durationMs: lastDurationMs });
+        await EventBus.emit("ACTION_COMPLETED", { action: actionToRun, durationMs: lastDurationMs });
 
         if (reflection.status === "success") {
           success = true;
@@ -192,7 +212,7 @@ export async function executePlan(
           const healing = await SelfHealing.heal(
             plan.goal,
             plan,
-            action,
+            actionToRun,
             stepError,
             currentAttempt,
             completedActions,
@@ -205,10 +225,10 @@ export async function executePlan(
 
           await ExecutionLogger.log({
             level: "warn",
-            action,
+            action: actionToRun,
             message: `Self-healing triggered. Strategy: ${healing.strategy}. ${healing.explanation}`
           });
-          await EventBus.emit("ACTION_FAILED", { action, error: stepError, attempt: currentAttempt });
+          await EventBus.emit("ACTION_FAILED", { action: actionToRun, error: stepError, attempt: currentAttempt });
 
           if (healing.strategy !== "retry" && healing.newActions && healing.newActions.length > 0) {
             // Replace remaining queue with the healed plan
@@ -231,14 +251,14 @@ export async function executePlan(
       } catch (err) {
         lastDurationMs = Math.round(performance.now() - startedAt);
         stepError = err instanceof Error ? err.message : "Step processing failed.";
-        await AgentMetrics.record(tool.agent, action, false, lastDurationMs);
+        await AgentMetrics.record(tool.agent, actionToRun, false, lastDurationMs);
         await ExecutionLogger.log({
           level: currentAttempt === retryLimit ? "error" : "warn",
-          action,
+          action: actionToRun,
           durationMs: lastDurationMs,
-          message: `Action ${action} attempt ${currentAttempt} threw: ${stepError}`
+          message: `Action ${actionToRun} attempt ${currentAttempt} threw: ${stepError}`
         });
-        await EventBus.emit("ACTION_FAILED", { action, error: stepError, attempt: currentAttempt });
+        await EventBus.emit("ACTION_FAILED", { action: actionToRun, error: stepError, attempt: currentAttempt });
         await new Promise((resolve) => setTimeout(resolve, 350 * currentAttempt));
       }
     }

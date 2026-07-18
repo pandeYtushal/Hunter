@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { Mic } from "lucide-react";
 import {
   isSpeechRecognitionSupported,
   requestMicrophonePermission,
@@ -107,21 +108,26 @@ export const VoiceInput = ({
   return (
     <button
       type="button"
-      aria-label={isListening ? "Stop Talk to Hunter" : "Start Talk to Hunter"}
+      aria-label={isListening ? "Stop Voice Session" : "Start Voice Session"}
       aria-pressed={isListening}
-      className={`h-8 px-3.5 shrink-0 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all duration-200 border cursor-pointer select-none active:scale-95 shadow-sm ${
+      className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition duration-150 cursor-pointer border ${
         isListening
-          ? "bg-rose-500/10 border-rose-500/40 text-rose-500 hover:bg-rose-500/20"
-          : "bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent)]"
+          ? "bg-rose-500/10 border-rose-500/30 text-rose-500 hover:bg-rose-500/20"
+          : "bg-transparent border-transparent hover:border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]"
       }`}
       disabled={disabled}
       onClick={handleToggleClick}
+      title={isListening ? "Stop Voice Session" : "Start Voice Session"}
     >
-      <span className={`relative flex h-2 w-2 ${isListening ? "" : "hidden"}`}>
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-      </span>
-      <span>Talk to Hunter</span>
+      {isListening ? (
+        <span className="relative flex h-3 w-3 items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+          <Mic size={14} className="relative z-10 text-rose-500" />
+        </span>
+      ) : (
+        <Mic size={14} />
+      )}
     </button>
   );
 };
+

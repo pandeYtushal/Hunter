@@ -280,9 +280,29 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
       handler: async ({ tab, pageContext }, context) => {
         const tabId = requireTabId(tab);
         const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || context.plan.query || context.plan.goal;
-        const { selector, source } = await VisionEngine.locate(tabId, "button", taskName, pageContext);
-        await NavigationAgent.click(tabId, selector);
-        return { result: `Clicked element matching "${selector}" (resolved via ${source}).` };
+        
+        // Recovery Strategy: Wait for dynamic content & scroll viewport down on retries
+        const currentAttempt = (context as any).currentTask?.attempts || 1;
+        if (currentAttempt > 1) {
+          console.log(`[Recovery] Attempt ${currentAttempt}: waiting for dynamic content...`);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          console.log(`[Recovery] Attempt ${currentAttempt}: scrolling viewport down to search again...`);
+          await chrome.tabs.sendMessage(tabId, { type: "SCROLL_PAGE", direction: "down" }).catch(() => null);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        const excludeSelectors = (context as any).failedSelectors || [];
+        const { selector, source } = await VisionEngine.locate(tabId, "button", taskName, pageContext, excludeSelectors);
+        
+        try {
+          await NavigationAgent.click(tabId, selector);
+          return { result: `Clicked element matching "${selector}" (resolved via ${source}).` };
+        } catch (err: any) {
+          if (selector) {
+            (context as any).failedSelectors = [...excludeSelectors, selector];
+          }
+          throw err;
+        }
       }
     },
     {
@@ -294,9 +314,29 @@ const createRegistry = (): Map<ActionType, ToolDefinition> => {
         const tabId = requireTabId(tab);
         const target = await resolveFillTarget(context.plan.query || context.plan.goal, pageContext).catch(() => ({ selector: "input", value: profile?.name || "" }));
         const taskName = (context as any).currentTask?.description || (context as any).currentTask?.name || target.selector || context.plan.query || context.plan.goal;
-        const { selector, source } = await VisionEngine.locate(tabId, "input", taskName, pageContext);
-        await NavigationAgent.fill(tabId, selector, target.value);
-        return { result: `Filled input matching "${selector}" (resolved via ${source}).` };
+
+        // Recovery Strategy: Wait for dynamic content & scroll viewport down on retries
+        const currentAttempt = (context as any).currentTask?.attempts || 1;
+        if (currentAttempt > 1) {
+          console.log(`[Recovery] Attempt ${currentAttempt}: waiting for dynamic content...`);
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          console.log(`[Recovery] Attempt ${currentAttempt}: scrolling viewport down to search again...`);
+          await chrome.tabs.sendMessage(tabId, { type: "SCROLL_PAGE", direction: "down" }).catch(() => null);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        const excludeSelectors = (context as any).failedSelectors || [];
+        const { selector, source } = await VisionEngine.locate(tabId, "input", taskName, pageContext, excludeSelectors);
+        
+        try {
+          await NavigationAgent.fill(tabId, selector, target.value);
+          return { result: `Filled input matching "${selector}" (resolved via ${source}).` };
+        } catch (err: any) {
+          if (selector) {
+            (context as any).failedSelectors = [...excludeSelectors, selector];
+          }
+          throw err;
+        }
       }
     },
     {

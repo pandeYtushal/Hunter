@@ -100,7 +100,16 @@ interface MarkdownProps {
 }
 
 export const Markdown = ({ content, className = "", isStreaming = false }: MarkdownProps) => {
-  if (!content) return null;
+  if (!content) {
+    if (isStreaming) {
+      return (
+        <div className={`markdown-body font-sans ${className}`}>
+          <span className="streaming-caret" aria-hidden />
+        </div>
+      );
+    }
+    return null;
+  }
 
   // Intercept Profile Match Analysis to render custom premium card
   if (content.includes("Profile Match Analysis") || content.includes("Match Score:")) {
@@ -316,7 +325,7 @@ export const Markdown = ({ content, className = "", isStreaming = false }: Markd
     i++;
   }
 
-  // Handle streaming cursor animation at the very end
+  // GPT/Claude-style blinking caret at the end of the stream
   if (isStreaming && elements.length > 0) {
     const lastIdx = elements.length - 1;
     const lastElement = elements[lastIdx];
@@ -326,16 +335,16 @@ export const Markdown = ({ content, className = "", isStreaming = false }: Markd
         lastElement,
         lastElement.props,
         ...React.Children.toArray(lastElement.props.children),
-        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
+        <span key="streaming-cursor" className="streaming-caret" aria-hidden />
       );
     } else {
       elements.push(
-        <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
+        <span key="streaming-cursor" className="streaming-caret" aria-hidden />
       );
     }
   } else if (isStreaming) {
     elements.push(
-      <span key="streaming-cursor" className="inline-block w-1.5 h-3.5 ml-1 bg-[var(--accent)] animate-pulse rounded-sm align-middle" />
+      <span key="streaming-cursor" className="streaming-caret" aria-hidden />
     );
   }
 

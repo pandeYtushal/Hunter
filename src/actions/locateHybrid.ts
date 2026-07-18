@@ -24,7 +24,7 @@ export function querySelectorAllShadow(selector: string, root: Document | Shadow
   return elements;
 }
 
-export function locateHybrid(query: LocateQuery): LocateResponse | null {
+export function locateHybrid(query: LocateQuery, excludeSelectors: string[] = []): LocateResponse | null {
   const getSelector = (el: HTMLElement): string => {
     if (el.id) return `#${el.id}`;
     if (el.className) {
@@ -40,7 +40,7 @@ export function locateHybrid(query: LocateQuery): LocateResponse | null {
   };
 
   // 1. Tier 2: Standard DOM (with Shadow DOM support)
-  if (query.selector) {
+  if (query.selector && !excludeSelectors.includes(query.selector)) {
     const matched = querySelectorAllShadow(query.selector);
     const visibleEl = matched.find(isVisible);
     if (visibleEl) {
@@ -55,13 +55,15 @@ export function locateHybrid(query: LocateQuery): LocateResponse | null {
     
     for (const cand of candidates) {
       if (!isVisible(cand)) continue;
+      const sel = getSelector(cand);
+      if (excludeSelectors.includes(sel)) continue;
 
       const label = cand.getAttribute("aria-label") || cand.getAttribute("aria-labelledby") || "";
       const matchesLabel = query.text ? label.toLowerCase().includes(query.text.toLowerCase()) : false;
       const matchesRole = query.role ? cand.getAttribute("role") === query.role || cand.tagName.toLowerCase() === query.role.toLowerCase() : true;
 
       if (matchesRole && (matchesLabel || !query.text)) {
-        return { selector: getSelector(cand), source: "accessibility" };
+        return { selector: sel, source: "accessibility" };
       }
     }
   }
@@ -74,12 +76,15 @@ export function locateHybrid(query: LocateQuery): LocateResponse | null {
 
     for (const el of interactiveElements) {
       if (!isVisible(el)) continue;
+      const sel = getSelector(el);
+      if (excludeSelectors.includes(sel)) continue;
+
       const innerText = el.innerText.toLowerCase().trim();
       const placeHolder = (el as HTMLInputElement).placeholder?.toLowerCase() || "";
       const textToMatch = query.text.toLowerCase().trim();
 
       if (innerText.includes(textToMatch) || placeHolder.includes(textToMatch)) {
-        return { selector: getSelector(el), source: "text_search" };
+        return { selector: sel, source: "text_search" };
       }
     }
   }

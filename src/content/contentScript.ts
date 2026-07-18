@@ -793,7 +793,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         return { ok };
       }
       case "LOCATE_ELEMENT_HYBRID": {
-        const res = locateHybrid(message.query);
+        const res = locateHybrid(message.query, message.excludeSelectors || []);
         if (res) {
           return { ok: true, selector: res.selector, source: res.source };
         }

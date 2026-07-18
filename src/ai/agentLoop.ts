@@ -229,8 +229,14 @@ export const AgentLoop = {
           lastDurationMs = Math.round(performance.now() - startedAt);
           context.currentResult = result.result;
 
+          // Wait a short moment for page animations/transitions to settle
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Fetch fresh post-action runtime details to observe resulting page state
+          const postRuntime = await getActiveRuntime();
+
           // 6. Observe
-          const observation = await ObservationEngine.observe(selectedTool, result.result, runtime.pageContext);
+          const observation = await ObservationEngine.observe(selectedTool, result.result, postRuntime.pageContext);
           
           // 7. Reflect
           const reflection = ReflectionEngine.reflect(observation, currentAttempt, retryLimit);

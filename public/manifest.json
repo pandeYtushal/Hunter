@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HUNTERR",
-  "description": "A Chrome extension assistant for finding, tracking, and preparing job applications.",
+  "description": "A Chrome extension assistant that automates forms, summarizes documents, conducts web research, and runs local AI agents.",
   "version": "0.1.0",
   "action": {
     "default_title": "HUNTERR",

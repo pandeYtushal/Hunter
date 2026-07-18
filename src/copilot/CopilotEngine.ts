@@ -68,6 +68,22 @@ export class CopilotEngine {
 
   private constructor() {}
 
+  private async getActiveRuntime(): Promise<any> {
+    if (typeof chrome === "undefined" || !chrome.tabs) {
+      return { tab: undefined, pageContext: undefined, profile: undefined };
+    }
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    let pageContext: any;
+
+    if (tab?.id) {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "GET_PAGE_SNAPSHOT" }).catch(() => undefined);
+      pageContext = response?.snapshot;
+    }
+
+    const profile = await storage.get("profile").catch(() => null);
+    return { tab, pageContext, profile };
+  }
+
   public static getInstance(): CopilotEngine {
     if (!CopilotEngine.instance) {
       CopilotEngine.instance = new CopilotEngine();
@@ -226,11 +242,17 @@ export class CopilotEngine {
         resultText = outcome.result;
         recoveryTask = outcome.recoveryTask;
 
+        // Wait a short moment for page animations/transitions to settle
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Fetch fresh post-action runtime details to observe resulting page state
+        const postRuntime = await this.getActiveRuntime();
+
         // Decision Engine check
         const evaluation = await DecisionEngine.evaluate(
           task.action,
           resultText,
-          undefined, // dynamic snapshot inside executor
+          postRuntime.pageContext,
           task.attempts,
           attemptLimit
         );

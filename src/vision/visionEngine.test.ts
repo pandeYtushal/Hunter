@@ -53,7 +53,8 @@ describe("VisionEngine locator hierarchy", () => {
     expect(res.source).toBe("dom");
     expect(mockSendMessage).toHaveBeenCalledWith(1, {
       type: "LOCATE_ELEMENT_HYBRID",
-      query: { selector: "#target-dom" }
+      query: { selector: "#target-dom" },
+      excludeSelectors: []
     });
   });
 
