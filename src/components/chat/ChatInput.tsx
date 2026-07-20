@@ -64,7 +64,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="bg-transparent px-4 pb-4 select-none shrink-0 max-w-2xl mx-auto w-full">
-      <div className="chat-composer relative flex items-center gap-2.5 rounded-2xl p-2.5 transition duration-200 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent-dim)] focus-within:shadow-[0_0_20px_rgba(var(--accent-rgb),0.12)] min-h-[58px] shadow-md hover:border-[var(--border-hover)]">
+      <div className="chat-composer relative flex items-center gap-2.5 rounded-2xl p-2.5 transition duration-200 border border-[var(--border-color)] bg-[var(--bg-secondary)] focus-within:border-[var(--text-primary)] focus-within:ring-2 focus-within:ring-[var(--text-primary)]/15 focus-within:shadow-[0_0_12px_rgba(0,0,0,0.04)] min-h-[58px] shadow-md hover:border-[var(--border-hover)]">
         
         {/* Attachment & Screenshot Controls */}
         <div className="flex items-center gap-1.5 shrink-0 self-end mb-0.5">
@@ -132,7 +132,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               type="button"
               onClick={() => onSend()}
               disabled={(!value.trim() && !isGenerating) || disabled}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-white hover:opacity-90 disabled:opacity-20 disabled:bg-[var(--bg-tertiary)] disabled:text-[var(--text-muted)] transition cursor-pointer border-0 shadow-sm"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-20 disabled:bg-[var(--bg-tertiary)] disabled:text-[var(--text-muted)] transition cursor-pointer border-0 shadow-sm"
               title="Send query"
             >
               <ArrowUp size={13} strokeWidth={2.5} />

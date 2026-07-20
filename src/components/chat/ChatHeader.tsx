@@ -52,20 +52,18 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     : null;
 
   const handleClear = () => {
-    if (window.confirm("Clear messages in this conversation? History is kept.")) {
-      onClearChat();
-    }
+    onClearChat();
   };
 
   return (
     <header
       onMouseDown={handleHeaderMouseDown}
-      className="flex h-14 items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 select-none cursor-grab active:cursor-grabbing shrink-0"
+      className="flex h-14 items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-3 select-none cursor-grab active:cursor-grabbing shrink-0 shadow-sm"
     >
       {/* Left: Brand */}
       <div className="flex items-center gap-2.5 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--accent-faint)] border border-[var(--accent-dim)] text-[var(--accent)] shadow-sm shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm shrink-0">
             {shortUrl ? (
               <PlugConnectedIcon size={16} />
             ) : (
@@ -74,7 +72,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </div>
           <div className="flex flex-col min-w-0">
             <h1 className="text-[12.5px] font-bold tracking-wider text-[var(--text-primary)] font-mono leading-none">
-              HUNTER
+               HUNTER
             </h1>
             <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
               <span className={`h-1 w-1 rounded-full shrink-0 ${shortUrl ? "bg-emerald-500 animate-pulse" : "bg-zinc-500"}`} />
@@ -89,7 +87,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5 shrink-0">
         {activeGoal && (
-          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--accent-faint)] px-2 py-1 text-[9px] font-medium text-[var(--text-secondary)] max-w-[100px]">
+          <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-2 py-1 text-[9px] font-medium text-[var(--text-secondary)] max-w-[100px]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)] animate-pulse shrink-0" />
             <span className="truncate">{activeGoal.length > 14 ? activeGoal.substring(0, 12) + "…" : activeGoal}</span>
           </div>

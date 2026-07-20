@@ -38,7 +38,7 @@ export const ContextBar: React.FC<ContextBarProps> = ({
       icon: Globe2,
       label: shortHost(currentUrl),
       title: "Current website context",
-      className: "border-[rgba(255,107,53,0.18)] bg-[rgba(255,107,53,0.06)] text-[var(--accent)]"
+      className: "border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
     });
   }
 
@@ -47,7 +47,7 @@ export const ContextBar: React.FC<ContextBarProps> = ({
       icon: MousePointer2,
       label: "Browser control",
       title: "Automation mode enabled",
-      className: "border-[rgba(255,107,53,0.18)] bg-[rgba(255,107,53,0.06)] text-[var(--accent)]"
+      className: "border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)]"
     });
   }
 
@@ -85,7 +85,7 @@ export const ContextBar: React.FC<ContextBarProps> = ({
           title="Show context details"
           aria-expanded={false}
         >
-          <PrimaryIcon size={11} className="shrink-0 text-[var(--accent)]" />
+          <PrimaryIcon size={11} className="shrink-0 text-[var(--text-primary)]" />
           <span className="truncate max-w-[160px]">{primary.label}</span>
           {extraCount > 0 && (
             <span className="rounded-full bg-[var(--bg-tertiary)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--text-muted)] border border-[var(--border-color)]">

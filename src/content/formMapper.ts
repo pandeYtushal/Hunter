@@ -3,13 +3,42 @@ import type { UserProfile } from "../shared/types/storage";
 export interface MappedField {
   element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   label: string;
-  mappedType: "name" | "firstName" | "lastName" | "email" | "phone" | "linkedin" | "portfolio" | "resume" | "unknown";
+  mappedType:
+    | "name"
+    | "firstName"
+    | "lastName"
+    | "email"
+    | "phone"
+    | "linkedin"
+    | "portfolio"
+    | "github"
+    | "location"
+    | "currentRole"
+    | "summary"
+    | "yearsOfExperience"
+    | "resume"
+    | "unknown";
 }
 
 type MappedType = MappedField["mappedType"];
 
 const isMappedType = (value: string): value is MappedType =>
-  ["name", "firstName", "lastName", "email", "phone", "linkedin", "portfolio", "resume", "unknown"].includes(value);
+  [
+    "name",
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "linkedin",
+    "portfolio",
+    "github",
+    "location",
+    "currentRole",
+    "summary",
+    "yearsOfExperience",
+    "resume",
+    "unknown"
+  ].includes(value);
 
 // Find a label associated with an element
 function getElementLabelText(element: HTMLElement): string {
@@ -121,6 +150,81 @@ export function mapFieldHeuristically(
     placeholder.includes("website")
   ) {
     return "portfolio";
+  }
+
+  // 5b. GitHub
+  if (
+    name.includes("github") ||
+    id.includes("github") ||
+    label.includes("github") ||
+    placeholder.includes("github")
+  ) {
+    return "github";
+  }
+
+  // 5c. Location / city / address
+  if (
+    name.includes("location") ||
+    name.includes("city") ||
+    name.includes("address") ||
+    id.includes("location") ||
+    id.includes("city") ||
+    label.includes("location") ||
+    label.includes("city") ||
+    label.includes("where are you based") ||
+    placeholder.includes("city") ||
+    placeholder.includes("location")
+  ) {
+    return "location";
+  }
+
+  // 5d. Current role / title
+  if (
+    name.includes("current_role") ||
+    name.includes("currentrole") ||
+    name.includes("job_title") ||
+    name.includes("jobtitle") ||
+    name.includes("headline") ||
+    id.includes("job_title") ||
+    id.includes("headline") ||
+    label.includes("current role") ||
+    label.includes("job title") ||
+    label.includes("current title") ||
+    label.includes("headline") ||
+    placeholder.includes("job title")
+  ) {
+    return "currentRole";
+  }
+
+  // 5e. Summary / about / bio
+  if (
+    name.includes("summary") ||
+    name.includes("about") ||
+    name.includes("bio") ||
+    name.includes("cover") ||
+    id.includes("summary") ||
+    id.includes("about") ||
+    label.includes("summary") ||
+    label.includes("about you") ||
+    label.includes("professional summary") ||
+    label.includes("bio") ||
+    placeholder.includes("tell us about")
+  ) {
+    return "summary";
+  }
+
+  // 5f. Years of experience
+  if (
+    name.includes("years_of_experience") ||
+    name.includes("yearsofexperience") ||
+    name.includes("yoe") ||
+    name.includes("experience_years") ||
+    id.includes("years_of") ||
+    label.includes("years of experience") ||
+    label.includes("years experience") ||
+    placeholder.includes("years of experience")
+  ) {
+    return "yearsOfExperience";
   }
 
   // 6. Name
@@ -264,6 +368,26 @@ export async function scanPageForm(profile: UserProfile): Promise<{
       case "portfolio":
         fillValue = profile.portfolio || "";
         fieldLabel = "Portfolio URL";
+        break;
+      case "github":
+        fillValue = profile.gitHub || "";
+        fieldLabel = "GitHub Profile";
+        break;
+      case "location":
+        fillValue = profile.location || "";
+        fieldLabel = "Location";
+        break;
+      case "currentRole":
+        fillValue = profile.currentRole || "";
+        fieldLabel = "Current Role";
+        break;
+      case "summary":
+        fillValue = profile.summary || profile.experience || "";
+        fieldLabel = "Professional Summary";
+        break;
+      case "yearsOfExperience":
+        fillValue = profile.yearsOfExperience || "";
+        fieldLabel = "Years of Experience";
         break;
       case "name":
         fillValue = profile.name || "";

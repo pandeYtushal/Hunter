@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Upload, X, Loader2, Check, User, Mail, Phone, Award, FileText, Copy, Download, Trash2, ChevronDown, ChevronUp, Linkedin, Globe, Github } from "lucide-react";
+import { 
+  Upload, X, Loader2, Check, User, Mail, Phone, Award, FileText, 
+  Copy, Download, Trash2, ChevronDown, ChevronUp, Linkedin, Globe, 
+  Github, Briefcase, GraduationCap, Sparkles, Plus, AlertTriangle, CheckCircle 
+} from "lucide-react";
 import { storage } from "../shared/storage";
 import { extractTextFromPdf } from "../shared/pdfExtractor";
-import type { UserProfile, CoverLetterRecord } from "../shared/types/storage";
+import type { UserProfile, ResumeRecord, ProjectItem, ExperienceItem, EducationItem, SkillItem } from "../shared/types/storage";
 
 interface ProfileSettingsProps {
   onBack: () => void;
 }
-
-
 
 export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   const [profile, setProfile] = useState<UserProfile>({
@@ -20,7 +22,66 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     resumeFileName: "",
     linkedIn: "",
     portfolio: "",
-    gitHub: ""
+    gitHub: "",
+    avatar: "",
+    currentRole: "",
+    yearsOfExperience: "0",
+    location: "",
+    availability: "Available",
+    preferredJobType: "Full-time",
+    atsScore: 75,
+    aiConfidenceScore: 82,
+    lastResumeAnalysis: "",
+    resumes: [],
+    summary: "",
+    primaryTechStack: [],
+    strongestSkills: [],
+    weakAreas: [],
+    recommendedSkills: [],
+    careerLevel: "Mid-level",
+    targetRoles: [],
+    resumeQuality: "Good",
+    missingKeywords: [],
+    skillsGrouped: {
+      languages: [],
+      frameworks: [],
+      ai: [],
+      backend: [],
+      frontend: [],
+      cloud: [],
+      devops: [],
+      databases: [],
+      tools: []
+    },
+    projects: [],
+    experienceTimeline: [],
+    educationList: [],
+    certifications: [],
+    awards: [],
+    languagesList: [],
+    publications: [],
+    preferences: {
+      desiredRoles: [],
+      preferredLocations: [],
+      salaryRange: "",
+      remotePreference: "any",
+      noticePeriod: "",
+      visaStatus: "",
+      openToWork: true
+    },
+    aiMemory: {
+      preferredResumeId: "",
+      preferredRole: "",
+      preferredTechnologies: [],
+      interviewHistory: [],
+      companiesApplied: [],
+      applicationsSent: [],
+      recruitersContacted: [],
+      rejectedCompanies: [],
+      offers: [],
+      favoriteCoverLetterStyle: "Professional & Direct"
+    },
+    careerInsights: []
   });
 
   const [preferredTone, setPreferredTone] = useState("");
@@ -35,26 +96,62 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [skillInput, setSkillInput] = useState("");
+  const [skillCategory, setSkillCategory] = useState<keyof Required<UserProfile>["skillsGrouped"]>("languages");
+  const [skillLevel, setSkillLevel] = useState<"Beginner" | "Intermediate" | "Advanced">("Advanced");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [coverLetters, setCoverLetters] = useState<CoverLetterRecord[]>([]);
+  const [coverLetters, setCoverLetters] = useState<any[]>([]);
   const [expandedLetterId, setExpandedLetterId] = useState<string | null>(null);
   const [copiedLetterId, setCopiedLetterId] = useState<string | null>(null);
 
   useEffect(() => {
     storage.get("profile").then((storedProfile) => {
       if (storedProfile) {
-        setProfile({
-          name: storedProfile.name || "",
-          email: storedProfile.email || "",
-          phone: storedProfile.phone || "",
-          skills: Array.isArray(storedProfile.skills) ? storedProfile.skills : [],
-          experience: storedProfile.experience || "",
-          resumeFileName: storedProfile.resumeFileName || "",
-          linkedIn: storedProfile.linkedIn || "",
-          portfolio: storedProfile.portfolio || "",
-          gitHub: storedProfile.gitHub || ""
-        });
+        setProfile((prev) => ({
+          ...prev,
+          ...storedProfile,
+          skillsGrouped: {
+            languages: storedProfile.skillsGrouped?.languages || [],
+            frameworks: storedProfile.skillsGrouped?.frameworks || [],
+            ai: storedProfile.skillsGrouped?.ai || [],
+            backend: storedProfile.skillsGrouped?.backend || [],
+            frontend: storedProfile.skillsGrouped?.frontend || [],
+            cloud: storedProfile.skillsGrouped?.cloud || [],
+            devops: storedProfile.skillsGrouped?.devops || [],
+            databases: storedProfile.skillsGrouped?.databases || [],
+            tools: storedProfile.skillsGrouped?.tools || []
+          },
+          projects: storedProfile.projects || [],
+          experienceTimeline: storedProfile.experienceTimeline || [],
+          educationList: storedProfile.educationList || [],
+          certifications: storedProfile.certifications || [],
+          awards: storedProfile.awards || [],
+          languagesList: storedProfile.languagesList || [],
+          publications: storedProfile.publications || [],
+          resumes: storedProfile.resumes || [],
+          preferences: {
+            desiredRoles: storedProfile.preferences?.desiredRoles || [],
+            preferredLocations: storedProfile.preferences?.preferredLocations || [],
+            salaryRange: storedProfile.preferences?.salaryRange || "",
+            remotePreference: storedProfile.preferences?.remotePreference || "any",
+            noticePeriod: storedProfile.preferences?.noticePeriod || "",
+            visaStatus: storedProfile.preferences?.visaStatus || "",
+            openToWork: storedProfile.preferences?.openToWork !== false
+          },
+          aiMemory: {
+            preferredResumeId: storedProfile.aiMemory?.preferredResumeId || "",
+            preferredRole: storedProfile.aiMemory?.preferredRole || "",
+            preferredTechnologies: storedProfile.aiMemory?.preferredTechnologies || [],
+            interviewHistory: storedProfile.aiMemory?.interviewHistory || [],
+            companiesApplied: storedProfile.aiMemory?.companiesApplied || [],
+            applicationsSent: storedProfile.aiMemory?.applicationsSent || [],
+            recruitersContacted: storedProfile.aiMemory?.recruitersContacted || [],
+            rejectedCompanies: storedProfile.aiMemory?.rejectedCompanies || [],
+            offers: storedProfile.aiMemory?.offers || [],
+            favoriteCoverLetterStyle: storedProfile.aiMemory?.favoriteCoverLetterStyle || "Professional & Direct"
+          },
+          careerInsights: storedProfile.careerInsights || []
+        }));
       }
     });
 
@@ -146,26 +243,130 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         throw new Error("No readable text could be extracted from this PDF.");
       }
 
-      // Send the text to the background script for parsing
       const response = await chrome.runtime.sendMessage({
         type: "PARSE_RESUME",
         resumeText: text
       });
 
       if (response && response.ok && response.profile) {
-        const parsed = response.profile as UserProfile;
-        setProfile({
+        const parsed = response.profile;
+
+        const strengthScore = Math.min(
+          99,
+          Math.max(
+            40,
+            Math.round(
+              ((parsed.aiConfidenceScore || 70) +
+                (parsed.atsScore || 70) +
+                Math.min(20, (parsed.skills?.length || 0) * 2) +
+                Math.min(15, (parsed.experienceTimeline?.length || 0) * 5)) /
+                2
+            )
+          )
+        );
+
+        const suggestedImprovements =
+          (parsed.careerInsights && parsed.careerInsights.length > 0
+            ? parsed.careerInsights
+            : null) ||
+          [
+            parsed.missingKeywords?.length
+              ? `Add keywords: ${parsed.missingKeywords.slice(0, 5).join(", ")}`
+              : "",
+            !(parsed.experienceTimeline && parsed.experienceTimeline.length)
+              ? "Add quantified work experience with dates and impact metrics"
+              : "",
+            !(parsed.projects && parsed.projects.length)
+              ? "Include 1–2 projects with tech stack and outcomes"
+              : "",
+            "Prefer action verbs and measurable results in bullet points"
+          ].filter(Boolean);
+
+        const newResume: ResumeRecord = {
+          id: crypto.randomUUID(),
+          name: file.name,
+          role: parsed.currentRole || profile.currentRole || "Software Developer",
+          uploadedAt: new Date().toISOString(),
+          text,
+          atsScore: parsed.atsScore || 78,
+          readability: Math.min(99, Math.round((parsed.aiConfidenceScore || 75) * 0.95 + 8)),
+          strengthScore,
+          missingSkills: parsed.missingKeywords || [],
+          suggestedImprovements
+        };
+
+        const updatedProfile: UserProfile = {
+          ...profile,
+          ...parsed,
           name: parsed.name || profile.name,
           email: parsed.email || profile.email,
           phone: parsed.phone || profile.phone,
-          skills: parsed.skills && parsed.skills.length > 0 ? parsed.skills : profile.skills,
-          experience: parsed.experience || profile.experience,
-          resumeFileName: file.name,
           linkedIn: parsed.linkedIn || profile.linkedIn || "",
           portfolio: parsed.portfolio || profile.portfolio || "",
-          gitHub: parsed.gitHub || profile.gitHub || ""
-        });
-        setSuccessMsg("Resume loaded successfully. Review the details, then save your profile.");
+          gitHub: parsed.gitHub || profile.gitHub || "",
+          skills:
+            parsed.skills && parsed.skills.length > 0
+              ? parsed.skills
+              : profile.skills,
+          experience: parsed.experience || profile.experience,
+          summary: parsed.summary || profile.summary || "",
+          currentRole: parsed.currentRole || profile.currentRole || "",
+          yearsOfExperience: parsed.yearsOfExperience || profile.yearsOfExperience || "0",
+          location: parsed.location || profile.location || "",
+          careerLevel: parsed.careerLevel || profile.careerLevel || "Mid-level",
+          primaryTechStack: parsed.primaryTechStack?.length
+            ? parsed.primaryTechStack
+            : profile.primaryTechStack || [],
+          strongestSkills: parsed.strongestSkills?.length
+            ? parsed.strongestSkills
+            : profile.strongestSkills || [],
+          weakAreas: parsed.weakAreas?.length ? parsed.weakAreas : profile.weakAreas || [],
+          recommendedSkills: parsed.recommendedSkills?.length
+            ? parsed.recommendedSkills
+            : profile.recommendedSkills || [],
+          targetRoles: parsed.targetRoles?.length ? parsed.targetRoles : profile.targetRoles || [],
+          resumeQuality: parsed.resumeQuality || profile.resumeQuality || "Good",
+          missingKeywords: parsed.missingKeywords?.length
+            ? parsed.missingKeywords
+            : profile.missingKeywords || [],
+          skillsGrouped: parsed.skillsGrouped || profile.skillsGrouped || {
+            languages: [], frameworks: [], ai: [], backend: [], frontend: [],
+            cloud: [], devops: [], databases: [], tools: []
+          },
+          projects:
+            parsed.projects && parsed.projects.length > 0
+              ? parsed.projects
+              : profile.projects || [],
+          experienceTimeline:
+            parsed.experienceTimeline && parsed.experienceTimeline.length > 0
+              ? parsed.experienceTimeline
+              : profile.experienceTimeline || [],
+          educationList:
+            parsed.educationList && parsed.educationList.length > 0
+              ? parsed.educationList
+              : profile.educationList || [],
+          certifications: parsed.certifications?.length
+            ? parsed.certifications
+            : profile.certifications || [],
+          awards: parsed.awards?.length ? parsed.awards : profile.awards || [],
+          languagesList: parsed.languagesList?.length
+            ? parsed.languagesList
+            : profile.languagesList || [],
+          publications: parsed.publications?.length
+            ? parsed.publications
+            : profile.publications || [],
+          careerInsights: suggestedImprovements,
+          resumeFileName: file.name,
+          resumes: [newResume],
+          atsScore: parsed.atsScore || 78,
+          aiConfidenceScore: parsed.aiConfidenceScore || 78,
+          lastResumeAnalysis: new Date().toLocaleDateString()
+        };
+
+        setProfile(updatedProfile);
+        setSuccessMsg(
+          "Resume parsed successfully. Review every section below — contact, skills, experience, projects, education, and extras — then save."
+        );
       } else {
         throw new Error(response?.error || "Hunter was unable to extract structured details from the resume.");
       }
@@ -180,19 +381,47 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
   const handleAddSkill = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanSkill = skillInput.trim();
-    if (cleanSkill && !profile.skills.includes(cleanSkill)) {
-      setProfile((prev) => ({
-        ...prev,
-        skills: [...prev.skills, cleanSkill]
-      }));
-      setSkillInput("");
-    }
-  };
+    if (!cleanSkill) return;
 
-  const handleRemoveSkill = (skillToRemove: string) => {
+    const skillItem: SkillItem = {
+      name: cleanSkill,
+      confidence: skillLevel === "Advanced" ? 90 : skillLevel === "Intermediate" ? 75 : 50,
+      source: "manual",
+      experience: "1 year",
+      usedIn: [],
+      relatedProjects: []
+    };
+
+    const currentGroup = profile.skillsGrouped?.[skillCategory] || [];
+    if (currentGroup.some(s => s.name.toLowerCase() === cleanSkill.toLowerCase())) {
+      setError("Skill already exists in this category.");
+      return;
+    }
+
+    const updatedGrouped = {
+      ...profile.skillsGrouped!,
+      [skillCategory]: [...currentGroup, skillItem]
+    };
+
     setProfile((prev) => ({
       ...prev,
-      skills: prev.skills.filter((s) => s !== skillToRemove)
+      skills: Array.from(new Set([...prev.skills, cleanSkill])),
+      skillsGrouped: updatedGrouped
+    }));
+    setSkillInput("");
+  };
+
+  const handleRemoveSkill = (category: keyof Required<UserProfile>["skillsGrouped"], skillName: string) => {
+    const currentGroup = profile.skillsGrouped?.[category] || [];
+    const updatedGrouped = {
+      ...profile.skillsGrouped!,
+      [category]: currentGroup.filter(s => s.name !== skillName)
+    };
+
+    setProfile((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((s) => s !== skillName),
+      skillsGrouped: updatedGrouped
     }));
   };
 
@@ -227,11 +456,75 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
     }
   };
 
+  // Helper arrays update functions
+  const handleAddExperienceItem = () => {
+    const newItem: ExperienceItem = { company: "", role: "", duration: "", responsibilities: [], achievements: [], technologies: [] };
+    setProfile(prev => ({
+      ...prev,
+      experienceTimeline: [...(prev.experienceTimeline || []), newItem]
+    }));
+  };
+
+  const handleUpdateExperienceItem = (index: number, field: keyof ExperienceItem, value: any) => {
+    const timeline = [...(profile.experienceTimeline || [])];
+    timeline[index] = { ...timeline[index], [field]: value };
+    setProfile(prev => ({ ...prev, experienceTimeline: timeline }));
+  };
+
+  const handleRemoveExperienceItem = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      experienceTimeline: (prev.experienceTimeline || []).filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const handleAddProjectItem = () => {
+    const newItem: ProjectItem = { title: "", description: "", technologies: [], gitHub: "", portfolio: "", role: "", impact: "" };
+    setProfile(prev => ({
+      ...prev,
+      projects: [...(prev.projects || []), newItem]
+    }));
+  };
+
+  const handleUpdateProjectItem = (index: number, field: keyof ProjectItem, value: any) => {
+    const projects = [...(profile.projects || [])];
+    projects[index] = { ...projects[index], [field]: value };
+    setProfile(prev => ({ ...prev, projects }));
+  };
+
+  const handleRemoveProjectItem = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      projects: (prev.projects || []).filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const handleAddEducationItem = () => {
+    const newItem: EducationItem = { institute: "", degree: "", cgpa: "", graduation: "" };
+    setProfile(prev => ({
+      ...prev,
+      educationList: [...(prev.educationList || []), newItem]
+    }));
+  };
+
+  const handleUpdateEducationItem = (index: number, field: keyof EducationItem, value: any) => {
+    const educationList = [...(profile.educationList || [])];
+    educationList[index] = { ...educationList[index], [field]: value };
+    setProfile(prev => ({ ...prev, educationList }));
+  };
+
+  const handleRemoveEducationItem = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      educationList: (prev.educationList || []).filter((_, idx) => idx !== index)
+    }));
+  };
+
   return (
     <div className="flex h-full flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
       <header className="flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--surface-overlay)] px-4 py-3.5 shrink-0 shadow-sm">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] dark:bg-[var(--bg-tertiary)] dark:border dark:border-[var(--border-color)] shrink-0 shadow-sm">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] shrink-0 shadow-sm">
             <User size={14} className="stroke-[2.5]" />
           </div>
           <div className="min-w-0 flex flex-col">
@@ -319,6 +612,80 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           </div>
         </div>
 
+        {/* AI Resume Insights Card */}
+        {profile.resumeFileName && (
+          <div className="premium-card p-4 rounded-2xl space-y-4 bg-zinc-50 dark:bg-zinc-900/40">
+            <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center gap-1.5">
+              <Sparkles size={14} className="text-[var(--text-primary)]" />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-mono">
+                AI Resume Insights
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3.5 text-xs">
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="font-bold text-zinc-500">Resume Strength:</span>
+                <p className="text-base font-black mt-1 text-[var(--text-primary)]">{profile.resumes?.[0]?.strengthScore || 75}%</p>
+              </div>
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="font-bold text-zinc-500">ATS Readiness:</span>
+                <p className="text-base font-black mt-1 text-[var(--text-primary)]">{profile.resumes?.[0]?.atsScore || profile.atsScore || 78}%</p>
+              </div>
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="font-bold text-zinc-500">Parse Confidence:</span>
+                <p className="text-base font-black mt-1 text-[var(--text-primary)]">{profile.aiConfidenceScore || 78}%</p>
+              </div>
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)]">
+                <span className="font-bold text-zinc-500">Career Level:</span>
+                <p className="text-sm font-black mt-0.5 text-[var(--text-primary)]">{profile.careerLevel || "—"}</p>
+              </div>
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)] col-span-2">
+                <span className="font-bold text-zinc-500">Detected Snapshot:</span>
+                <p className="text-[11px] mt-1 text-[var(--text-secondary)] leading-relaxed">
+                  {[
+                    profile.currentRole,
+                    profile.yearsOfExperience ? `${profile.yearsOfExperience} yrs exp` : "",
+                    profile.location,
+                    profile.experienceTimeline?.length ? `${profile.experienceTimeline.length} jobs` : "",
+                    profile.projects?.length ? `${profile.projects.length} projects` : "",
+                    profile.educationList?.length ? `${profile.educationList.length} education` : "",
+                    profile.skills?.length ? `${profile.skills.length} skills` : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Upload a resume to auto-detect profile fields."}
+                </p>
+              </div>
+              <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)] col-span-2">
+                <span className="font-bold text-zinc-500">Top Inferred Skills:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(profile.strongestSkills || profile.skills || []).slice(0, 8).map(s => (
+                    <span key={s} className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold">{s}</span>
+                  ))}
+                </div>
+              </div>
+              {profile.missingKeywords && profile.missingKeywords.length > 0 && (
+                <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)] col-span-2">
+                  <span className="font-bold text-zinc-500">Missing Key Skills (Gap):</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {profile.missingKeywords.map(s => (
+                      <span key={s} className="bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 px-2 py-0.5 rounded text-[10px] font-bold">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile.resumes?.[0]?.suggestedImprovements && (
+                <div className="bg-[var(--bg-primary)] p-2.5 rounded-xl border border-[var(--border-color)] col-span-2">
+                  <span className="font-bold text-zinc-500">Suggested Improvements:</span>
+                  <ul className="list-disc list-inside mt-1 text-zinc-600 dark:text-zinc-400 space-y-0.5">
+                    {profile.resumes[0].suggestedImprovements.map((imp, idx) => (
+                      <li key={idx}>{imp}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Personal Details Card */}
         <div className="premium-card p-4 rounded-2xl space-y-4">
           <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1">
@@ -373,6 +740,82 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 className="premium-input h-10 w-full rounded-xl pl-10 pr-4 text-[12.5px] outline-none font-medium"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                Location
+              </label>
+              <input
+                type="text"
+                value={profile.location || ""}
+                onChange={(e) => setProfile((prev) => ({ ...prev, location: e.target.value }))}
+                placeholder="City, Country"
+                className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                Current Role
+              </label>
+              <div className="relative">
+                <Briefcase size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="text"
+                  value={profile.currentRole || ""}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, currentRole: e.target.value }))}
+                  placeholder="e.g. Software Engineer"
+                  className="premium-input h-10 w-full rounded-xl pl-10 pr-4 text-[12.5px] outline-none font-medium"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                Years of Experience
+              </label>
+              <input
+                type="text"
+                value={profile.yearsOfExperience || ""}
+                onChange={(e) => setProfile((prev) => ({ ...prev, yearsOfExperience: e.target.value }))}
+                placeholder="e.g. 3"
+                className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+                Career Level
+              </label>
+              <select
+                value={profile.careerLevel || "Mid-level"}
+                onChange={(e) => setProfile((prev) => ({ ...prev, careerLevel: e.target.value }))}
+                className="premium-input h-10 w-full rounded-xl px-3 text-[12.5px] outline-none font-medium"
+              >
+                <option value="Fresher">Fresher</option>
+                <option value="Entry-level">Entry-level</option>
+                <option value="Junior">Junior</option>
+                <option value="Mid-level">Mid-level</option>
+                <option value="Senior">Senior</option>
+                <option value="Lead">Lead</option>
+                <option value="Executive">Executive</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Professional Summary
+            </label>
+            <textarea
+              value={profile.summary || ""}
+              onChange={(e) => setProfile((prev) => ({ ...prev, summary: e.target.value }))}
+              placeholder="AI-extracted professional summary from your resume..."
+              rows={3}
+              className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium leading-relaxed font-sans"
+            />
           </div>
         </div>
 
@@ -433,19 +876,16 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           </div>
         </div>
 
-        {/* Skills & Experience Card */}
+        {/* Skills Card */}
         <div className="premium-card p-4 rounded-2xl space-y-4">
           <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
-              Skills & Experience
+              Skills Catalog
             </h3>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
-              Skills
-            </label>
-            <form onSubmit={handleAddSkill} className="flex gap-2">
+            <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row gap-2 bg-[var(--bg-secondary)]/30 p-2.5 rounded-xl border border-[var(--border-color)]">
               <input
                 type="text"
                 value={skillInput}
@@ -453,46 +893,411 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 placeholder="Add skill (e.g. React, Python)"
                 className="premium-input h-10 flex-1 rounded-xl px-3.5 text-[12.5px] outline-none"
               />
-              <button
-                type="submit"
-                className="h-10 rounded-xl bg-[var(--text-primary)] hover:opacity-90 px-4 text-xs font-bold text-[var(--bg-primary)] transition-all shadow-md active:scale-95 uppercase tracking-wider font-sans shrink-0"
-              >
-                Add
-              </button>
-            </form>
-            {profile.skills && profile.skills.length > 0 && (
-              <div className="mt-2.5 flex flex-wrap gap-1.5 border border-[var(--border-color)]/40 bg-[var(--bg-secondary)]/20 dark:bg-[var(--bg-primary)]/20 p-2.5 rounded-xl backdrop-blur-sm dark:border-[var(--border-color)]/50">
-                {profile.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="skill-chip-premium"
-                  >
-                    {skill}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="skill-chip-premium-delete"
-                      title={`Remove ${skill}`}
-                    >
-                      <X size={11} className="stroke-[2.5]" />
-                    </button>
-                  </span>
-                ))}
+              <div className="flex gap-2 shrink-0">
+                <select
+                  value={skillCategory}
+                  onChange={(e) => setSkillCategory(e.target.value as any)}
+                  className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl px-2 text-xs outline-none text-[var(--text-secondary)] font-bold"
+                >
+                  <option value="languages">Languages</option>
+                  <option value="frameworks">Frameworks</option>
+                  <option value="frontend">Frontend</option>
+                  <option value="backend">Backend</option>
+                  <option value="ai">AI / ML</option>
+                  <option value="databases">Databases</option>
+                  <option value="cloud">Cloud</option>
+                  <option value="devops">DevOps</option>
+                  <option value="tools">Tools</option>
+                </select>
+                <select
+                  value={skillLevel}
+                  onChange={(e) => setSkillLevel(e.target.value as any)}
+                  className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl px-2 text-xs outline-none text-[var(--text-secondary)] font-bold"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+                <button
+                  type="submit"
+                  className="h-10 rounded-xl bg-[var(--text-primary)] hover:opacity-90 px-4 text-xs font-bold text-[var(--bg-primary)] transition-all shadow-md uppercase shrink-0"
+                >
+                  Add
+                </button>
               </div>
+            </form>
+
+            {/* Categorized Skills list */}
+            {profile.skillsGrouped && (
+              <div className="mt-4 space-y-3">
+                {(Object.keys(profile.skillsGrouped) as Array<keyof typeof profile.skillsGrouped>).map(cat => {
+                  const items = profile.skillsGrouped?.[cat] || [];
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={String(cat)} className="space-y-1.5">
+                      <h4 className="text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">{String(cat)}</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {items.map((skill: SkillItem) => (
+                          <span
+                            key={skill.name}
+                            className="skill-chip-premium"
+                          >
+                            {skill.name}
+                            <span className="text-[8px] opacity-75 font-mono ml-1">
+                              ({skill.confidence >= 90 ? "Advanced" : skill.confidence >= 70 ? "Intermediate" : "Beginner"})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(cat, skill.name)}
+                              className="skill-chip-premium-delete"
+                            >
+                              <X size={11} className="stroke-[2.5]" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Experience Timeline Card */}
+        <div className="premium-card p-4 rounded-2xl space-y-4">
+          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center justify-between">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
+              Work Experience Timeline
+            </h3>
+            <button
+              onClick={handleAddExperienceItem}
+              className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:opacity-80 flex items-center gap-1"
+            >
+              <Plus size={12} /> Add Job
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {profile.experienceTimeline && profile.experienceTimeline.length > 0 ? (
+              profile.experienceTimeline.map((exp, idx) => (
+                <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900/20 border border-[var(--border-color)] rounded-xl space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-[9px] font-black font-mono text-zinc-400">JOB #{idx + 1}</span>
+                    <button 
+                      onClick={() => handleRemoveExperienceItem(idx)}
+                      className="text-rose-500 hover:text-rose-700 text-[10px] font-bold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={exp.company}
+                      onChange={(e) => handleUpdateExperienceItem(idx, "company", e.target.value)}
+                      placeholder="Company (e.g. Google)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={exp.role}
+                      onChange={(e) => handleUpdateExperienceItem(idx, "role", e.target.value)}
+                      placeholder="Role (e.g. Software Engineer)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={exp.duration}
+                      onChange={(e) => handleUpdateExperienceItem(idx, "duration", e.target.value)}
+                      placeholder="Duration (e.g. Jun 2024 - Present)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={exp.location || ""}
+                      onChange={(e) => handleUpdateExperienceItem(idx, "location", e.target.value)}
+                      placeholder="Location (e.g. Mountain View, CA)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                  </div>
+                  <textarea
+                    value={exp.responsibilities.join("\n")}
+                    onChange={(e) => handleUpdateExperienceItem(idx, "responsibilities", e.target.value.split("\n"))}
+                    placeholder="Description (one bullet point per line)..."
+                    rows={3}
+                    className="premium-input w-full resize-none p-2.5 text-xs rounded-lg leading-relaxed font-sans"
+                  />
+                  <input
+                    type="text"
+                    value={exp.technologies.join(", ")}
+                    onChange={(e) => handleUpdateExperienceItem(idx, "technologies", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                    placeholder="Technologies Used (comma-separated, e.g. React, Docker)"
+                    className="premium-input h-9 px-3 text-xs rounded-lg"
+                  />
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-[var(--text-muted)] italic">No experience parsed from resume yet.</p>
             )}
           </div>
 
           <div>
             <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] font-mono">
-              Work Experience Summary
+              Overall Work Experience Summary
             </label>
             <textarea
               value={profile.experience}
               onChange={(e) => setProfile((prev) => ({ ...prev, experience: e.target.value }))}
-              placeholder="Provide a summary of your career background..."
+              placeholder="Provide a general summary of your career background..."
               rows={4}
               className="premium-input w-full resize-none rounded-xl px-3.5 py-2.5 text-[12.5px] outline-none font-medium leading-relaxed font-sans"
             />
+          </div>
+        </div>
+
+        {/* Projects Card */}
+        <div className="premium-card p-4 rounded-2xl space-y-4">
+          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center justify-between">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
+              Projects
+            </h3>
+            <button
+              onClick={handleAddProjectItem}
+              className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:opacity-80 flex items-center gap-1"
+            >
+              <Plus size={12} /> Add Project
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {profile.projects && profile.projects.length > 0 ? (
+              profile.projects.map((proj, idx) => (
+                <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900/20 border border-[var(--border-color)] rounded-xl space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-[9px] font-black font-mono text-zinc-400">PROJECT #{idx + 1}</span>
+                    <button 
+                      onClick={() => handleRemoveProjectItem(idx)}
+                      className="text-rose-500 hover:text-rose-700 text-[10px] font-bold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={proj.title}
+                      onChange={(e) => handleUpdateProjectItem(idx, "title", e.target.value)}
+                      placeholder="Project Title"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={proj.role || ""}
+                      onChange={(e) => handleUpdateProjectItem(idx, "role", e.target.value)}
+                      placeholder="Role (e.g. Fullstack Developer)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={proj.gitHub}
+                      onChange={(e) => handleUpdateProjectItem(idx, "gitHub", e.target.value)}
+                      placeholder="GitHub Link URL"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={proj.portfolio}
+                      onChange={(e) => handleUpdateProjectItem(idx, "portfolio", e.target.value)}
+                      placeholder="Live Demo Portfolio URL"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                  </div>
+                  <textarea
+                    value={proj.description}
+                    onChange={(e) => handleUpdateProjectItem(idx, "description", e.target.value)}
+                    placeholder="Short description of what was built..."
+                    rows={2}
+                    className="premium-input w-full resize-none p-2.5 text-xs rounded-lg leading-relaxed font-sans"
+                  />
+                  <input
+                    type="text"
+                    value={proj.technologies.join(", ")}
+                    onChange={(e) => handleUpdateProjectItem(idx, "technologies", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                    placeholder="Technologies Used (comma-separated, e.g. React, Node.js)"
+                    className="premium-input h-9 px-3 text-xs rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={proj.impact || ""}
+                    onChange={(e) => handleUpdateProjectItem(idx, "impact", e.target.value)}
+                    placeholder="Metrics / Project Impact (e.g. Accelerated build times by 30%)"
+                    className="premium-input h-9 px-3 text-xs rounded-lg"
+                  />
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-[var(--text-muted)] italic">No projects parsed from resume yet.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Certifications, Awards, Languages */}
+        <div className="premium-card p-4 rounded-2xl space-y-4">
+          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center gap-1.5">
+            <Award size={14} className="text-[var(--text-primary)]" />
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
+              Certifications, Awards & Languages
+            </h3>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Certifications (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={(profile.certifications || []).join(", ")}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  certifications: e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                }))
+              }
+              placeholder="e.g. AWS Certified Cloud Practitioner, Google Data Analytics"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Awards & Honors (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={(profile.awards || []).join(", ")}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  awards: e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                }))
+              }
+              placeholder="e.g. Dean's List 2024, Hackathon Winner"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Spoken Languages (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={(profile.languagesList || []).join(", ")}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  languagesList: e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                }))
+              }
+              placeholder="e.g. English, Spanish, Hindi"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 font-mono">
+              Target Roles (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={(profile.targetRoles || []).join(", ")}
+              onChange={(e) =>
+                setProfile((prev) => ({
+                  ...prev,
+                  targetRoles: e.target.value
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                }))
+              }
+              placeholder="e.g. Frontend Engineer, Full Stack Developer"
+              className="premium-input h-10 w-full rounded-xl px-3.5 text-[12.5px] outline-none font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Education Card */}
+        <div className="premium-card p-4 rounded-2xl space-y-4">
+          <div className="border-b border-zinc-200/40 pb-2 dark:border-zinc-800/40 mb-1 flex items-center justify-between">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 font-mono">
+              Education
+            </h3>
+            <button
+              onClick={handleAddEducationItem}
+              className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:opacity-80 flex items-center gap-1"
+            >
+              <Plus size={12} /> Add Education
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {profile.educationList && profile.educationList.length > 0 ? (
+              profile.educationList.map((edu, idx) => (
+                <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900/20 border border-[var(--border-color)] rounded-xl space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-[9px] font-black font-mono text-zinc-400">INSTITUTE #{idx + 1}</span>
+                    <button 
+                      onClick={() => handleRemoveEducationItem(idx)}
+                      className="text-rose-500 hover:text-rose-700 text-[10px] font-bold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={edu.institute}
+                      onChange={(e) => handleUpdateEducationItem(idx, "institute", e.target.value)}
+                      placeholder="College / Institute Name"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={edu.degree}
+                      onChange={(e) => handleUpdateEducationItem(idx, "degree", e.target.value)}
+                      placeholder="Degree (e.g. B.S. in Computer Science)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={edu.graduation}
+                      onChange={(e) => handleUpdateEducationItem(idx, "graduation", e.target.value)}
+                      placeholder="Graduation Year (e.g. 2024)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                    <input
+                      type="text"
+                      value={edu.cgpa}
+                      onChange={(e) => handleUpdateEducationItem(idx, "cgpa", e.target.value)}
+                      placeholder="GPA / CGPA (e.g. 8.5 / 10)"
+                      className="premium-input h-9 px-3 text-xs rounded-lg"
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-[var(--text-muted)] italic">No education history parsed from resume yet.</p>
+            )}
           </div>
         </div>
 
@@ -561,7 +1366,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
         <div className="premium-card p-4 rounded-2xl space-y-4">
           <div className="border-b border-[var(--border-color)]/40 pb-2 dark:border-[var(--border-color)]/40 mb-1 flex items-center justify-between">
             <h2 className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] font-mono flex items-center gap-1.5">
-              <FileText size={13} className="text-[var(--accent)]" />
+              <FileText size={13} className="text-[var(--text-primary)]" />
               Tailored Cover Letters ({coverLetters.length})
             </h2>
           </div>
@@ -572,7 +1377,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                 return (
                   <div
                     key={letter.id}
-                    className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/40 dark:bg-[var(--bg-primary)]/20 shadow-sm overflow-hidden hover:border-[var(--accent)]/30 transition duration-200"
+                    className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)]/40 dark:bg-[var(--bg-primary)]/20 shadow-sm overflow-hidden hover:border-[var(--border-color)]/80 transition duration-200"
                   >
                     <div
                       onClick={() => setExpandedLetterId(isExpanded ? null : letter.id)}
@@ -604,7 +1409,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           >
                             {copiedLetterId === letter.id ? (
                               <>
-                                <Check size={11} className="text-[var(--accent)] stroke-[3]" />
+                                <Check size={11} className="stroke-[3]" />
                                 Copied
                               </>
                             ) : (
@@ -617,7 +1422,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           <button
                             onClick={() => handleDownloadLetter(letter.company, letter.content)}
                             title="Download letter as text file"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--bg-tertiary)] transition duration-150 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--text-secondary)] dark:hover:bg-[var(--bg-tertiary)] transition duration-155 shadow-sm active:scale-95"
                           >
                             <Download size={11} />
                             Download
@@ -625,7 +1430,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
                           <button
                             onClick={() => handleDeleteLetter(letter.id)}
                             title="Delete cover letter draft"
-                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-[var(--danger)] hover:bg-[var(--danger-faint)] dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-[var(--danger)] dark:hover:bg-[var(--danger)]/20 transition duration-155 shadow-sm active:scale-95"
+                            className="flex h-7.5 items-center gap-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] px-3 py-1 text-[10px] font-extrabold text-rose-600 hover:bg-rose-50 dark:border-[var(--border-color)] dark:bg-[var(--bg-primary)] dark:text-rose-450 dark:hover:bg-rose-950/20 transition duration-155 shadow-sm active:scale-95"
                           >
                             <Trash2 size={11} />
                             Delete
@@ -648,7 +1453,7 @@ export const ProfileSettings = ({ onBack }: ProfileSettingsProps) => {
           onClick={handleSaveProfile}
           disabled={isSaving || isParsing}
           className={`flex h-11 w-full items-center justify-center gap-2 rounded-xl font-bold text-xs transition-all duration-300 shadow-md hover:shadow-lg active:scale-98 uppercase tracking-wider font-sans ${saveSuccess
-            ? "bg-[var(--success)] text-[var(--bg-primary)]"
+            ? "bg-emerald-600 text-white"
             : "bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 disabled:opacity-60"
             }`}
         >

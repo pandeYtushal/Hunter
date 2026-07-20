@@ -29,6 +29,25 @@ export interface PageSnapshot {
   };
 }
 
+export interface BrowserStateModel {
+  currentWebsite: string;
+  currentUrl: string;
+  currentPageType: string;
+  visibleComponents: string[];
+  navigationElements: Array<{ text: string; selector: string; type: string }>;
+  primaryActions: Array<{ text: string; selector: string; description: string }>;
+  currentDialogs: Array<{ text: string; selector: string; visible: boolean }>;
+  currentForms: Array<{
+    selector: string;
+    inputs: Array<{ name: string; type: string; selector: string; placeholder: string; value: string }>;
+  }>;
+  currentScrollPosition: { x: number; y: number; maxScrollX: number; maxScrollY: number };
+  selectedText: string;
+  focusedElement: { tagName: string; id: string; className: string; selector: string } | null;
+  availableBrowserActions: string[];
+}
+
+
 export type ChatRole = "user" | "assistant";
 
 export interface ChatMessage {
@@ -43,6 +62,7 @@ export type SidebarStatus = "open" | "closed";
 export type RuntimeMessage =
   | { type: "PING" }
   | { type: "GET_PAGE_SNAPSHOT" }
+  | { type: "GET_BROWSER_STATE_MODEL" }
   | { type: "WAIT_FOR_PAGE_READY" }
   | { type: "SEND_CHAT_MESSAGE"; prompt: string; pageContext?: PageSnapshot }
   | { type: "GET_CHAT_HISTORY" }
@@ -96,6 +116,7 @@ export type RuntimeMessage =
 export interface RuntimeResponseMap {
   PING: { ok: true };
   GET_PAGE_SNAPSHOT: { snapshot: PageSnapshot };
+  GET_BROWSER_STATE_MODEL: { model: BrowserStateModel };
   WAIT_FOR_PAGE_READY: { ready: boolean; reason: string; observedMutationCount: number };
   SEND_CHAT_MESSAGE: { message: ChatMessage; history: ChatMessage[] };
   GET_CHAT_HISTORY: { history: ChatMessage[] };

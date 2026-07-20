@@ -361,7 +361,7 @@ export const ChatWindow: React.FC = () => {
       await setActiveMode(detected);
     }
 
-    const useAct = shouldActQuery(trimmedQuery) && !opts.forceChat && !forceChatMode;
+    const useAct = false;
 
     if (useAct) {
       setInput("");
@@ -452,7 +452,7 @@ export const ChatWindow: React.FC = () => {
       />
 
       {/* Main Panel Content Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative bg-[var(--bg-primary)] bg-[radial-gradient(ellipse_80%_85%_at_50%_-20%,rgba(var(--accent-rgb),0.035),transparent)]">
+      <div className="flex-1 flex flex-col min-w-0 h-full relative bg-[var(--bg-primary)]">
         <ChatHeader
           currentUrl={currentUrl || undefined}
           activeGoal={copilot.machineState !== "idle" ? copilot.currentGoal : null}
@@ -489,53 +489,58 @@ export const ChatWindow: React.FC = () => {
                 className="chat-thread flex-1 overflow-y-auto px-4 py-4 space-y-5 custom-scrollbar bg-transparent"
               >
                 {!activeConversation || activeConversation.messages.length === 0 ? (
-                  <div className="flex-grow flex flex-col items-center justify-center text-center p-6 select-none animate-fade-in space-y-6 max-w-sm mx-auto h-full justify-self-center py-10">
-                    {/* Brand Greeting */}
-                    <div className="space-y-3 flex flex-col items-center relative w-full">
-                      <div className="absolute -top-10 h-32 w-32 bg-gradient-to-tr from-[var(--accent)]/10 via-[var(--accent-strong)]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-                      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--accent)] shadow-md mb-1 transition-all duration-300 hover:scale-105 hover:border-[var(--accent-dim)]">
-                        <Compass size={22} className="animate-spin-slow" style={{ animationDuration: "24s" }} />
+                  <div className="flex-grow flex flex-col items-center justify-center p-6 select-none animate-fade-in max-w-sm mx-auto h-full justify-self-center py-10 space-y-6">
+                    {/* Dynamic Context-Aware Action Suggestions */}
+                    <div className="w-full space-y-4 text-left">
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
+                          ⚡ Act (Browser Automation)
+                        </span>
+                        <div className="grid grid-cols-1 gap-2 w-full">
+                          <button
+                            onClick={() => handleSendFromSuggestion("Apply to this job listing using my resume")}
+                            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-primary)]/50 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-155 cursor-pointer group shadow-sm"
+                          >
+                            <span className="truncate">Apply to this job using my profile</span>
+                            <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--text-primary)]">Act</span>
+                          </button>
+                          <button
+                            onClick={() => handleSendFromSuggestion("Autofill application details on this page")}
+                            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-primary)]/50 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-155 cursor-pointer group shadow-sm"
+                          >
+                            <span className="truncate">Autofill contact & experience fields</span>
+                            <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--text-primary)]">Act</span>
+                          </button>
+                        </div>
                       </div>
-                      <h2 className="text-xl font-extrabold tracking-tight bg-gradient-to-b from-[var(--text-primary)] to-[var(--text-secondary)] bg-clip-text text-transparent">
-                        How can I assist you?
-                      </h2>
-                      <p className="text-[12.5px] text-[var(--text-muted)] font-normal leading-relaxed max-w-[260px] mx-auto">
-                        Ask about this page, or tell Hunter to act — apply, research, or autofill.
-                      </p>
-                    </div>
 
-                    {/* Page-aware suggestions (top 3) */}
-                    <div className="w-full space-y-2 text-left">
-                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
-                        Suggested
-                      </span>
-                      <div className="grid grid-cols-1 gap-2 w-full">
-                        {emptySuggestions.map((s) => {
-                          const Icon = s.icon;
-                          const isAct = shouldActQuery(s.prompt);
-                          return (
-                            <button
-                              key={s.prompt}
-                              onClick={() => handleSendFromSuggestion(s.prompt)}
-                              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--accent)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-150 cursor-pointer group shadow-sm hover:-translate-y-0.5 hover:shadow-md"
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <Icon size={13} className="text-[var(--text-muted)] group-hover:text-[var(--accent)] shrink-0 transition-colors" />
-                                <span className="truncate">{s.label}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0 select-none">
-                                <span className={`text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border transition-colors ${
-                                  isAct
-                                    ? "text-[var(--accent)] border-[var(--accent-dim)] bg-[var(--accent-faint)]"
-                                    : "text-[var(--text-muted)] border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--accent)]"
-                                }`}>
-                                  {isAct ? "Act" : "Ask"}
-                                </span>
-                                <span className="text-[var(--text-muted)] group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-transform duration-150">{"→"}</span>
-                              </div>
-                            </button>
-                          );
-                        })}
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-1">
+                          💬 Ask (AI Assistance & Analysis)
+                        </span>
+                        <div className="grid grid-cols-1 gap-2 w-full">
+                          <button
+                            onClick={() => handleSendFromSuggestion("Compare this page with my resume and find gaps")}
+                            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-primary)]/50 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-155 cursor-pointer group shadow-sm"
+                          >
+                            <span className="truncate">Compare job description with resume</span>
+                            <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--text-primary)]">Ask</span>
+                          </button>
+                          <button
+                            onClick={() => handleSendFromSuggestion("Generate a tailored cover letter for this page")}
+                            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-primary)]/50 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-155 cursor-pointer group shadow-sm"
+                          >
+                            <span className="truncate">Draft a tailored cover letter</span>
+                            <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--text-primary)]">Ask</span>
+                          </button>
+                          <button
+                            onClick={() => handleSendFromSuggestion("Summarize the key information on this page")}
+                            className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-primary)]/50 text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition duration-155 cursor-pointer group shadow-sm"
+                          >
+                            <span className="truncate">Summarize this page content</span>
+                            <span className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-[var(--border-color)] bg-[var(--bg-tertiary)] group-hover:text-[var(--text-primary)]">Ask</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -605,14 +610,14 @@ export const ChatWindow: React.FC = () => {
                     ? "bg-rose-500"
                     : copilot.machineState === "completed"
                       ? "bg-emerald-500"
-                      : "bg-[var(--accent)] animate-pulse"
+                      : "bg-[var(--text-primary)] animate-pulse"
                 }`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-[var(--text-primary)] truncate">
                       {copilot.currentGoal || "Running goal"}
                     </span>
-                    <span className="text-[10px] font-mono font-bold text-[var(--accent)] shrink-0 tabular-nums">
+                    <span className="text-[10px] font-mono font-bold text-[var(--text-primary)] shrink-0 tabular-nums">
                       {copilot.progress}%
                     </span>
                   </div>
@@ -701,7 +706,7 @@ export const ChatWindow: React.FC = () => {
                           ) : isFailed ? (
                             <XCircle size={12} className="text-rose-500 step-check-pop" />
                           ) : isRunning ? (
-                            <div className="h-2.5 w-2.5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                            <div className="h-2.5 w-2.5 rounded-full border-2 border-[var(--text-primary)] border-t-transparent animate-spin" />
                           ) : (
                             <div className="h-2.5 w-2.5 rounded-full border border-[var(--border-color)] bg-[var(--bg-tertiary)]" />
                           )}
@@ -721,8 +726,8 @@ export const ChatWindow: React.FC = () => {
                 </div>
 
                 {((copilot.machineState === "waiting_confirmation") || (approvalState && approvalState.status === "pending")) && (
-                  <div className="p-3 rounded-xl border border-[var(--accent-dim)] bg-[var(--accent-faint)] space-y-2.5 text-left">
-                    <p className="text-[11px] font-bold text-[var(--accent)] flex items-center gap-1.5">
+                  <div className="p-3 rounded-xl border border-[var(--border-color)] bg-[var(--bg-tertiary)] space-y-2.5 text-left">
+                    <p className="text-[11px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                       <AlertTriangle size={13} />
                       Safety Approval Required
                     </p>
@@ -741,7 +746,7 @@ export const ChatWindow: React.FC = () => {
                             await storage.set("approvalState", { ...approvalState, status: "approved" });
                           }
                         }}
-                        className="flex-1 h-7 rounded bg-[var(--accent)] hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider transition cursor-pointer border-0"
+                        className="flex-1 h-7 rounded bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 text-[10px] font-bold uppercase tracking-wider transition cursor-pointer border-0"
                       >
                         Confirm
                       </button>
@@ -766,7 +771,7 @@ export const ChatWindow: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => CopilotEngine.getInstance().retry()}
-                    className="w-full h-8 rounded-lg bg-[var(--accent)] text-white text-[11px] font-bold uppercase cursor-pointer border-0"
+                    className="w-full h-8 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 text-[11px] font-bold uppercase cursor-pointer border-0"
                   >
                     Retry Failed Step
                   </button>
@@ -792,10 +797,10 @@ export const ChatWindow: React.FC = () => {
 
         {/* Act-mode preview banner */}
         {willAct && (
-          <div className="mx-4 mb-1.5 flex items-center gap-2 rounded-lg border border-[var(--accent-dim)] bg-[var(--accent-faint)] px-3 py-2 text-[11px] animate-fade-in select-none">
-            <MousePointerClick size={13} className="text-[var(--accent)] shrink-0" />
+          <div className="mx-4 mb-1.5 flex items-center gap-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] px-3 py-2 text-[11px] animate-fade-in select-none">
+            <MousePointerClick size={13} className="text-[var(--text-primary)] shrink-0" />
             <span className="flex-1 text-[var(--text-secondary)] text-left">
-              <strong className="text-[var(--accent)]">Act mode:</strong> Hunter will automate the browser
+              <strong className="text-[var(--text-primary)]">Act mode:</strong> Hunter will automate the browser
             </span>
             <button
               type="button"
@@ -818,7 +823,7 @@ export const ChatWindow: React.FC = () => {
             <button
               type="button"
               onClick={() => setForceChatMode(false)}
-              className="shrink-0 text-[10px] font-semibold text-[var(--accent)] bg-transparent border-0 cursor-pointer"
+              className="shrink-0 text-[10px] font-semibold text-[var(--text-primary)] bg-transparent border-0 cursor-pointer"
             >
               Use Act
             </button>
@@ -861,7 +866,7 @@ export const ChatWindow: React.FC = () => {
         {devModeOpen && (
           <div className="border-t border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 text-[11.5px] font-mono leading-relaxed select-text max-h-[200px] overflow-y-auto custom-scrollbar animate-fade-in shadow-inner">
             <div className="flex justify-between items-center border-b border-[var(--border-color)] pb-2 mb-3">
-              <h3 className="font-bold text-[var(--accent)] uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-1.5">
                 <Terminal size={12} />
                 Developer Console Metrics
               </h3>
@@ -888,7 +893,7 @@ export const ChatWindow: React.FC = () => {
               <div>
                 <span className="text-[var(--text-muted)] font-bold">STREAM STATUS:</span>{" "}
                 <span className={`font-bold uppercase ${devMetrics.streamingStatus === "streaming"
-                  ? "text-[var(--accent)]"
+                  ? "text-[var(--text-primary)]"
                   : devMetrics.streamingStatus === "completed"
                     ? "text-emerald-500"
                     : "text-[var(--text-muted)]"

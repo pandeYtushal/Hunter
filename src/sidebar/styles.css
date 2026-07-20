@@ -1488,3 +1488,19 @@ html:not(.dark) .bg-zinc-950 button:hover {
   scrollbar-width: none;
 }
 
+/* Custom grab/grabbing cursor overrides for dragging panels */
+.cursor-grab,
+.cursor-grab * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23ffffff' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5'/%3E%3Cpath d='M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v6'/%3E%3Cpath d='M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4.5'/%3E%3Cpath d='M6 10a2 2 0 0 0-2 2v2a8 8 0 0 0 16 0v-3a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v3'/%3E%3C/svg%3E") 12 12, grab !important;
+}
+.cursor-grab button,
+.cursor-grab button *,
+.cursor-grab a,
+.cursor-grab a * {
+  cursor: pointer !important;
+}
+.active\:cursor-grabbing:active,
+.active\:cursor-grabbing:active * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23ffffff' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 11V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2'/%3E%3Cpath d='M14 10V8a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4'/%3E%3Cpath d='M10 10.5V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v3.5'/%3E%3Cpath d='M6 10a2 2 0 0 0-2 2v2a8 8 0 0 0 16 0v-5a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5'/%3E%3C/svg%3E") 12 12, grabbing !important;
+}
+

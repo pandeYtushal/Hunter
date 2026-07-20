@@ -2,7 +2,7 @@ import { ScreenCapture } from "../vision/ScreenCapture";
 import { longTermMemory } from "../ai/longTermMemory";
 import { memory } from "../ai/memory";
 import { storage } from "../shared/storage";
-import type { PageSnapshot } from "../shared/types/messages";
+import type { PageSnapshot, BrowserStateModel } from "../shared/types/messages";
 import type { ChatContextInfo } from "./ChatTypes";
 
 export const ChatContext = {
@@ -29,6 +29,20 @@ export const ChatContext = {
     }
   },
 
+  async requestBrowserStateModel(): Promise<BrowserStateModel | null> {
+    if (typeof chrome === "undefined" || !chrome.runtime) return null;
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: "SEND_TO_ACTIVE_TAB",
+        message: { type: "GET_BROWSER_STATE_MODEL" },
+      });
+      return response?.model || null;
+    } catch (err) {
+      console.warn("Failed to request browser state model:", err);
+      return null;
+    }
+  },
+
   async captureScreenshot(tabId?: number): Promise<string | null> {
     try {
       let targetTabId = tabId;
@@ -50,6 +64,7 @@ export const ChatContext = {
   async gatherContext(): Promise<ChatContextInfo> {
     const tab = await this.getActiveTab();
     const pageSnapshot = await this.requestPageSnapshot();
+    const browserStateModel = await this.requestBrowserStateModel();
     const screenshotBase64 = await this.captureScreenshot(tab?.id ?? undefined);
     
     const ltm = await longTermMemory.retrieveMemory().catch(() => null);
@@ -59,6 +74,7 @@ export const ChatContext = {
     return {
       currentUrl: tab?.url || pageSnapshot?.url || "",
       pageSnapshot,
+      browserStateModel,
       selectedText: pageSnapshot?.selectedText || "",
       screenshotBase64,
       longTermMemory: ltm,

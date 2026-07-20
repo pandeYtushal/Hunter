@@ -5,7 +5,7 @@ type StorageFallbacks = Partial<StorageSchema> | StorageKey;
 
 const isExtension = typeof chrome !== "undefined" && typeof chrome.storage !== "undefined";
 
-const SYNC_KEYS = ["settings", "profile", "sidebarOpen"];
+const SYNC_KEYS = ["settings", "sidebarOpen"];
 const isSyncKey = (key: string): boolean => SYNC_KEYS.includes(key);
 
 const storageArea = {

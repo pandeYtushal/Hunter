@@ -2,6 +2,7 @@ import { sidebarStyles } from "./sidebarStyles";
 import { defaultStorage, type StorageSchema } from "../shared/types/storage";
 import type { PageSnapshot, RuntimeMessage, SidebarStatus, ThemeMode } from "../shared/types/messages";
 import { extractTitle, extractMetadata, extractPageContent, extractStructuredPageData } from "./pageReader";
+import { extractBrowserStateModel } from "./browserStateExtractor";
 import { startPageReadinessObserver, waitForPageReady } from "./pageReadiness";
 import { autofillPageForm, scanPageForm, executeAutofill, cancelAutofill } from "./formMapper";
 import { clickElement } from "../actions/clickElement";
@@ -345,7 +346,7 @@ class SidebarController {
       width: 100vw;
       height: 100vh;
       z-index: 2147483647;
-      cursor: grabbing;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%23ffffff' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 11V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2'/%3E%3Cpath d='M14 10V8a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v4'/%3E%3Cpath d='M10 10.5V9a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v3.5'/%3E%3Cpath d='M6 10a2 2 0 0 0-2 2v2a8 8 0 0 0 16 0v-5a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5'/%3E%3C/svg%3E") 12 12, grabbing;
       background: transparent;
       pointer-events: auto !important;
     `;
@@ -492,9 +493,26 @@ class SidebarController {
     let startRight = 0;
     let isDragging = false;
     let isTouchDragging = false;
+    let hoverTimer: any = null;
+
+    const hideRemoveBtn = (e: MouseEvent) => {
+      const path = e.composedPath();
+      if (path.includes(toggleBtn) || path.includes(removeBtn)) {
+        return;
+      }
+      removeBtn.classList.remove("visible");
+      document.removeEventListener("mousedown", hideRemoveBtn);
+    };
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0 || e.target === removeBtn || removeBtn.contains(e.target as Node) || this.isPinned) return;
+      
+      if (hoverTimer) {
+        window.clearTimeout(hoverTimer);
+        hoverTimer = null;
+      }
+      removeBtn.classList.remove("visible");
+      document.removeEventListener("mousedown", hideRemoveBtn);
       
       startX = e.clientX;
       startY = e.clientY;
@@ -543,6 +561,13 @@ class SidebarController {
     const onTouchStart = (e: TouchEvent) => {
       if (e.target === removeBtn || removeBtn.contains(e.target as Node) || this.isPinned) return;
       if (e.touches.length === 0) return;
+      
+      if (hoverTimer) {
+        window.clearTimeout(hoverTimer);
+        hoverTimer = null;
+      }
+      removeBtn.classList.remove("visible");
+      document.removeEventListener("mousedown", hideRemoveBtn);
       
       const touch = e.touches[0];
       startX = touch.clientX;
@@ -596,14 +621,26 @@ class SidebarController {
     toggleBtn.addEventListener("mousedown", onMouseDown);
     toggleBtn.addEventListener("touchstart", onTouchStart, { passive: true });
 
-    // ─── 2. Double-Click Close Icon Trigger ───
-    toggleBtn.addEventListener("dblclick", (e) => {
-      e.preventDefault();
-      removeBtn.classList.toggle("visible");
+    // ─── 2. Hover 1.5s Close Icon Trigger ───
+    toggleBtn.addEventListener("mouseenter", () => {
+      if (hoverTimer) window.clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => {
+        removeBtn.classList.add("visible");
+        document.addEventListener("mousedown", hideRemoveBtn);
+        hoverTimer = null;
+      }, 1500);
+    });
+
+    toggleBtn.addEventListener("mouseleave", () => {
+      if (hoverTimer) {
+        window.clearTimeout(hoverTimer);
+        hoverTimer = null;
+      }
     });
 
     removeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      document.removeEventListener("mousedown", hideRemoveBtn);
       this.host?.remove();
     });
 
@@ -612,6 +649,7 @@ class SidebarController {
       if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
         keyboardEvent.preventDefault();
         keyboardEvent.stopPropagation();
+        document.removeEventListener("mousedown", hideRemoveBtn);
         this.host?.remove();
       }
     });
@@ -697,6 +735,8 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
     switch (message.type) {
       case "GET_PAGE_SNAPSHOT":
         return { snapshot: await getPageSnapshot() };
+      case "GET_BROWSER_STATE_MODEL":
+        return { model: extractBrowserStateModel() };
       case "WAIT_FOR_PAGE_READY": {
         const readiness = await waitForPageReady();
         return {

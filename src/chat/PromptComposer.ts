@@ -1,4 +1,5 @@
 import type { ChatContextInfo, ChatMessage } from "./ChatTypes";
+import { PromptManager } from "../ai/core/PromptManager";
 
 export const PromptComposer = {
   composeSystemInstruction(context: ChatContextInfo): string {
@@ -35,33 +36,31 @@ export const PromptComposer = {
       if (ltm.savedJobs?.length) {
         lines.push(`- Saved Jobs: ${ltm.savedJobs.join(", ")}`);
       }
+      if (ltm.preferredTone) lines.push(`- Preferred Tone: ${ltm.preferredTone}`);
+      if (ltm.favoriteTechnologies?.length) {
+        lines.push(`- Favorite Technologies: ${ltm.favoriteTechnologies.join(", ")}`);
+      }
+      if (ltm.currentProjects?.length) {
+        lines.push(`- Current Projects: ${ltm.currentProjects.join(", ")}`);
+      }
+      if (ltm.interviewNotes) lines.push(`- Interview Notes: ${ltm.interviewNotes}`);
     }
 
-    if (context.profile) {
-      const p = context.profile;
+    lines.push("");
+    lines.push(PromptManager.formatProfileForPrompt(context.profile));
+
+    if (context.browserStateModel) {
       lines.push("");
-      lines.push("### CANDIDATE PROFILE & RESUME DATA");
-      if (p.name) lines.push(`- Name: ${p.name}`);
-      if (p.email) lines.push(`- Email: ${p.email}`);
-      if (p.phone) lines.push(`- Phone: ${p.phone}`);
-      if (p.linkedIn) lines.push(`- LinkedIn: ${p.linkedIn}`);
-      if (p.portfolio) lines.push(`- Portfolio: ${p.portfolio}`);
-      if (p.skills && p.skills.length > 0) {
-        lines.push(`- Skills: ${p.skills.join(", ")}`);
-      }
-      if (p.experience) {
-        lines.push(`- Work Experience & Education Summary:\n${p.experience}`);
-      }
-      if (p.resumeFileName) {
-        lines.push(`- Resume Source File: ${p.resumeFileName}`);
-      }
+      lines.push("### BROWSER STATE MODEL");
+      lines.push(JSON.stringify(context.browserStateModel, null, 2));
     }
 
     lines.push("");
     lines.push("### INSTRUCTIONS");
-    lines.push("1. When analyzing forms, jobs, or pages, utilize the page context variables below.");
-    lines.push("2. If the page context is irrelevant to the query, answer general questions directly like a helpful chatbot.");
-    lines.push("3. Keep responses structured, concise, and professional.");
+    lines.push("1. When analyzing forms, jobs, or pages, utilize the page context and the FULL candidate profile above.");
+    lines.push("2. For autofill, cover letters, match scores, and personalization, detect values only from the saved profile — never invent contact info, employers, degrees, or skills.");
+    lines.push("3. If the page context is irrelevant to the query, answer general questions directly like a helpful chatbot.");
+    lines.push("4. Keep responses structured, concise, and professional.");
 
     return lines.join("\n");
   },

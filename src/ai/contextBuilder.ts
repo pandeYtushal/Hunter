@@ -3,6 +3,7 @@ import type { UserProfile } from "../shared/types/storage";
 import { ToolRegistry } from "./toolRegistry";
 import type { ActionType } from "../types";
 import type { LongTermMemory } from "../types/Memory";
+import { PromptManager } from "./core/PromptManager";
 
 export interface DecisionLogEntry {
   action: ActionType;
@@ -52,14 +53,8 @@ ${openTabs.map((t, idx) => `- Tab ${idx + 1}: "${t.title}" (URL: "${t.url}"${t.a
       : `### Open Browser Tabs
 - No other browser tabs available.`;
 
-    // 4. User Candidate Profile Section
-    const profileSection = profile && (profile.name || profile.email || profile.skills.length > 0)
-      ? `### Candidate Profile
-- Name: ${profile.name || "Unknown"}
-- Skills: ${profile.skills.join(", ") || "None"}
-- Experience: ${profile.experience || "None"}`
-      : `### Candidate Profile
-- Candidate profile is empty/not configured.`;
+    // 4. User Candidate Profile Section (full career hub — all fields agents can detect)
+    const profileSection = PromptManager.formatProfileForPrompt(profile);
 
     // 5. Long-Term Memory Section
     const memorySection = longTermMemory

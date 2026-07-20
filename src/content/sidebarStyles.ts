@@ -310,10 +310,11 @@ export const sidebarStyles = `
 
 .agent-remove-btn {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 22px;
-  height: 22px;
+  top: 12px;
+  right: auto;
+  left: -36px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   background: #ef4444;
   color: white;
@@ -324,10 +325,10 @@ export const sidebarStyles = `
   align-items: center;
   justify-content: center;
   font-family: Arial, sans-serif;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   z-index: 2147483647;
-  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease;
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 180ms ease;
   transform: scale(0);
   opacity: 0;
   pointer-events: none;

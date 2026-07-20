@@ -1,4 +1,4 @@
-import type { PageSnapshot } from "../shared/types/messages";
+import type { PageSnapshot, BrowserStateModel } from "../shared/types/messages";
 import type { UserProfile } from "../shared/types/storage";
 
 export type MessageRole =
@@ -57,6 +57,7 @@ export interface ChatConversation {
 export interface ChatContextInfo {
   currentUrl: string;
   pageSnapshot: PageSnapshot | null;
+  browserStateModel: BrowserStateModel | null;
   selectedText: string;
   screenshotBase64: string | null;
   longTermMemory: any | null;

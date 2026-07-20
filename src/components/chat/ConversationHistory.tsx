@@ -74,7 +74,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
       >
         <div className="flex h-14 items-center justify-between border-b border-[var(--border-color)] px-3 shrink-0">
           <div className="flex items-center gap-2 text-[var(--text-primary)]">
-            <History size={15} className="text-[var(--accent)]" />
+            <History size={15} className="text-[var(--text-primary)]" />
             <span className="text-[12px] font-bold tracking-wide uppercase font-mono">History</span>
           </div>
           <div className="flex items-center gap-1">
@@ -118,7 +118,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                   key={conv.id}
                   className={`group relative flex items-start gap-2 rounded-xl border px-2.5 py-2.5 transition cursor-pointer ${
                     isActive
-                      ? "border-[var(--accent-dim)] bg-[var(--accent-faint)]"
+                      ? "border-[var(--text-primary)] bg-[var(--bg-tertiary)]"
                       : "border-transparent hover:border-[var(--border-color)] hover:bg-[var(--bg-tertiary)]"
                   }`}
                   onClick={() => {
@@ -137,7 +137,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                 >
                   <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-[var(--text-muted)]">
                     {conv.pinned ? (
-                      <Pin size={12} className="text-[var(--accent)]" />
+                      <Pin size={12} className="text-[var(--text-primary)]" />
                     ) : (
                       <MessageSquare size={12} />
                     )}
@@ -158,18 +158,16 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
                     <button
                       type="button"
                       onClick={() => onTogglePin(conv.id)}
-                      className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--bg-primary)] border-0 bg-transparent cursor-pointer"
+                      className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)] border-0 bg-transparent cursor-pointer"
                       title={conv.pinned ? "Unpin" : "Pin"}
                       aria-label={conv.pinned ? "Unpin conversation" : "Pin conversation"}
                     >
-                      <Pin size={12} className={conv.pinned ? "fill-current text-[var(--accent)]" : ""} />
+                      <Pin size={12} className={conv.pinned ? "fill-current text-[var(--text-primary)]" : ""} />
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm("Delete this conversation?")) {
-                          onDelete(conv.id);
-                        }
+                        onDelete(conv.id);
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/10 border-0 bg-transparent cursor-pointer"
                       title="Delete"
