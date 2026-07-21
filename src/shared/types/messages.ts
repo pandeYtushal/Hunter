@@ -90,7 +90,7 @@ export type RuntimeMessage =
   | { type: "CANCEL_AUTOFILL" }
   | { type: "CLICK_ELEMENT"; selector: string; text?: string }
   | { type: "FILL_INPUT"; selector: string; value: string }
-  | { type: "EXTRACT_TEXT" }
+  | { type: "EXTRACT_TEXT"; selector?: string }
   | { type: "NAVIGATE_PAGE"; url: string }
   | { type: "UPLOAD_RESUME" }
   | { type: "GET_ACTIVE_TAB" }

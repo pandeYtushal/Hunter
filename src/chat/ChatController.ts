@@ -361,6 +361,11 @@ If the request is a simple question or description that does not require browser
                 type: "SEND_TO_ACTIVE_TAB",
                 message: { type: "UPLOAD_RESUME" }
               });
+            } else if (action.type === "extract_text") {
+              response = await chrome.runtime.sendMessage({
+                type: "SEND_TO_ACTIVE_TAB",
+                message: { type: "EXTRACT_TEXT", selector: action.selector }
+              });
             } else if (action.type === "wait") {
               await new Promise(resolve => setTimeout(resolve, action.ms || 1000));
               response = { ok: true };

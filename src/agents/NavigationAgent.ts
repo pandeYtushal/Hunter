@@ -21,9 +21,10 @@ export const NavigationAgent = {
     }
   },
 
-  async extract(tabId: number): Promise<string> {
+  async extract(tabId: number, selector?: string): Promise<string> {
     const response = await chrome.tabs.sendMessage(tabId, {
-      type: "EXTRACT_TEXT"
+      type: "EXTRACT_TEXT",
+      selector
     });
     if (response && response.ok) {
       return response.text;

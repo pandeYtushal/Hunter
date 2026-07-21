@@ -780,7 +780,7 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
         return { ok: true };
       }
       case "EXTRACT_TEXT": {
-        const text = extractText();
+        const text = extractText(message.selector);
         return { ok: true, text };
       }
       case "NAVIGATE_PAGE": {
