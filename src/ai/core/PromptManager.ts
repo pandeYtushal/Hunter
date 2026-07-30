@@ -425,18 +425,51 @@ Return a clean, valid JSON object with the following keys. Do not include any ma
         : resumeText;
 
     return `You are an expert ATS resume parser and career intelligence agent for HUNTERR.
-Your job is to extract EVERY usable fact from the resume into a complete structured JSON profile.
-Do not summarize away details. Prefer exhaustive extraction over short generic answers.
+Your primary directive: Stop treating the uploaded resume as a collection of unrelated sections. Instead, treat it as a holistic Professional Profile (the single source of truth).
 
-EXTRACTION CHECKLIST (scan the full text for each):
-1. Identity: full name, email, phone, city/region/country, LinkedIn, GitHub, portfolio/personal site, other profile links.
-2. Career snapshot: current/latest role, total years of experience, career level, target roles, professional summary/objective.
-3. Skills: every technology, language, framework, tool, soft skill, methodology. Categorize and score confidence.
-4. Work experience: every job/internship — company, role, dates, location, responsibilities, achievements, technologies used.
-5. Projects: every project — title, role, description, tech stack, impact/metrics, links.
-6. Education: institute, degree/major, GPA/CGPA, graduation date/year for every entry.
-7. Extras: certifications, awards/honors, spoken languages, publications, open-source or research notes.
-8. Quality signals: strongest skills, weak/underrepresented areas, recommended skills for target roles, missing market keywords, resume quality.
+PARSING WORKFLOW:
+
+STEP 1: ANALYZE THE ENTIRE RESUME AS A PROFESSIONAL PROFILE
+Examine the whole document to determine:
+- careerStage: "Student" | "Graduate" | "Professional"
+- studentOrGraduateOrProfessional: "Student" | "Graduate" | "Professional"
+- fresherOrExperienced: "Fresher" | "Experienced"
+- highestQualification: Highest degree or academic credential found (e.g. "B.Tech in Computer Science")
+- currentRole: Official current role title, or student/fresher status if no employment exists
+- yearsOfExperience: Numeric string of total official employment years (e.g. "0" if fresher)
+- primaryDomain: Primary domain/specialization (e.g. "Frontend Engineering", "Full Stack", "Data Science")
+- summary: Professional Summary grounded strictly in resume facts
+
+CRITICAL: Do NOT infer employment if none exists.
+
+STEP 2: EXTRACT STRUCTURED INFORMATION
+Extract the following categories:
+- Projects
+- Education
+- Experience
+- Skills
+- Certificates
+- Awards
+
+--------------------------------------------------
+IMPORTANT STRICT CLASSIFICATION RULES:
+
+1. Experience should NEVER be inferred from projects.
+2. If the resume has Projects, but NO official company, NO employer, NO internship, and NO employment:
+   Return experienceTimeline = [] and experience = "".
+3. Projects MUST NEVER become work experience.
+   Action verbs and tech terms like:
+   "Built", "Developed", "Created", "GitHub", "Portfolio", "Tech Stack", "Architecture", "Chrome Extension", "AI", "React", "Node"
+   belong ONLY to Projects unless explicitly executed under a registered company/employer/organization.
+4. A Work Experience entry MUST contain:
+   - An explicit Company / Employer / Organization name
+   - AND an explicit Role / Title / Internship position
+   Otherwise REJECT IT from experience.
+5. POST-PARSING VALIDATION PASS:
+   For every potential experience entry, ask: "Is this genuine employment?"
+   If NOT, move it to Projects.
+6. Prioritize CORRECTNESS over completeness. Missing data is acceptable; incorrect categorization is NOT acceptable.
+--------------------------------------------------
 
 Return ONLY a valid raw JSON object (no markdown fences, no commentary) with this exact shape:
 
@@ -447,12 +480,17 @@ Return ONLY a valid raw JSON object (no markdown fences, no commentary) with thi
   "linkedIn": "https://linkedin.com/in/... or empty string",
   "portfolio": "personal site URL or empty string",
   "gitHub": "https://github.com/... or empty string",
-  "currentRole": "Most recent job title or student status",
-  "yearsOfExperience": "numeric string e.g. \\"3\\" or \\"0\\"",
+  "careerStage": "Student | Graduate | Professional",
+  "studentOrGraduateOrProfessional": "Student | Graduate | Professional",
+  "fresherOrExperienced": "Fresher | Experienced",
+  "highestQualification": "Highest degree / qualification",
+  "currentRole": "Most recent official job title or Student / Fresher Developer",
+  "yearsOfExperience": "numeric string e.g. \\"0\\" or \\"3\\"",
+  "primaryDomain": "Primary domain e.g. Software Engineering",
   "location": "City, Region/Country if present",
   "summary": "2-5 sentence professional summary grounded in resume content",
   "skills": ["Flat list of ALL distinct skills found"],
-  "experience": "Multi-line bullet summary of career history (use • bullets)",
+  "experience": "Multi-line bullet summary of official career history (ONLY if genuine employment exists, else \\"\\")",
   "primaryTechStack": ["Top 4-8 core technologies"],
   "strongestSkills": ["Skills with clearest evidence of depth"],
   "weakAreas": ["Important market skills weakly evidenced or missing"],
@@ -492,8 +530,8 @@ Return ONLY a valid raw JSON object (no markdown fences, no commentary) with thi
 
   "experienceTimeline": [
     {
-      "company": "Company Name",
-      "role": "Job Title",
+      "company": "Official Company / Organization / Employer Name ONLY",
+      "role": "Official Job Title / Internship Title",
       "duration": "Mon YYYY - Mon YYYY|Present",
       "location": "City / Remote if available",
       "responsibilities": ["Concrete duty from resume"],
@@ -518,27 +556,7 @@ Return ONLY a valid raw JSON object (no markdown fences, no commentary) with thi
   "suggestedImprovements": ["Actionable resume improvements"]
 }
 
-CRITICAL RULES:
-- Use empty string "" or empty arrays [] when a field is truly absent. Never invent employers, degrees, emails, phones, or metrics.
-- Do NOT use the placeholder word "Unknown". Use "" instead.
-- Extract dates exactly as written when possible (normalize lightly to "Mon YYYY - Mon YYYY" only if clear).
-- skills MUST be a complete flat list of every skill also present in skillsGrouped (union of all categories).
-- Categorize skills ONLY into: languages, frameworks, ai, backend, frontend, cloud, devops, databases, tools.
-  - Programming languages (Python, TypeScript, Go, SQL, HTML, CSS, etc.) -> languages
-  - Libraries/frameworks (React, Django, Spring Boot, Next.js) -> frameworks or frontend/backend as appropriate
-  - ML/AI stacks (PyTorch, TensorFlow, LLMs, NLP) -> ai
-  - Cloud providers/services -> cloud; containers/CI -> devops; DBs -> databases; IDEs/soft tools -> tools
-- confidence is 1-100 based on evidence: repeated usage + achievements high; single mention medium; inferred low.
-- usedIn / relatedProjects should reference real company or project names from the resume when possible.
-- experienceTimeline and projects must be ordered most recent first when dates are known.
-- yearsOfExperience should reflect total professional experience (internships optional if they are the only history).
-- experience string should be a readable multi-line summary derived from experienceTimeline (not truncated gibberish).
-- If both a summary/objective section and body content exist, craft summary from both.
-- aiConfidenceScore = how complete/confident the parse is overall. atsScore = how ATS-friendly the resume appears.
-- Preserve quantified impact (%, $, time saved, scale) in achievements/impact fields.
-- If the resume is sparse, still return every field with empty defaults rather than omitting keys.
-
-Resume Text:
+RESUME TEXT:
 ${truncated}`;
   }
 

@@ -152,6 +152,13 @@ export interface UserProfile {
   atsScore?: number;
   aiConfidenceScore?: number;
   lastResumeAnalysis?: string;
+
+  // Professional Profile (Source of Truth)
+  careerStage?: string;
+  studentOrGraduateOrProfessional?: "Student" | "Graduate" | "Professional";
+  fresherOrExperienced?: "Fresher" | "Experienced";
+  highestQualification?: string;
+  primaryDomain?: string;
   
   resumes?: ResumeRecord[];
   

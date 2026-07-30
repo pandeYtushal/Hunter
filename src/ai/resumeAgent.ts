@@ -246,28 +246,49 @@ STRICT CRITICAL RULES:
 7. Reject any project that does not contain a Title AND Description.`;
 };
 
-// Check if an experience entry looks like a project rather than employment
+// Check if an entry contains project indicators rather than employment
 const hasProjectKeywords = (company: string, role: string, description: string): boolean => {
-  const c = company.toLowerCase();
-  const r = role.toLowerCase();
-  const d = description.toLowerCase();
+  const c = company.toLowerCase().trim();
+  const r = role.toLowerCase().trim();
+  const d = description.toLowerCase().trim();
 
   const projectKeywords = [
     "github", "git link", "live demo", "chrome extension", "hackathon", "personal project", 
     "academic project", "portfolio", "research paper", "built a", "developed a", "created a", 
     "implemented a", "engineered a", "dashboard", "website", "repository", "tech stack", "architecture",
-    "api", "react", "node", "python", "ai"
+    "api", "react", "node", "python", "ai", "built", "developed", "created", "project", "side project"
   ];
 
   if (projectKeywords.some(k => c.includes(k) || r.includes(k) || d.includes(k))) {
     return true;
   }
   
-  if (c.includes("personal") || c.includes("academic") || c.includes("self-employed") || c.includes("freelance") && !r) {
+  if (/^(built|developed|created|implemented|engineered|designed|deployed)\b/i.test(c)) {
+    return true;
+  }
+
+  if (c.includes("personal") || c.includes("academic") || c.includes("self-employed") || (c.includes("freelance") && !r)) {
+    return true;
+  }
+
+  if (!c || /^(n\/a|none|self|project|projects|personal|academic|independent|unknown|null|undefined|na|-)$/i.test(c)) {
     return true;
   }
 
   return false;
+};
+
+// Strict check: "Is this genuine employment?"
+// Must contain an explicit Company / Employer / Organization AND a Role / Position / Internship, and not be a project.
+const isGenuineEmployment = (company: string, role: string, description: string): boolean => {
+  const comp = company.trim();
+  const r = role.trim();
+
+  if (!comp || !r) return false;
+  if (/^(n\/a|none|self|project|projects|personal|academic|independent|unknown|null|undefined|na|-)$/i.test(comp)) return false;
+  if (hasProjectKeywords(comp, r, description)) return false;
+
+  return true;
 };
 
 const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
@@ -388,7 +409,7 @@ const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
     rawEducation.push(currentEdu);
   }
 
-  // VALIDATION & FILTERING WITH CONFIDENCE CHECKS
+  // VALIDATION & FILTERING: "Is this genuine employment?"
   const validatedExperience: ExperienceItem[] = [];
   const validatedProjects: ProjectItem[] = [];
   const validatedEducation: EducationItem[] = [];
@@ -413,33 +434,25 @@ const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
     const role = (job.role || "").trim();
     const desc = Array.isArray(job.responsibilities) ? job.responsibilities.join(" ") : String(job.responsibilities || "");
 
-    if (comp && role) {
-      const isProject = hasProjectKeywords(comp, role, desc);
-      if (isProject) {
-        // Move to projects pool
-        rawProjects.push({
-          title: comp,
-          description: desc || "Personal project implementation details",
-          technologies: job.technologies || [],
-          gitHub: "",
-          portfolio: ""
-        });
-      } else {
-        let conf = 80;
-        if (job.duration) conf += 10;
-        if (job.location) conf += 10;
-        if (conf >= 70) {
-          validatedExperience.push({
-            company: comp,
-            role: role,
-            duration: job.duration || "Present",
-            location: job.location || "Remote",
-            responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.map(String) : [],
-            technologies: Array.isArray(job.technologies) ? job.technologies.map(String) : [],
-            achievements: []
-          });
-        }
-      }
+    if (isGenuineEmployment(comp, role, desc)) {
+      validatedExperience.push({
+        company: comp,
+        role: role,
+        duration: job.duration || "Present",
+        location: job.location || "Remote",
+        responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.map(String) : [],
+        technologies: Array.isArray(job.technologies) ? job.technologies.map(String) : [],
+        achievements: []
+      });
+    } else if (comp || role || desc) {
+      // Re-classify non-employment entries to projects pool
+      rawProjects.push({
+        title: comp || role || "Project",
+        description: desc || "Personal project implementation details",
+        technologies: job.technologies || [],
+        gitHub: "",
+        portfolio: ""
+      });
     }
   });
 
@@ -447,14 +460,12 @@ const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
   rawProjects.forEach(proj => {
     const title = (proj.title || "").trim();
     const desc = (proj.description || "").trim();
-    if (title && desc) {
-      let conf = 80;
-      if (proj.technologies && proj.technologies.length > 0) conf += 10;
-      if (proj.gitHub || proj.portfolio) conf += 10;
-      if (conf >= 70) {
+    if (title || desc) {
+      const projTitle = title || "Project";
+      if (!validatedProjects.some(p => p.title.toLowerCase() === projTitle.toLowerCase())) {
         validatedProjects.push({
-          title,
-          description: desc,
+          title: projTitle,
+          description: desc || "Personal project implementation details",
           technologies: Array.isArray(proj.technologies) ? proj.technologies.map(String) : [],
           gitHub: proj.gitHub || "",
           portfolio: proj.portfolio || "",
@@ -510,8 +521,13 @@ const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
     }
   });
 
-  const yearsOfExperience = String(totalYears || 0);
-  const careerLevel = totalYears === 0 ? "Fresher" : totalYears <= 1 ? "Entry-level" : "Junior";
+  const yearsOfExperience = validatedExperience.length > 0 ? String(totalYears || 0) : "0";
+  const fresherOrExperienced: "Fresher" | "Experienced" = validatedExperience.length === 0 ? "Fresher" : "Experienced";
+  const careerStage: "Student" | "Graduate" | "Professional" = validatedExperience.length === 0 ? "Student" : "Professional";
+  const studentOrGraduateOrProfessional = careerStage;
+  const highestQualification = validatedEducation[0] ? `${validatedEducation[0].degree} - ${validatedEducation[0].institute}` : "";
+  const primaryDomain = skills[0] ? `${skills[0]} Engineering` : "Software Development";
+  const currentRole = validatedExperience[0]?.role || (fresherOrExperienced === "Fresher" ? "Student Developer" : "Developer");
 
   return {
     name,
@@ -522,11 +538,16 @@ const parseLocalSegments = (segments: ResumeSegments): UserProfile => {
     gitHub,
     skills,
     experience: validatedExperience.map(e => `${e.role} at ${e.company}`).join("\n"),
-    currentRole: validatedExperience[0]?.role || "Developer",
+    currentRole,
     yearsOfExperience,
     location: "Global",
     summary: segments.summary.join(" ").slice(0, 300),
-    careerLevel,
+    careerLevel: fresherOrExperienced === "Fresher" ? "Fresher" : (totalYears <= 1 ? "Entry-level" : "Junior"),
+    careerStage,
+    studentOrGraduateOrProfessional,
+    fresherOrExperienced,
+    highestQualification,
+    primaryDomain,
     skillsGrouped,
     projects: validatedProjects,
     experienceTimeline: validatedExperience,
@@ -549,9 +570,17 @@ export const parseResumeText = async (resumeText: string): Promise<UserProfile> 
 
     const parsed = robustJsonParse<any>(responseText);
 
-    const rawExperience = Array.isArray(parsed.experience) ? parsed.experience : [];
+    const rawExperience = Array.isArray(parsed.experienceTimeline) 
+      ? parsed.experienceTimeline 
+      : Array.isArray(parsed.experience) 
+        ? parsed.experience 
+        : [];
     const rawProjects = Array.isArray(parsed.projects) ? parsed.projects : [];
-    const rawEducation = Array.isArray(parsed.education) ? parsed.education : [];
+    const rawEducation = Array.isArray(parsed.educationList) 
+      ? parsed.educationList 
+      : Array.isArray(parsed.education) 
+        ? parsed.education 
+        : [];
 
     const validatedExperience: ExperienceItem[] = [];
     const validatedProjects: ProjectItem[] = [];
@@ -571,64 +600,53 @@ export const parseResumeText = async (resumeText: string): Promise<UserProfile> 
       }
     });
 
-    // 2. Second-Pass Validation: Review Experience Pool
+    // 2. Post-parsing Validation Pass: Ask for every experience entry "Is this employment?"
     rawExperience.forEach((job: any) => {
-      const company = (job.company || job.organization || "").trim();
-      const role = (job.role || "").trim();
-      const desc = Array.isArray(job.responsibilities) ? job.responsibilities.join(" ") : String(job.responsibilities || "");
+      const company = (job.company || job.organization || job.employer || "").trim();
+      const role = (job.role || job.title || job.position || "").trim();
+      const desc = Array.isArray(job.responsibilities) 
+        ? job.responsibilities.join(" ") 
+        : String(job.responsibilities || job.description || "");
+      const tech = Array.isArray(job.technologies) ? job.technologies : [];
 
-      if (company && role) {
-        const isProject = hasProjectKeywords(company, role, desc);
-        if (isProject) {
-          // Re-classify and move to projects pool
-          rawProjects.push({
-            title: company,
-            description: desc || "Project details engineered by candidate",
-            technologies: job.technologies || [],
-            gitHub: "",
-            portfolio: ""
-          });
-        } else {
-          // Experience Confidence: Company + Role found = 80%. Duration = 10%. Location = 10%.
-          let conf = 80;
-          if (job.duration) conf += 10;
-          if (job.location) conf += 10;
-
-          if (conf >= 70) {
-            validatedExperience.push({
-              company,
-              role,
-              duration: job.duration || "Present",
-              location: job.location || "Remote",
-              responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.map(String) : [],
-              technologies: Array.isArray(job.technologies) ? job.technologies.map(String) : [],
-              achievements: []
-            });
-          }
-        }
+      if (isGenuineEmployment(company, role, desc)) {
+        validatedExperience.push({
+          company,
+          role,
+          duration: job.duration || "Present",
+          location: job.location || "Remote",
+          responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities.map(String) : [],
+          technologies: tech.map(String),
+          achievements: Array.isArray(job.achievements) ? job.achievements.map(String) : []
+        });
+      } else if (company || role || desc) {
+        // Re-classify non-employment entries to projects pool
+        rawProjects.push({
+          title: company && !hasProjectKeywords(company, "", "") ? company : (role || "Project"),
+          description: desc || `${company} ${role}`.trim() || "Personal project details engineered by candidate",
+          technologies: tech.map(String),
+          gitHub: job.gitHub || "",
+          portfolio: job.portfolio || ""
+        });
       }
     });
 
-    // 3. Projects Validation (Required: Title AND Description)
+    // 3. Projects Validation (Required: Title OR Description)
     rawProjects.forEach((proj: any) => {
-      const title = (proj.title || proj.projectName || "").trim();
-      const description = (proj.description || "").trim();
+      const title = (proj.title || proj.projectName || proj.name || "").trim();
+      const description = (proj.description || proj.details || "").trim();
 
-      if (title && description) {
-        // Project Confidence: Title + Description found = 80%. Technologies = 10%. GitHub/liveLink = 10%.
-        let conf = 80;
-        if (proj.technologies && proj.technologies.length > 0) conf += 10;
-        if (proj.gitHub || proj.liveLink || proj.portfolio) conf += 10;
-
-        if (conf >= 70) {
+      if (title || description) {
+        const projTitle = title || "Project";
+        if (!validatedProjects.some(p => p.title.toLowerCase() === projTitle.toLowerCase())) {
           validatedProjects.push({
-            title,
-            description,
+            title: projTitle,
+            description: description || "Personal project details engineered by candidate",
             technologies: Array.isArray(proj.technologies) ? proj.technologies.map(String) : [],
             gitHub: proj.gitHub || "",
             portfolio: proj.liveLink || proj.portfolio || "",
             role: proj.role || "Developer",
-            impact: ""
+            impact: proj.impact || ""
           });
         }
       }
@@ -658,20 +676,28 @@ export const parseResumeText = async (resumeText: string): Promise<UserProfile> 
     };
 
     if (parsed.skills) {
-      mapSkillList(parsed.skills.languages, "languages");
-      mapSkillList(parsed.skills.frontend, "frontend");
-      mapSkillList(parsed.skills.backend, "backend");
-      mapSkillList(parsed.skills.frameworks, "frameworks");
-      mapSkillList(parsed.skills.databases, "databases");
-      mapSkillList(parsed.skills.cloud, "cloud");
-      mapSkillList(parsed.skills["AI/ML"] || parsed.skills.ai, "ai");
-      mapSkillList(parsed.skills.tools, "tools");
+      if (typeof parsed.skills === "object" && !Array.isArray(parsed.skills)) {
+        mapSkillList(parsed.skills.languages, "languages");
+        mapSkillList(parsed.skills.frontend, "frontend");
+        mapSkillList(parsed.skills.backend, "backend");
+        mapSkillList(parsed.skills.frameworks, "frameworks");
+        mapSkillList(parsed.skills.databases, "databases");
+        mapSkillList(parsed.skills.cloud, "cloud");
+        mapSkillList(parsed.skills["AI/ML"] || parsed.skills.ai, "ai");
+        mapSkillList(parsed.skills.tools, "tools");
+      }
     }
 
     const flatSkills: string[] = [];
     Object.values(skillsGrouped).forEach((grp: SkillItem[]) => {
       grp.forEach((s: SkillItem) => flatSkills.push(s.name));
     });
+
+    if (flatSkills.length === 0 && Array.isArray(parsed.skills)) {
+      parsed.skills.forEach((s: string) => {
+        if (typeof s === "string") flatSkills.push(s);
+      });
+    }
 
     const personal = parsed.personal || {};
 
@@ -690,23 +716,33 @@ export const parseResumeText = async (resumeText: string): Promise<UserProfile> 
       }
     });
 
-    const yearsOfExperience = String(totalYears || 0);
-    const careerLevel = totalYears === 0 ? "Fresher" : totalYears <= 1 ? "Entry-level" : "Junior";
+    const yearsOfExperience = validatedExperience.length > 0 ? String(totalYears || 0) : "0";
+    const fresherOrExperienced: "Fresher" | "Experienced" = validatedExperience.length === 0 ? "Fresher" : "Experienced";
+    const careerStage = parsed.careerStage || (validatedExperience.length === 0 ? "Student" : "Professional");
+    const studentOrGraduateOrProfessional = (parsed.studentOrGraduateOrProfessional || careerStage) as "Student" | "Graduate" | "Professional";
+    const highestQualification = parsed.highestQualification || (validatedEducation[0] ? `${validatedEducation[0].degree} - ${validatedEducation[0].institute}` : localProfile.highestQualification || "");
+    const primaryDomain = parsed.primaryDomain || (flatSkills[0] ? `${flatSkills[0]} Engineering` : "Software Development");
+    const currentRole = validatedExperience[0]?.role || (fresherOrExperienced === "Fresher" ? "Student Developer" : (parsed.currentRole || localProfile.currentRole || "Software Developer"));
 
     return {
-      name: personal.name && personal.name !== "Unknown" ? personal.name : localProfile.name,
-      email: personal.email && personal.email !== "Unknown" ? personal.email : localProfile.email,
-      phone: personal.phone && personal.phone !== "Unknown" ? personal.phone : localProfile.phone,
-      linkedIn: personal.linkedIn || localProfile.linkedIn || "",
-      portfolio: personal.portfolio || localProfile.portfolio || "",
-      gitHub: personal.gitHub || localProfile.gitHub || "",
+      name: personal.name && personal.name !== "Unknown" ? personal.name : (parsed.name || localProfile.name),
+      email: personal.email && personal.email !== "Unknown" ? personal.email : (parsed.email || localProfile.email),
+      phone: personal.phone && personal.phone !== "Unknown" ? personal.phone : (parsed.phone || localProfile.phone),
+      linkedIn: personal.linkedIn || parsed.linkedIn || localProfile.linkedIn || "",
+      portfolio: personal.portfolio || parsed.portfolio || localProfile.portfolio || "",
+      gitHub: personal.gitHub || parsed.gitHub || localProfile.gitHub || "",
       skills: flatSkills.length > 0 ? flatSkills : localProfile.skills,
       experience: validatedExperience.map(e => `${e.role} at ${e.company}`).join("\n"),
-      currentRole: validatedExperience[0]?.role || localProfile.currentRole || "Software Developer",
+      currentRole,
       yearsOfExperience,
-      location: personal.location || localProfile.location || "Global",
+      location: personal.location || parsed.location || localProfile.location || "Global",
       summary: parsed.summary || localProfile.summary || "",
-      careerLevel,
+      careerLevel: fresherOrExperienced === "Fresher" ? "Fresher" : (totalYears <= 1 ? "Entry-level" : "Junior"),
+      careerStage,
+      studentOrGraduateOrProfessional,
+      fresherOrExperienced,
+      highestQualification,
+      primaryDomain,
       skillsGrouped,
       projects: validatedProjects,
       experienceTimeline: validatedExperience,
