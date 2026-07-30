@@ -9,7 +9,7 @@ export const ParticleCanvas: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId: number | null = null;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -82,7 +82,9 @@ export const ParticleCanvas: React.FC = () => {
 
     return () => {
       window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, []);
 
