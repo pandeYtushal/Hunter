@@ -13,5 +13,8 @@
   "aliases": {
     "components": "src/components",
     "utils": "src/shared/utils"
+  },
+  "registries": {
+    "@kokonutui": "https://kokonutui.com/r/{name}.json"
   }
 }

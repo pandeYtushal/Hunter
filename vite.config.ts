@@ -27,6 +27,12 @@ const getConfig = ({ mode }: { mode: string }) => {
 
   const baseConfig = {
     plugins: [react()],
+    resolve: {
+      alias: {
+        src: resolve(__dirname, "src"),
+        "@": resolve(__dirname, "src")
+      }
+    },
     test: {
       environment: "node",
       globals: true,

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
+import ParticleButton from '../components/kokonutui/particle-button';
 
 interface AntiGravityWrapperProps {
   children: React.ReactNode;
@@ -129,7 +130,7 @@ export const AntiGravityWrapper: React.FC<AntiGravityWrapperProps> = ({ children
 
   return (
     <>
-      <button 
+      <ParticleButton 
         onClick={() => setIsActive(!isActive)}
         style={{
           position: 'fixed',
@@ -138,8 +139,8 @@ export const AntiGravityWrapper: React.FC<AntiGravityWrapperProps> = ({ children
           zIndex: 1000,
           padding: '0.75rem 1.5rem',
           borderRadius: '9999px',
-          backgroundColor: isActive ? 'var(--destructive, #ef4444)' : 'var(--primary)',
-          color: isActive ? '#fff' : 'var(--primary-foreground)',
+          backgroundColor: isActive ? '#ef4444' : '#111827',
+          color: '#ffffff',
           fontWeight: 600,
           cursor: 'pointer',
           border: 'none',
@@ -149,7 +150,7 @@ export const AntiGravityWrapper: React.FC<AntiGravityWrapperProps> = ({ children
         }}
       >
         {isActive ? 'Reset Layout' : 'Enable Zero-G Mode'}
-      </button>
+      </ParticleButton>
 
       <div ref={containerRef}>
         {children}

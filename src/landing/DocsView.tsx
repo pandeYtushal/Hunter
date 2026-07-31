@@ -19,7 +19,9 @@ import {
   Cpu,
   Globe,
   Database,
-  ArrowUpRight
+  ArrowUpRight,
+  Lock,
+  Brain
 } from 'lucide-react';
 import './index.css';
 
@@ -112,7 +114,7 @@ export const DocsView: React.FC<DocsViewProps> = ({ onBackToLanding }) => {
             {/* TAB 1: QUICK START (SETUP IN 60 SECONDS) */}
             {activeTab === 'quickstart' && (
               <div>
-                <div className="minimal-section-badge">⚡ SETUP IN 60 SECONDS</div>
+                <div className="minimal-section-badge"><Zap size={14} /> SETUP IN 60 SECONDS</div>
                 <h2 className="docs-article-title">Get Started with Hunter</h2>
                 <p className="docs-article-lead">
                   Install the browser extension locally, add your AI key, and run your first automated task.
@@ -135,7 +137,7 @@ export const DocsView: React.FC<DocsViewProps> = ({ onBackToLanding }) => {
                         </button>
                       </div>
                       <pre className="code-content-block">
-{`git clone https://github.com/pandeYtushal/Hunter.git
+                        {`git clone https://github.com/pandeYtushal/Hunter.git
 cd Hunter
 npm install
 npm run build`}
@@ -170,7 +172,7 @@ npm run build`}
                         </button>
                       </div>
                       <pre className="code-content-block">
-{`/apply Autofill job application form using my resume.`}
+                        {`/apply Autofill job application form using my resume.`}
                       </pre>
                     </div>
                   </div>
@@ -189,7 +191,7 @@ npm run build`}
             {/* TAB 2: HOW IT WORKS */}
             {activeTab === 'howitworks' && (
               <div>
-                <div className="minimal-section-badge">🤖 AUTOMATION ENGINE</div>
+                <div className="minimal-section-badge"><Bot size={14} /> AUTOMATION ENGINE</div>
                 <h2 className="docs-article-title">How Hunter Works</h2>
                 <p className="docs-article-lead">
                   Hunter translates natural language requests into deterministic DOM click and form fill actions.
@@ -250,42 +252,42 @@ npm run build`}
             {/* TAB 3: RESUME & AI */}
             {activeTab === 'ai-resume' && (
               <div>
-                <div className="minimal-section-badge">🧠 INTELLIGENCE PIPELINE</div>
-                <h2 className="docs-article-title">Resume Parsing &amp; AI Providers</h2>
+                <div className="minimal-section-badge"><Brain size={14} /> INTELLIGENCE PIPELINE</div>
+                <h2 className="docs-article-title">Resume Parsing &amp; AI Integration</h2>
                 <p className="docs-article-lead">
-                  Connect your favorite AI model or run completely offline with local Ollama models.
+                  Connect your favorite AI provider or run completely offline with local Ollama &amp; DeepSeek models to parse PDF resumes and automate form fields with 100% data privacy.
                 </p>
 
                 <h3 className="docs-section-heading">Supported AI Providers</h3>
                 <div className="minimal-grid-4col">
                   <div className="minimal-provider-card">
-                    <div className="provider-name">Gemini</div>
-                    <div className="provider-model">1.5 Pro / Flash</div>
+                    <div className="provider-name">Google Gemini</div>
+                    <div className="provider-model">2.0 Flash / 1.5 Pro</div>
                     <div className="provider-badge">Fastest API</div>
                   </div>
 
                   <div className="minimal-provider-card">
                     <div className="provider-name">OpenAI</div>
-                    <div className="provider-model">GPT-4o / O3-Mini</div>
+                    <div className="provider-model">GPT-4o / o3-Mini</div>
                     <div className="provider-badge">High Reasoning</div>
                   </div>
 
                   <div className="minimal-provider-card">
-                    <div className="provider-name">Claude</div>
-                    <div className="provider-model">3.5 Sonnet</div>
+                    <div className="provider-name">Anthropic</div>
+                    <div className="provider-model">Claude 3.5 Sonnet</div>
                     <div className="provider-badge">Precise Extraction</div>
                   </div>
 
                   <div className="minimal-provider-card">
-                    <div className="provider-name">Ollama</div>
-                    <div className="provider-model">Llama 3.2 / DeepSeek</div>
+                    <div className="provider-name">Local Ollama</div>
+                    <div className="provider-model">DeepSeek R1 / Llama 3.2</div>
                     <div className="provider-badge">100% Offline</div>
                   </div>
                 </div>
 
-                <h3 className="docs-section-heading" style={{ marginTop: '2.5rem' }}>Resume Extraction Schema</h3>
+                <h3 className="docs-section-heading" style={{ marginTop: '2.5rem' }}>Resume Extraction &amp; Processing Workflow</h3>
                 <p className="docs-paragraph">
-                  Hunter automatically extracts and validates these 4 core resume sections:
+                  When you upload a PDF resume, Hunter uses <code>pdfjs-dist</code> to extract the raw text layer in your browser, then sends it to your selected AI provider with strict JSON schema constraints.
                 </p>
 
                 <div className="docs-table-wrapper">
@@ -299,27 +301,84 @@ npm run build`}
                     </thead>
                     <tbody>
                       <tr>
-                        <td><strong>Work Experience</strong></td>
-                        <td>Requires both Role AND Company to prevent fake entries.</td>
-                        <td>Autofills Work History forms.</td>
+                        <td><strong>Personal Info</strong></td>
+                        <td>Validates email, phone, LinkedIn, GitHub, and portfolio URLs.</td>
+                        <td>Fills contact &amp; social links across forms.</td>
                       </tr>
                       <tr>
-                        <td><strong>Skills</strong></td>
-                        <td>Grouped into Languages, Frameworks, and Tools.</td>
-                        <td>Matches job skill requirements.</td>
+                        <td><strong>Work Experience</strong></td>
+                        <td>Requires Role, Company, and Start/End dates.</td>
+                        <td>Autofills Work History &amp; Employment forms.</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Skills &amp; Tech Stack</strong></td>
+                        <td>Categorized into Languages, Frameworks, and Tools.</td>
+                        <td>Matches job skill requirements &amp; tags.</td>
                       </tr>
                       <tr>
                         <td><strong>Education</strong></td>
-                        <td>Degree, Institution, and Graduation Year parsing.</td>
-                        <td>Fills Education dropdowns.</td>
+                        <td>Degree type, Field of Study, Institution, and Year.</td>
+                        <td>Fills Education dropdowns &amp; fields.</td>
                       </tr>
                       <tr>
-                        <td><strong>Projects</strong></td>
+                        <td><strong>Projects &amp; Publications</strong></td>
                         <td>Title, Description, and Link extraction.</td>
-                        <td>Fills Portfolio/Project links.</td>
+                        <td>Fills Portfolio/Project details.</td>
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <h3 className="docs-section-heading" style={{ marginTop: '2.5rem' }}>Extracted Resume Schema (JSON)</h3>
+                <div className="docs-code-card">
+                  <div className="code-header">
+                    <span className="code-filename"><Code2 size={14} /> src/types/Memory.ts — ResumeProfile</span>
+                    <button
+                      className="copy-code-btn"
+                      onClick={() => handleCopy(`{\n  "personalInfo": {\n    "fullName": "Jane Doe",\n    "email": "jane@example.com",\n    "phone": "+1 555-0199",\n    "location": "San Francisco, CA",\n    "linkedin": "https://linkedin.com/in/janedoe",\n    "github": "https://github.com/janedoe"\n  },\n  "workExperience": [\n    {\n      "company": "Acme Corp",\n      "role": "Senior Frontend Engineer",\n      "startDate": "2022-01",\n      "endDate": "Present",\n      "description": "Led React & TypeScript migration."\n    }\n  ],\n  "skills": ["TypeScript", "React", "Node.js", "TailwindCSS"],\n  "education": [\n    {\n      "institution": "Stanford University",\n      "degree": "B.S. Computer Science",\n      "year": 2021\n    }\n  ]\n}`, 'c_resume_schema')}
+                    >
+                      {copiedCodeId === 'c_resume_schema' ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedCodeId === 'c_resume_schema' ? 'COPIED' : 'COPY SCHEMA'}</span>
+                    </button>
+                  </div>
+                  <pre className="code-content-block">
+                    <code>{`{
+  "personalInfo": {
+    "fullName": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": "+1 555-0199",
+    "location": "San Francisco, CA",
+    "linkedin": "https://linkedin.com/in/janedoe",
+    "github": "https://github.com/janedoe"
+  },
+  "workExperience": [
+    {
+      "company": "Acme Corp",
+      "role": "Senior Frontend Engineer",
+      "startDate": "2022-01",
+      "endDate": "Present",
+      "description": "Led React & TypeScript migration."
+    }
+  ],
+  "skills": ["TypeScript", "React", "Node.js", "TailwindCSS"],
+  "education": [
+    {
+      "institution": "Stanford University",
+      "degree": "B.S. Computer Science",
+      "year": 2021
+    }
+  ]
+}`}</code>
+                  </pre>
+                </div>
+
+                <div className="minimal-card" style={{ marginTop: '2rem', borderLeft: '3px solid var(--accent-orange)' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Lock size={16} style={{ color: 'var(--accent-orange)' }} /> Zero-Knowledge Local Storage Security
+                  </h4>
+                  <p className="minimal-card-desc" style={{ marginTop: '0.5rem' }}>
+                    All parsed resume fields and API keys are stored exclusively in your browser's encrypted <code>chrome.storage.local</code>. API keys are never stored on any remote cloud database.
+                  </p>
                 </div>
               </div>
             )}
@@ -327,7 +386,7 @@ npm run build`}
             {/* TAB 4: DEVELOPER & API */}
             {activeTab === 'developer' && (
               <div>
-                <div className="minimal-section-badge">🔌 DEVELOPER REFERENCE</div>
+                <div className="minimal-section-badge"><Code2 size={14} /> DEVELOPER REFERENCE</div>
                 <h2 className="docs-article-title">TypeScript API &amp; Commands</h2>
                 <p className="docs-article-lead">
                   Extend Hunter or call core action engines programmatically.
@@ -362,7 +421,7 @@ npm run build`}
                     </button>
                   </div>
                   <pre className="code-content-block">
-{`export class ActionEngine {
+                    {`export class ActionEngine {
   // Execute a browser action (click, fill, scroll, select)
   async executeAction(action: BrowserAction): Promise<ActionResult>;
 
